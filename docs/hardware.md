@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 04:33 EST
+Last Modified at: 2026-11-14 04:58 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -11,12 +11,28 @@ Last Modified by: Codex
 
 ## 1. Verified Controller
 
-- Controller: ESP32-S3 development board with 16 MB flash and 8 MB OPI PSRAM (N16R8-class configuration).
-- Development connection: USB-C through the board's USB-to-UART bridge; serial console runs at 115,200 baud.
+- Controller: ESP32-S3 revision v0.2 development board with 16 MB Quad Flash and 8 MB embedded OPI PSRAM (N16R8-class configuration), confirmed by read-only esptool probing on 2026-11-14.
+- Development connection: ESP32-S3 native USB-Serial/JTAG (USB VID:PID `303A:1001`); serial console runs at 115,200 baud. Port paths are discovered dynamically.
 - Framework used for hardware validation: Arduino ESP32 Core 3.3.12.
 - Both displays run at 3.3 V and use 100 kHz I²C.
 - GPIO33–GPIO37 are reserved by the board's OPI PSRAM and must not be assigned to displays or other peripherals.
 - Avoid GPIO19/GPIO20 for project peripherals because they are the ESP32-S3 native USB pair; GPIO43/GPIO44 are the console UART. The current generic ESP32-S3 Arduino board profile assigns GPIO48 to its built-in RGB LED, so do not reuse it without first verifying the exact development-board schematic.
+
+Read-only preflight evidence from `/dev/cu.usbmodem1101` at the time of testing:
+
+| Property | Observed value |
+|---|---|
+| Chip | ESP32-S3 QFN56 revision v0.2 |
+| CPU/features | Dual core + LP core, 240 MHz, Wi-Fi, BT 5 LE |
+| USB mode | Native USB-Serial/JTAG |
+| MAC / USB serial identity | `98:3d:ae:ea:84:a0` |
+| Flash JEDEC | Manufacturer `0x68`, device `0x4018` |
+| Flash | 16 MB, Quad data lines, 3.3 V |
+| PSRAM | 8 MB embedded PSRAM, 3.3 V |
+
+The PlatformIO base board `esp32-s3-devkitc-1` defaults to an 8 MB/no-PSRAM variant, so the project configuration must explicitly override it to 16 MB Flash and `qio_opi` memory type. Runtime diagnostic firmware must still assert the observed capacities before the product firmware is accepted.
+
+The first uploaded diagnostic ran while both OLED modules were intentionally disconnected. It observed all four configured I²C lines HIGH with no bus errors and zero responding devices on both controllers. That is expected for disconnected displays and is not recorded as a wiring failure. Product upload remains gated until the modules are reconnected and a fresh diagnostic sees exactly one `0x3C` device on each bus.
 
 ## 2. Dual OLED Assignment and Wiring
 

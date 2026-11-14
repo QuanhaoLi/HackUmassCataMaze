@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:55 EST
+Last Modified at: 2026-11-14 05:00 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,12 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Documents acceptance-script ownership.
 |-capture_chrome.mjs — Applies an exact CSS viewport through Chrome DevTools, rejects overflow, and saves a PNG.
+|-esp32_capture_serial.py — Captures bounded ESP32 Serial output without hard-coding a port.
+|-esp32_detect_port.sh — Resolves exactly one Espressif native USB-Serial/JTAG device.
+|-esp32_preflight.sh — Runs read-only chip and Flash identity checks before any upload.
+|-esp32_upload_product.sh — Refuses product upload unless a fresh physical diagnostic passes, then validates product boot evidence.
+|-esp32_upload_diagnostic.sh — Uploads only the bounded diagnostic firmware and validates its Serial evidence.
+|-mac_audio_companion.py — Auto-discovers ESP32 Serial audio events, reconnects, validates, and plays through Mac speakers.
 |-native_smoke.sh — Builds and runs a bounded headless Native gameplay smoke check.
 |-pio_coverage.py — Adds Clang's profile runtime to the final Native coverage link.
 |-pio_native_deps.py — Fetches and SHA-256-verifies pinned cpp-httplib and nlohmann/json single headers for Native builds.

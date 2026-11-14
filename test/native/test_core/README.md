@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:19 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:36 EST
+Last Modified at: 2026-11-14 04:37 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,6 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents the M1 Game Core test suite.
+|-test_audio_event.cpp — Exhaustively verifies canonical event names, hearing range, and same-tick priority.
 |-test_main.cpp — Provides the isolated GoogleTest entry point.
 |-test_application.cpp — Verifies deterministic legal-observation heuristic coordination.
 |-test_map.cpp — Verifies PCG32, `dfs-grid-v1`, connectivity, exit, and spawn determinism.

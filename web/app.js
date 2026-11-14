@@ -1,7 +1,7 @@
 /*
 Created at: 2026-11-14 02:37 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:14 EST
+Last Modified at: 2026-11-14 04:37 EST
 Last Modified by: Codex
 Resolves physical button semantics, calls the versioned API, and paints authoritative framebuffers.
 */
@@ -71,15 +71,15 @@ function playObservableEvents(snapshot) {
   if (key === state.lastEventKey) return;
   state.lastEventKey = key;
   const types = new Set(events.map((event) => event.type));
-  if (types.has("DEATH")) {
+  if (types.has("PLAYER_DEATH")) {
     scheduleBeeps([[0, 0.45]]);
-  } else if (types.has("VICTORY")) {
+  } else if (types.has("PLAYER_VICTORY")) {
     scheduleBeeps([[0, 0.07], [0.13, 0.07], [0.26, 0.1]]);
   } else if (types.has("PLAYER_DAMAGE")) {
     scheduleBeeps([[0, 0.08], [0.17, 0.08]]);
-  } else if (types.has("HEARD_ENEMY_SHOT")) {
+  } else if (types.has("ENEMY_SHOT_HEARD")) {
     scheduleBeeps([[0, 0.045], [0.1, 0.045]]);
-  } else if (types.has("OWN_SHOT")) {
+  } else if (types.has("PLAYER_SHOT")) {
     scheduleBeeps([[0, 0.07]]);
   }
 }

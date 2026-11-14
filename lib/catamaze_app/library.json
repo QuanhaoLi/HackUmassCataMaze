@@ -2,7 +2,7 @@
   "_file_header": {
     "created_at": "2026-11-14 02:26 EST",
     "created_by": "Codex",
-    "last_modified_at": "2026-11-14 02:32 EST",
+    "last_modified_at": "2026-11-14 04:37 EST",
     "last_modified_by": "Codex"
   },
   "name": "catamaze-app",
@@ -13,7 +13,8 @@
     "srcDir": "src"
   },
   "headers": [
-    "catamaze/app/application.hpp"
+    "catamaze/app/application.hpp",
+    "catamaze/app/audio_event.hpp"
   ],
   "platforms": [
     "native",

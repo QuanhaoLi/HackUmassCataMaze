@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 03:11 EST
+// Last Modified at: 2026-11-14 04:37 EST
 // Last Modified by: Codex
 // Implements exact 128x64 Map and HUD pixel layouts without driver-specific code.
 
@@ -107,25 +107,27 @@ Framebuffer Renderer::hudScreen(const core::WorldState& state) noexcept {
   const auto& player = state.entities[core::entityIndex(core::EntityId::Player)];
   std::array<char, 24> line{};
 
-  frame.drawText(1, 0, "CATAMAZE");
-  std::snprintf(line.data(), line.size(), "TICK   %05u", static_cast<unsigned>(state.tick));
-  frame.drawText(1, 10, line.data());
-  frame.drawText(1, 20, "HP");
+  frame.drawText(kHudLabelX, kHudRowY[0], "TICK");
+  std::snprintf(line.data(), line.size(), "%05u", static_cast<unsigned>(state.tick));
+  frame.drawText(kHudValueX, kHudRowY[0], line.data());
+  frame.drawText(kHudLabelX, kHudRowY[1], "HP");
   for (std::uint8_t index = 0; index < core::kMaxHp; ++index) {
-    drawIcon(frame, static_cast<std::int16_t>(32 + index * 9), 20,
+    drawIcon(frame, static_cast<std::int16_t>(kHudValueX + index * 9), kHudRowY[1],
              index < player.hp ? kHeartFilled : kHeartOutline);
   }
-  frame.drawText(1, 30, "AMMO");
+  frame.drawText(kHudLabelX, kHudRowY[2], "AMMO");
   for (std::uint8_t index = 0; index < core::kMaxAmmo; ++index) {
-    drawIcon(frame, static_cast<std::int16_t>(32 + index * 10), 30,
+    drawIcon(frame, static_cast<std::int16_t>(kHudValueX + index * 10), kHudRowY[2],
              index < player.ammo ? kAmmoFilled : kAmmoOutline);
   }
-  std::snprintf(line.data(), line.size(), "QUEUE  %02u/%02u",
+  frame.drawText(kHudLabelX, kHudRowY[3], "QUEUE");
+  std::snprintf(line.data(), line.size(), "%02u/%02u",
                 static_cast<unsigned>(state.player_queue.size()),
                 static_cast<unsigned>(state.player_queue.capacity()));
-  frame.drawText(1, 40, line.data());
-  std::snprintf(line.data(), line.size(), "POS    %02d,%02d", player.position.x, player.position.y);
-  frame.drawText(1, 50, line.data());
+  frame.drawText(kHudValueX, kHudRowY[3], line.data());
+  frame.drawText(kHudLabelX, kHudRowY[4], "POS");
+  std::snprintf(line.data(), line.size(), "%02d,%02d", player.position.x, player.position.y);
+  frame.drawText(kHudValueX, kHudRowY[4], line.data());
   return frame;
 }
 

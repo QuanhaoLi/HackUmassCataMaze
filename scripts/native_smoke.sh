@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 02:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 03:14 EST
+# Last Modified at: 2026-11-14 04:37 EST
 # Last Modified by: Codex
 # Builds and executes a bounded headless Native gameplay acceptance check.
 
@@ -94,7 +94,7 @@ for _ in {1..40}; do
   sleep 0.05
 done
 [[ "${sound_tick}" == "2" ]]
-jq -e '.last_events | any(.type == "OWN_SHOT")' <<<"${sound_snapshot}" >/dev/null
+jq -e '.last_events | any(.type == "PLAYER_SHOT")' <<<"${sound_snapshot}" >/dev/null
 
 invalid_status="$(curl -sS -o "${artifact_dir}/invalid.json" -w '%{http_code}' \
   -X POST -H 'Content-Type: application/json' -d '{"action":"FLY"}' \
@@ -106,5 +106,5 @@ kill -TERM "${server_pid}"
 server_status=0
 wait "${server_pid}" || server_status=$?
 [[ "${server_status}" == "0" ]]
-printf 'CATAMAZE_BROWSER_OK url=%s tick=%s sound=OWN_SHOT\n' \
+printf 'CATAMAZE_BROWSER_OK url=%s tick=%s sound=PLAYER_SHOT\n' \
   "${base_url}" "${sound_tick}"

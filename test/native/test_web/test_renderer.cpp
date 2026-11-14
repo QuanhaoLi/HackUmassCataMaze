@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 03:11 EST
+// Last Modified at: 2026-11-14 04:37 EST
 // Last Modified by: Codex
 // Verifies SSD1306 page order, clipping, deterministic screens, and player-visible rendering.
 
@@ -135,15 +135,33 @@ TEST(Renderer, HudUsesFilledAndOutlineHeartAndAmmoSlots) {
   const Framebuffer depleted = Renderer::hudScreen(state);
   EXPECT_NE(full.bytes(), depleted.bytes());
 
-  constexpr std::int16_t kLastHeartX = 32 + 4 * 9;
-  EXPECT_TRUE(full.pixel(kLastHeartX + 3, 22));
-  EXPECT_FALSE(depleted.pixel(kLastHeartX + 3, 22));
-  EXPECT_TRUE(depleted.pixel(kLastHeartX, 21));
+  constexpr std::int16_t kLastHeartX = Renderer::kHudValueX + 4 * 9;
+  EXPECT_TRUE(full.pixel(kLastHeartX + 3, Renderer::kHudRowY[1] + 2));
+  EXPECT_FALSE(depleted.pixel(kLastHeartX + 3, Renderer::kHudRowY[1] + 2));
+  EXPECT_TRUE(depleted.pixel(kLastHeartX, Renderer::kHudRowY[1] + 1));
 
-  constexpr std::int16_t kLastAmmoX = 32 + 2 * 10;
-  EXPECT_TRUE(full.pixel(kLastAmmoX + 3, 33));
-  EXPECT_FALSE(depleted.pixel(kLastAmmoX + 3, 33));
-  EXPECT_TRUE(depleted.pixel(kLastAmmoX + 1, 33));
+  constexpr std::int16_t kLastAmmoX = Renderer::kHudValueX + 2 * 10;
+  EXPECT_TRUE(full.pixel(kLastAmmoX + 3, Renderer::kHudRowY[2] + 3));
+  EXPECT_FALSE(depleted.pixel(kLastAmmoX + 3, Renderer::kHudRowY[2] + 3));
+  EXPECT_TRUE(depleted.pixel(kLastAmmoX + 1, Renderer::kHudRowY[2] + 3));
+}
+
+TEST(Renderer, HudHasNoTitleAndUsesOneRightColumn) {
+  core::WorldState state{};
+  state.tick = 761U;
+  const Framebuffer hud = Renderer::hudScreen(state);
+
+  EXPECT_EQ(Renderer::kHudLabelX, 1);
+  EXPECT_EQ(Renderer::kHudValueX, 44);
+  EXPECT_EQ(Renderer::kHudRowY, (std::array<std::int16_t, 5>{3, 15, 27, 39, 51}));
+  for (std::int16_t y = 0; y < 3; ++y) {
+    for (std::int16_t x = 0; x < Framebuffer::kWidth; ++x) {
+      EXPECT_FALSE(hud.pixel(x, y));
+    }
+  }
+  EXPECT_TRUE(hud.pixel(Renderer::kHudValueX, Renderer::kHudRowY[0] + 1));
+  EXPECT_TRUE(hud.pixel(Renderer::kHudValueX, Renderer::kHudRowY[3] + 1));
+  EXPECT_TRUE(hud.pixel(Renderer::kHudValueX, Renderer::kHudRowY[4] + 1));
 }
 
 TEST(Renderer, HudChangesWhenPublicFieldsChange) {
