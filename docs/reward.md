@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:38 EST
+Last Modified at: 2026-11-14 04:44 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -406,6 +406,16 @@ v1 默认超参数：
 | D | 50M～100M | 全策略池动态采样 | 提高泛化和抗策略过拟合 |
 
 课程晋级同时受步数和评估门槛控制。若当前阶段胜率、稳定性或人格差异未达标，不得仅因步数达到就晋级。
+
+v1 晋级门槛固定如下；每项使用未参与训练的固定 seed、stochastic 策略和每个列出对手至少 300 局：
+
+| 晋级 | 最低步数 | 固定评估门槛 |
+|---|---:|---|
+| A → B | `5M` | stationary 玩家死亡率 ≥ `25%`；random-valid 玩家逃脱率 ≤ `10%` |
+| B → C | `20M` | wall-follower 玩家逃脱率 ≤ `30%` 且玩家死亡率 ≥ `10%` |
+| C → D | `50M` | shortest-path noisy 和 combat planner 各自玩家逃脱率 ≤ `80%`；aggressive 射击率不低于 cautious；cautious 死亡率不高于 aggressive；explorer 首次访问率不低于 aggressive |
+
+所有晋级还要求最近区间无 NaN/Inf、非法动作、环境不变量失败、checkpoint 恢复失败或连续 KL 超限。未达门槛时继续当前阶段并保留评估报告，不允许降低门槛或仅按步数强制晋级。D 阶段不再自动晋级；它进入最终多 seed 发布验收。
 
 训练出生点必须随机化。固定地图训练时必须覆盖出口附近、远离出口、狭窄走廊和开放区域；不能让网络只记住少量出生坐标。
 

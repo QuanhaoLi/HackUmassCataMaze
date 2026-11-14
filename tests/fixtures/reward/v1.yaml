@@ -1,0 +1,41 @@
+# Created at: 2026-11-14 04:50 EST
+# Created by: Codex
+# Last Modified at: 2026-11-14 04:50 EST
+# Last Modified by: Codex
+
+version: catamaze.reward.v1
+cases:
+  - name: simultaneous_player_kill
+    current:
+      status: death
+      events:
+        - [damage_applied, 0, 0, 1]
+        - [damage_credit, 1, 0, 1]
+        - [damage_credit, 2, 0, 1]
+        - [entity_died, 0, 0, 0]
+    expected:
+      terminal: [20.0, 20.0, 20.0]
+      player_combat: [5.0, 3.0, 0.0]
+      total: [25.0, 23.0, 20.0]
+
+  - name: player_escape
+    current:
+      status: victory
+    expected:
+      terminal: [-20.0, -20.0, -20.0]
+      total: [-19.99995, -19.99998, -20.0]
+
+  - name: timeout_bootstraps
+    current:
+      status: timeout
+    expected:
+      terminal: [10.0, 10.0, 10.0]
+      total: [10.00005, 10.00002, 10.0]
+      truncated: [true, true, true]
+
+  - name: blocked_wall_nonterminal_cost
+    current:
+      last_result: [0, 2, 0, 0]
+    expected:
+      efficiency: [-0.022, -0.0005, -0.0015]
+      total: [-0.02195, -0.00048, -0.0015]

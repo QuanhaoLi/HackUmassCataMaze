@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:24 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:24 EST
+# Last Modified at: 2026-11-14 04:51 EST
 # Last Modified by: Codex
 
 versions:
@@ -71,3 +71,17 @@ checkpoint:
 evaluation:
   every_agent_steps: 500000
   episodes_per_persona_per_opponent: 300
+
+curriculum:
+  A:
+    minimum_agent_steps: 5000000
+    evaluation_opponents: [stationary, random_valid]
+  B:
+    minimum_agent_steps: 20000000
+    evaluation_opponents: [wall_follower]
+  C:
+    minimum_agent_steps: 50000000
+    evaluation_opponents: [shortest_path_noisy, combat_planner]
+  D:
+    minimum_agent_steps: 100000000
+    evaluation_opponents: [stationary, random_valid, wall_follower, shortest_path_noisy, combat_planner, frozen_pool]

@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:43 EST
+Last Modified at: 2026-11-14 04:51 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -15,6 +15,7 @@ Last Modified by: Codex
 |-benchmark_env.py — Measures batched CPU environment throughput without model-update noise.
 |-checkpoint.py — Atomically saves and restores model, optimizer, environment, recurrent, curriculum, and RNG state.
 |-config.py — Loads and validates immutable YAML run configurations.
+|-curriculum.py — Enforces step-plus-evaluation promotion gates without lowering failed criteria.
 |-native_bindings.cpp — Binds batched in-memory C++ Game Engines and policy-contract tensors to Python.
 |-env.py — Owns batched episode lifecycle, partial resets, opponent actions, and reward state.
 |-evaluator.py — Runs fixed-seed stochastic/deterministic evaluation and emits per-persona metrics.
@@ -24,6 +25,9 @@ Last Modified by: Codex
 |-ppo.py — Implements GAE, clipped recurrent PPO updates, KL stopping, and optimizer metrics.
 |-reward.py — Converts structured events and state deltas into independently logged per-agent reward components.
 |-smoke.py — Runs the bounded end-to-end correctness qualification before long GPU work.
+|-train_ppo.py — Runs resumable production training, schedules, evaluation gates, metrics, and checkpoint retention.
+|-validate_env.py — Runs bounded seeded environment invariants without a neural policy.
+|-validate_reward.py — Executes reviewed YAML reward trajectories independently from pytest.
 
 ## To-Dos
-- Add golden-fixture validation, production training, export, and release-report entry points in milestone order.
+- Add export and release-report entry points in milestone order.

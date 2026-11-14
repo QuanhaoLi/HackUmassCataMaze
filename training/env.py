@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:43 EST
+# Last Modified at: 2026-11-14 04:51 EST
 # Last Modified by: Codex
 # Coordinates batched Native episodes, player opponents, reward state, and partial resets.
 
@@ -104,6 +104,13 @@ class CataMazeBatchEnv:
             if strategy < 0 or strategy > 5:
                 raise ValueError("opponent strategy must be in range [0, 5]")
             self._strategies.fill(strategy)
+
+    def set_curriculum_stage(self, stage: str) -> None:
+        if stage not in ("A", "B", "C", "D"):
+            raise ValueError("curriculum stage must be A, B, C, or D")
+        if self._forced_strategy is not None:
+            raise RuntimeError("cannot change curriculum while an opponent is forced")
+        self.curriculum_stage = stage
 
     def state_dict(self) -> dict[str, object]:
         return {
