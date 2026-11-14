@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:19 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 05:02 EST
+# Last Modified at: 2026-11-14 06:42 EST
 # Last Modified by: Codex
 # Implements clipped recurrent PPO with masked actions and KL safety stops.
 
@@ -83,12 +83,13 @@ class PPOTrainer:
         updates = 0
         stop = False
         max_approx_kl = 0.0
+        shuffle_generator = generator if generator.device.type == "cpu" else None
         self.model.train()
         for _epoch in range(self.config.update_epochs):
             for batch in rollout.sequence_batches(
                 sequence_length=self.config.sequence_length,
                 sequences_per_batch=self.config.sequences_per_batch,
-                generator=generator,
+                generator=shuffle_generator,
             ):
                 metrics = self._update_batch(batch)
                 for name in totals:

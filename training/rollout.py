@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:19 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 05:02 EST
+# Last Modified at: 2026-11-14 06:42 EST
 # Last Modified by: Codex
 # Stores recurrent on-policy transitions and produces fixed-length sequence batches.
 
@@ -157,7 +157,7 @@ class RecurrentRollout:
         *,
         sequence_length: int,
         sequences_per_batch: int,
-        generator: torch.Generator,
+        generator: torch.Generator | None,
         shuffle: bool = True,
     ) -> Iterator[SequenceBatch]:
         if self.advantages is None or self.returns is None:
