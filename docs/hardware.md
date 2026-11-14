@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 04:58 EST
+Last Modified at: 2026-11-14 05:33 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -33,6 +33,10 @@ Read-only preflight evidence from `/dev/cu.usbmodem1101` at the time of testing:
 The PlatformIO base board `esp32-s3-devkitc-1` defaults to an 8 MB/no-PSRAM variant, so the project configuration must explicitly override it to 16 MB Flash and `qio_opi` memory type. Runtime diagnostic firmware must still assert the observed capacities before the product firmware is accepted.
 
 The first uploaded diagnostic ran while both OLED modules were intentionally disconnected. It observed all four configured I²C lines HIGH with no bus errors and zero responding devices on both controllers. That is expected for disconnected displays and is not recorded as a wiring failure. Product upload remains gated until the modules are reconnected and a fresh diagnostic sees exactly one `0x3C` device on each bus.
+
+After both OLED modules were reconnected, a fresh diagnostic found exactly one `0x3C` device on each controller, all four lines HIGH, zero I²C errors, correct Flash/PSRAM, all seven buttons released, and GPIO4 unconfigured. The diagnostic gate passed.
+
+The first product image then exposed an early-boot stack defect: constructing `Application` as a global invoked maze generation before Arduino created its loop task, and USB failed to re-enumerate. The corrected image defers `Application` construction into `setup()` and explicitly provisions a 32 KiB loop-task stack while reporting its high-water mark. The corrected image is compiled but cannot be uploaded until the board is manually returned to download mode.
 
 ## 2. Dual OLED Assignment and Wiring
 

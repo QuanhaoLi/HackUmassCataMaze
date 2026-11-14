@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 05:02 EST
+Last Modified at: 2026-11-14 05:33 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -214,7 +214,7 @@ Pass conditions:
 
 - `esp32s3_diagnostic` compile passed on PlatformIO Espressif32 8.0.0 / Arduino Core 3.3.12.
 - Production `esp32s3` compile passed with only shared app/core/render and Wire dependencies.
-- Production memory: 46,776 bytes static RAM (14.3%) and 393,428 bytes app Flash (6.0% of partition).
+- Corrected production memory: 46,816 bytes static RAM (14.3%) and 394,468 bytes app Flash (6.0% of partition).
 - Product firmware contains canonical `CATAMAZE_AUDIO` and boot diagnostics and contains no httplib/nlohmann dependency.
 - Static source audit found no GPIO4 pin initialization or write.
 - Display output is queued and serviced one 16-byte I²C chunk per loop to preserve input responsiveness at 100 kHz.
@@ -249,8 +249,9 @@ Pass conditions:
 - Read-only preflight confirmed ESP32-S3 rev 0.2, 16 MB Quad Flash, 8 MB PSRAM, native USB-Serial/JTAG, and 3.3 V configuration.
 - Diagnostic firmware upload and verified Flash write succeeded; GPIO4 remained unconfigured.
 - All seven button inputs were HIGH/released during observation. Manual press/debounce sequences remain pending.
-- Both OLED modules were intentionally disconnected. Both I²C controllers started, all four lines read HIGH, and zero devices responded as expected.
-- Product firmware upload is intentionally gated until reconnected displays each respond once at `0x3C`.
+- With displays reconnected, a fresh diagnostic found one `0x3C` device on each controller, all four lines HIGH, zero bus errors, and returned `pass=true`.
+- The first product upload exposed a pre-`setup()` stack overflow caused by global `Application` construction; USB did not re-enumerate.
+- The corrected image defers construction into a 32 KiB loop task and reports stack high-water evidence. It compiles successfully and is pending manual BOOT/RESET recovery before re-upload.
 
 ## M6 — Cross-platform determinism and release-candidate evidence
 
