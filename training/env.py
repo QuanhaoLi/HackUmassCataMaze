@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:38 EST
+# Last Modified at: 2026-11-14 04:43 EST
 # Last Modified by: Codex
 # Coordinates batched Native episodes, player opponents, reward state, and partial resets.
 
@@ -52,6 +52,7 @@ class CataMazeBatchEnv:
         opponent_seed = int(self._seed_rng.integers(0, 2**63, dtype=np.uint64))
         self._opponents = OpponentPool(num_envs, opponent_seed)
         self._strategies = self._opponents.sample_strategies(curriculum_stage)
+        self._forced_strategy: int | None = None
 
     @property
     def observation(self) -> Snapshot:
@@ -88,9 +89,21 @@ class CataMazeBatchEnv:
         seeds = self._next_seeds(indices.size)
         self._observation = self._native.reset_at(indices, seeds)
         self._reward.reset(self._observation, finished)
-        sampled = self._opponents.sample_strategies(self.curriculum_stage)
-        self._strategies[finished] = sampled[finished]
+        if self._forced_strategy is None:
+            sampled = self._opponents.sample_strategies(self.curriculum_stage)
+            self._strategies[finished] = sampled[finished]
+        else:
+            self._strategies[finished] = self._forced_strategy
         return finished
+
+    def force_opponent_strategy(self, strategy: int | None) -> None:
+        self._forced_strategy = strategy
+        if strategy is None:
+            self._strategies = self._opponents.sample_strategies(self.curriculum_stage)
+        else:
+            if strategy < 0 or strategy > 5:
+                raise ValueError("opponent strategy must be in range [0, 5]")
+            self._strategies.fill(strategy)
 
     def state_dict(self) -> dict[str, object]:
         return {
@@ -100,6 +113,7 @@ class CataMazeBatchEnv:
             "opponents": self._opponents.state_dict(),
             "strategies": self._strategies.copy(),
             "curriculum_stage": self.curriculum_stage,
+            "forced_strategy": self._forced_strategy,
         }
 
     def load_state_dict(self, state: dict[str, object]) -> None:
@@ -114,6 +128,7 @@ class CataMazeBatchEnv:
         if strategies.shape != (self.num_envs,):
             raise ValueError("checkpoint strategies do not match num_envs")
         self._strategies[:] = strategies
+        self._forced_strategy = state.get("forced_strategy")
 
     def _next_seeds(self, count: int) -> npt.NDArray[np.uint64]:
         return self._seed_rng.integers(

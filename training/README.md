@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:38 EST
+Last Modified at: 2026-11-14 04:43 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -17,6 +17,7 @@ Last Modified by: Codex
 |-config.py — Loads and validates immutable YAML run configurations.
 |-native_bindings.cpp — Binds batched in-memory C++ Game Engines and policy-contract tensors to Python.
 |-env.py — Owns batched episode lifecycle, partial resets, opponent actions, and reward state.
+|-evaluator.py — Runs fixed-seed stochastic/deterministic evaluation and emits per-persona metrics.
 |-model.py — Implements the CNN, scalar MLP, GRU actor-critic, initialization, and masked categorical policy.
 |-opponents.py — Implements the deterministic curriculum player-policy pool.
 |-rollout.py — Stores recurrent on-policy transitions and builds masked fixed-length sequence minibatches.
@@ -25,4 +26,4 @@ Last Modified by: Codex
 |-smoke.py — Runs the bounded end-to-end correctness qualification before long GPU work.
 
 ## To-Dos
-- Add golden-fixture validation, evaluation, production training, export, and release-report entry points in milestone order.
+- Add golden-fixture validation, production training, export, and release-report entry points in milestone order.
