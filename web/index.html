@@ -1,0 +1,90 @@
+<!--
+Created at: 2026-11-14 02:37 EST
+Created by: Codex
+Last Modified at: 2026-11-14 02:37 EST
+Last Modified by: Codex
+Defines the accessible Native simulator shell around the two authoritative OLED canvases.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CataMaze — Native console</title>
+    <link rel="stylesheet" href="/app.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">ESP32-S3 / NATIVE TWIN</p>
+          <h1>CataMaze <span>control console</span></h1>
+        </div>
+        <div class="connection" id="connection" data-state="connecting">
+          <span class="connection-dot" aria-hidden="true"></span>
+          <span id="connection-label">Connecting</span>
+        </div>
+      </header>
+
+      <section class="device" aria-label="CataMaze handheld simulator">
+        <div class="device-mark">CATAMAZE // DEV-01</div>
+        <div class="screens">
+          <article class="screen-module">
+            <div class="screen-heading"><span>MAP OLED</span><span>128×64</span></div>
+            <div class="screen-bezel">
+              <canvas id="map-screen" width="128" height="64" aria-label="Player local map OLED"></canvas>
+            </div>
+          </article>
+          <article class="screen-module">
+            <div class="screen-heading"><span>HUD OLED</span><span>128×64</span></div>
+            <div class="screen-bezel">
+              <canvas id="hud-screen" width="128" height="64" aria-label="Player HUD OLED"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <div class="status-strip" aria-live="polite">
+          <span><b>STATUS</b><i id="status">—</i></span>
+          <span><b>TICK</b><i id="tick">00000</i></span>
+          <span><b>HASH</b><i id="hash">—</i></span>
+        </div>
+
+        <div class="control-deck">
+          <section class="dpad-panel" aria-label="Directional controls">
+            <button class="key direction up" data-direction="UP" aria-label="Up">▲</button>
+            <button class="key direction left" data-direction="LEFT" aria-label="Left">◀</button>
+            <div class="dpad-center" aria-hidden="true"></div>
+            <button class="key direction right" data-direction="RIGHT" aria-label="Right">▶</button>
+            <button class="key direction down" data-direction="DOWN" aria-label="Down">▼</button>
+          </section>
+
+          <section class="action-panel" aria-label="Action controls">
+            <button class="round-key fire" id="fire" aria-label="Hold fire, then choose a direction">
+              <span>FIRE</span><small>HOLD</small>
+            </button>
+            <button class="round-key" id="wait"><span>WAIT</span><small>QUEUE</small></button>
+            <button class="round-key danger" id="clear"><span>CLEAR</span><small>NOW</small></button>
+          </section>
+        </div>
+      </section>
+
+      <aside class="utility-panel">
+        <div class="utility-copy">
+          <p class="eyebrow">SIMULATION CLOCK</p>
+          <p>Arrow keys move. Hold <kbd>Space</kbd> before a direction to fire. <kbd>W</kbd> waits; <kbd>C</kbd> clears.</p>
+        </div>
+        <div class="clock-actions">
+          <button id="pause">Pause</button>
+          <button id="realtime">Realtime</button>
+          <button id="step">Step tick</button>
+        </div>
+        <form id="reset-form">
+          <label for="seed">Explicit seed</label>
+          <input id="seed" name="seed" value="0x000000000134fd5a" spellcheck="false">
+          <button type="submit">Reset game</button>
+        </form>
+      </aside>
+    </main>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:26 EST
+Last Modified at: 2026-11-14 02:34 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,8 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Documents the Native executable entry point.
 |-main.cpp — Provides the headless interactive Native game and composes shared libraries.
+|-native_server.cpp — Implements the loopback HTTP adapter, single simulation owner, and immutable snapshots.
+|-native_server.hpp — Declares Native server options and lifecycle.
 
 ## To-Dos
-- Add the loopback browser adapter during M2 without moving rules into the executable.
+- Keep HTTP and operating-system concerns isolated from reusable libraries.

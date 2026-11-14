@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:19 EST
+Last Modified at: 2026-11-14 02:34 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -12,6 +12,7 @@ Last Modified by: Codex
 |-README.md — Documents Native test ownership.
 |-test_bootstrap/ — Proves the pinned compiler, library discovery, and GoogleTest chain.
 |-test_core/ — Verifies deterministic maps, queueing, observations, physics, combat, and terminal rules.
+|-test_web/ — Verifies framebuffer storage and authoritative Map/HUD pixel rendering.
 
 ## To-Dos
-- Add M2 browser suites after the complete headless game passes.
+- Add M3 hardening suites only after browser playability passes.

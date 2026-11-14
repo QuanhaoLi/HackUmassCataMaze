@@ -1,19 +1,22 @@
 // Created at: 2026-11-14 02:13 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:37 EST
 // Last Modified by: Codex
 // Runs the complete headless Native game without making a web server a core dependency.
 
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "catamaze/app/application.hpp"
 #include "catamaze/core/version.hpp"
+#include "native_server.hpp"
 
 namespace {
 
@@ -199,9 +202,15 @@ int interactive(std::uint64_t seed) {
 int main(int argc, char** argv) {
   std::uint64_t seed = kDefaultSeed;
   std::uint64_t auto_ticks = 0U;
+  std::uint64_t port_value = 0U;
+  bool serve = false;
+  bool paused = false;
+  std::string web_root = "web";
   for (int index = 1; index < argc; ++index) {
     const std::string option = argv[index];
-    if ((option == "--seed" || option == "--auto") && index + 1 >= argc) {
+    if ((option == "--seed" || option == "--auto" || option == "--port" ||
+         option == "--web-root") &&
+        index + 1 >= argc) {
       std::cerr << option << " requires a value\n";
       return 2;
     }
@@ -216,9 +225,39 @@ int main(int argc, char** argv) {
         std::cerr << "invalid auto tick count\n";
         return 2;
       }
+    } else if (option == "--serve") {
+      serve = true;
+    } else if (option == "--paused") {
+      paused = true;
+    } else if (option == "--port") {
+      if (!parseUnsigned(argv[++index], port_value) || port_value > 65535U) {
+        std::cerr << "invalid TCP port\n";
+        return 2;
+      }
+    } else if (option == "--web-root") {
+      web_root = argv[++index];
     } else {
       std::cerr << "unknown option: " << option << '\n';
       return 2;
+    }
+  }
+
+  if (serve) {
+    if (auto_ticks != 0U) {
+      std::cerr << "--serve and --auto cannot be combined\n";
+      return 2;
+    }
+    catamaze::native::NativeServerOptions options;
+    options.seed = seed;
+    options.port = static_cast<std::uint16_t>(port_value);
+    options.start_paused = paused;
+    options.web_root = web_root;
+    try {
+      catamaze::native::NativeServer server(std::move(options));
+      return server.run();
+    } catch (const std::exception& error) {
+      std::cerr << "Native server failed: " << error.what() << '\n';
+      return 1;
     }
   }
 

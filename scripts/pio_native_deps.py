@@ -1,8 +1,8 @@
 # Created at: 2026-11-14 02:16 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 02:16 EST
+# Last Modified at: 2026-11-14 02:42 EST
 # Last Modified by: Codex
-# Fetches the exact cpp-httplib single header into ignored build storage and verifies its digest.
+# Fetches exact Native-only single headers into ignored build storage and verifies every digest.
 
 from hashlib import sha256
 from pathlib import Path
@@ -16,30 +16,37 @@ HTTPLIB_URL = (
     "https://raw.githubusercontent.com/yhirose/cpp-httplib/"
     f"v{HTTPLIB_VERSION}/httplib.h"
 )
-MAX_HEADER_BYTES = 2 * 1024 * 1024
+JSON_VERSION = "3.12.0"
+JSON_SHA256 = "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63"
+JSON_URL = (
+    "https://raw.githubusercontent.com/nlohmann/json/"
+    f"v{JSON_VERSION}/single_include/nlohmann/json.hpp"
+)
+MAX_HEADER_BYTES = 3 * 1024 * 1024
 
 project_dir = Path(env.subst("$PROJECT_DIR"))  # type: ignore[name-defined]
-vendor_dir = project_dir / ".pio" / "vendor" / "cpp-httplib" / HTTPLIB_VERSION
-header_path = vendor_dir / "httplib.h"
+vendor_root = project_dir / ".pio" / "vendor"
 
 
-def verified(data: bytes) -> bool:
-    return sha256(data).hexdigest() == HTTPLIB_SHA256
-
-
-if header_path.exists() and not verified(header_path.read_bytes()):
-    header_path.unlink()
-
-if not header_path.exists():
-    with urlopen(HTTPLIB_URL, timeout=30) as response:
+def fetch_verified(url: str, expected_digest: str, target: Path) -> None:
+    if target.exists() and sha256(target.read_bytes()).hexdigest() != expected_digest:
+        target.unlink()
+    if target.exists():
+        return
+    with urlopen(url, timeout=30) as response:
         payload = response.read(MAX_HEADER_BYTES + 1)
     if len(payload) > MAX_HEADER_BYTES:
-        raise RuntimeError("cpp-httplib header exceeded the 2 MiB safety limit")
-    if not verified(payload):
-        raise RuntimeError("cpp-httplib SHA-256 verification failed")
-    vendor_dir.mkdir(parents=True, exist_ok=True)
-    temporary_path = header_path.with_suffix(".tmp")
+        raise RuntimeError(f"Native dependency exceeded safety limit: {target.name}")
+    if sha256(payload).hexdigest() != expected_digest:
+        raise RuntimeError(f"SHA-256 verification failed: {target.name}")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = target.with_suffix(".tmp")
     temporary_path.write_bytes(payload)
-    temporary_path.replace(header_path)
+    temporary_path.replace(target)
 
-env.Append(CPPPATH=[str(vendor_dir)])  # type: ignore[name-defined]
+
+httplib_dir = vendor_root / "cpp-httplib" / HTTPLIB_VERSION
+json_dir = vendor_root / "nlohmann-json" / JSON_VERSION
+fetch_verified(HTTPLIB_URL, HTTPLIB_SHA256, httplib_dir / "httplib.h")
+fetch_verified(JSON_URL, JSON_SHA256, json_dir / "nlohmann" / "json.hpp")
+env.Append(CPPPATH=[str(httplib_dir), str(json_dir)])  # type: ignore[name-defined]

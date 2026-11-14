@@ -1,0 +1,23 @@
+{
+  "_file_header": {
+    "created_at": "2026-11-14 02:34 EST",
+    "created_by": "Codex",
+    "last_modified_at": "2026-11-14 02:34 EST",
+    "last_modified_by": "Codex"
+  },
+  "name": "catamaze-render",
+  "version": "0.1.0",
+  "description": "Driver-free CataMaze 128x64 monochrome framebuffer renderer",
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src"
+  },
+  "headers": [
+    "catamaze/render/framebuffer.hpp",
+    "catamaze/render/renderer.hpp"
+  ],
+  "platforms": [
+    "native",
+    "espressif32"
+  ]
+}

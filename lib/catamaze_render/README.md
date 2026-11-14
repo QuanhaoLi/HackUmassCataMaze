@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:11 EST
+Last Modified at: 2026-11-14 02:34 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,7 +11,8 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Defines the renderer library boundary.
 |-include/ — Contains public framebuffer and renderer headers.
+|-library.json — Declares PlatformIO metadata and the public include directory.
 |-src/ — Contains font and pixel-rendering implementations.
 
 ## To-Dos
-- Implement the shared bitmap font and both screen layouts during M2.
+- Keep physical OLED and browser Canvas consumers byte-identical.

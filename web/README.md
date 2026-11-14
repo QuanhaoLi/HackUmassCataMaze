@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:11 EST
+Last Modified at: 2026-11-14 02:34 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,6 +10,9 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents browser asset ownership.
+|-app.css — Styles the responsive handheld simulator and pixel-perfect OLED surfaces.
+|-app.js — Resolves FIRE-modified input, calls versioned APIs, and paints framebuffer bytes.
+|-index.html — Defines the accessible two-screen simulator shell and controls.
 
 ## To-Dos
-- Add fixed allow-listed assets during M2; do not introduce a bundler.
+- Keep assets dependency-free, allow-listed, and compatible with headless screenshot QA.

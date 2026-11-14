@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:11 EST
+Last Modified at: 2026-11-14 02:34 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,6 +10,8 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents renderer implementation ownership.
+|-framebuffer.cpp — Implements bounds-safe pixel, primitive, and fixed-font drawing.
+|-renderer.cpp — Implements the authoritative Map and HUD pixel layouts.
 
 ## To-Dos
-- Add pixel primitives and golden framebuffer tests during M2.
+- Keep layout changes covered by deterministic framebuffer tests and screenshots.

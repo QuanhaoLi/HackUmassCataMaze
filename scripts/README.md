@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:26 EST
+Last Modified at: 2026-11-14 02:48 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,8 +10,10 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents acceptance-script ownership.
+|-capture_chrome.mjs — Applies an exact CSS viewport through Chrome DevTools, rejects overflow, and saves a PNG.
 |-native_smoke.sh — Builds and runs a bounded headless Native gameplay smoke check.
-|-pio_native_deps.py — Fetches and SHA-256-verifies the pinned cpp-httplib single header for Native builds.
+|-pio_native_deps.py — Fetches and SHA-256-verifies pinned cpp-httplib and nlohmann/json single headers for Native builds.
+|-screenshot_native.sh — Starts the loopback simulator and captures desktop and narrow Chrome screenshots.
 
 ## To-Dos
-- Add the screenshot script during M2.
+- Add later hardening scripts only when their milestones begin.
