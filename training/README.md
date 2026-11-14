@@ -28,6 +28,7 @@ Last Modified by: Codex
 |-train_ppo.py — Runs resumable production training, schedules, evaluation gates, metrics, and checkpoint retention.
 |-validate_env.py — Runs bounded seeded environment invariants without a neural policy.
 |-validate_reward.py — Executes reviewed YAML reward trajectories independently from pytest.
+|-validate_system.py — Verifies the pinned V100 runtime, real CUDA compute, and CPU/GPU numerical parity.
 
 ## To-Dos
 - Add export and release-report entry points in milestone order.

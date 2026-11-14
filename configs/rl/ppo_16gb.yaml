@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:24 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:51 EST
+# Last Modified at: 2026-11-14 05:26 EST
 # Last Modified by: Codex
 
 versions:
@@ -8,11 +8,19 @@ versions:
   observation: catamaze.observation.v1
   reward: catamaze.reward.v1
   model_arch: catamaze.model.rppo.v1
-  training_config: catamaze.training.ppo16gb.v1
+  training_config: catamaze.training.ppo16gb.v2
 
 seed: 20261113
 device: cuda
 total_agent_steps: 100000000
+
+runtime:
+  python: "3.12"
+  torch: "2.6.0"
+  cuda: "12.4"
+  pip_index: https://pypi.tuna.tsinghua.edu.cn/simple
+  physical_gpu_indices: [1, 2, 3, 4]
+  expected_gpu_name: Tesla V100-PCIE-16GB
 
 environment:
   num_envs: 64

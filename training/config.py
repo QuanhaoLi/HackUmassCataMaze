@@ -69,3 +69,14 @@ def _validate_shapes(config: dict[str, Any]) -> None:
         raise ValueError("rollout lengths must be integers")
     if steps <= 0 or sequence_length <= 0 or steps % sequence_length != 0:
         raise ValueError("sequence_length must evenly divide environment_steps")
+    runtime = config.get("runtime")
+    expected_runtime = {
+        "python": "3.12",
+        "torch": "2.6.0",
+        "cuda": "12.4",
+        "pip_index": "https://pypi.tuna.tsinghua.edu.cn/simple",
+        "physical_gpu_indices": [1, 2, 3, 4],
+        "expected_gpu_name": "Tesla V100-PCIE-16GB",
+    }
+    if runtime != expected_runtime:
+        raise ValueError("runtime section does not match the frozen V100/Tsinghua contract")

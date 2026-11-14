@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:28 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:29 EST
+Last Modified at: 2026-11-14 05:26 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Introduces and indexes architecture decision records.
 |-0001-rl-training-and-deployment-boundary.md — Selects Native-first RL training/inference, preserves the standalone ESP32 fallback, and defines four-GPU run isolation.
+|-0002-v100-torch-and-china-mirror.md — Pins the Volta-compatible PyTorch/CUDA build and Tsinghua-only remote package source.
 
 ## To-Dos
 - Add and index an ADR before implementing any future change to a frozen environment, reward, model, deployment, or hardware contract.

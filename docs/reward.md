@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:44 EST
+Last Modified at: 2026-11-14 05:26 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -429,6 +429,7 @@ v1 晋级门槛固定如下；每项使用未参与训练的固定 seed、stocha
 - 20GB 以上可用磁盘空间；
 - Linux 作为正式训练环境；
 - 支持当前 PyTorch 的 NVIDIA 驱动和 CUDA runtime。
+- V100 正式环境固定为 PyTorch `2.6.0` 与 CUDA `12.4` 用户态依赖，并通过清华 PyPI 镜像安装；不得在 V100 上安装 CUDA 13 build。
 
 这个模型只有约 100 万参数，16GB 显存的主要压力不是参数，而是 recurrent PPO 的序列激活和 minibatch。环境模拟通常是 CPU 瓶颈。
 

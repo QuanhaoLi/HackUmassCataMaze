@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:33 EST
+Last Modified at: 2026-11-14 05:26 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -154,10 +154,17 @@ Interfaces MAY reserve extension points, but speculative implementations are pro
 - `sudo` does not authorize a power transition or removal of the server's power-safety guard.
 - If a future training, driver, or package task requires a reboot, work MUST stop and the user must perform it outside Codex.
 
-## 14. RL deployment boundary
+## 15. RL deployment boundary
 
 - The first RL implementation targets Native training, evaluation, export, and optional Native gameplay inference.
 - It MUST NOT introduce a network or cloud inference dependency into standalone gameplay.
 - TorchScript and ONNX artifacts MUST NOT be represented as ESP32-compatible artifacts.
 - ESP32 MUST retain the deterministic heuristic policy until a later documented decision defines and physically validates an embedded model runtime, quantization format, memory budget, and latency budget.
 - Multi-GPU training MUST first reproduce a correct single-GPU baseline. The default four-V100 topology is one isolated training seed per GPU, not synchronous DDP.
+
+## 16. China training-host dependency source
+
+- Python dependencies on the approved V100 host MUST be downloaded through the Tsinghua PyPI mirror.
+- The V100 training baseline MUST use PyTorch 2.6.0 with CUDA 12.4 user-space dependencies; CUDA 13 builds MUST NOT be installed for V100 training.
+- Training MUST use physical GPU indices 1–4. Physical GPU 0 is a GTX 750 and MUST NOT be selected by any training or evaluation launcher.
+- Package installation MUST remain inside the project virtual environment and MUST NOT mutate the system Python, NVIDIA driver, host CUDA toolkit, or another project's environment.
