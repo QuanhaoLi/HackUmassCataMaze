@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:37 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 02:09 EST
+Last Modified at: 2026-11-14 03:10 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
@@ -48,10 +48,10 @@ Shows **only the player's current 5 × 5 field of view**, not the full 50 × 50 
 
 - `@` — player, always at the center of the view.
 - `#` — visible wall; `.` — visible path; `S` / `E` — entrance or exit when visible.
-- `P` — visible AI enemy; a projectile symbol — visible bullet.
+- `P` — visible AI enemy. Player projectiles and enemy projectiles are never drawn on the Map OLED.
 - `?` — obscured cell, including cells hidden behind walls; outside the map counts as a wall.
 
-Walls block line of sight, including diagonal views through a blocked corner. Enemies, bullets, and terrain outside the current view must remain hidden. The map redraws after each tick. An optional directional gunshot indicator may appear **only when the player legitimately hears that shot**; it must not identify an unseen shooter or reveal exact coordinates.
+Walls block line of sight, including diagonal views through a blocked corner. Enemies and terrain outside the current view must remain hidden. The map redraws after each tick. The player receives no projectile sprite, muzzle flash, trajectory line, or directional gunshot graphic; the intended horror feedback is audible gunfire followed by damage feedback and HP loss when a hit occurs.
 
 ### Screen 2 — HUD
 
@@ -60,15 +60,15 @@ Displays these **five persistent fields only**:
 ```text
 CATAMAZE
 TICK   00125
-HP     4/5
-AMMO   2/3
+HP     ♥ ♥ ♥ ♥ ♡
+AMMO   ▮ ▮ □
 QUEUE  07/32
 POS    12,28
 ```
 
 - `TICK` — completed world updates (0–2,000).
-- `HP` — current / maximum player health.
-- `AMMO` — current / maximum available shots.
+- `HP` — exactly five heart slots. Each remaining HP is one filled heart; each lost HP is one outline heart.
+- `AMMO` — exactly three ammunition slots. Each available shot is one filled cartridge; each unavailable shot is one outline cartridge.
 - `QUEUE` — actions still waiting / capacity (0–32).
 - `POS` — player's `(x, y)` on the 50 × 50 map.
 
@@ -101,7 +101,7 @@ All four entities select actions from the **same tick-start state**. Each tick p
 4. Remove dead entities; restore ammo; update visited cells and in-game gunshot events.
 5. Check end conditions, advance the tick, and refresh both screens.
 
-Blocked moves still consume their action. All AIs follow the same movement, HP, combat, and visibility rules as the player.
+Blocked moves still consume their action. All AIs follow the same movement, HP, and combat rules as the player. AI observations may contain legally visible projectile direction channels for deterministic avoidance and future model compatibility, while the human player's Map OLED intentionally omits every projectile.
 
 ## 5. Shooting, HP, and In-Game Sound
 
@@ -113,6 +113,7 @@ Blocked moves still consume their action. All AIs follow the same movement, HP, 
 - Bullets remain in flight after their shooter dies. HP never regenerates.
 - Ammo regenerates by **1 after every 2 eligible tick completions**, capped at 3. Shooting does not erase partial recharge progress.
 - An actual shot creates a **game-world sound event** heard by entities within 3 cells in either axis, even through walls. An observer receives approximate direction, not the hidden shooter's identity or exact location.
+- Projectile simulation is never rendered to the player. A successful own shot is communicated by its buzzer effect and the AMMO icon changing when the action executes. An enemy hit is communicated by the damage buzzer and one filled heart becoming an outline heart.
 
 ## 6. Active Buzzer — Physical Audio
 

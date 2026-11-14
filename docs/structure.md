@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:51 EST
+Last Modified at: 2026-11-14 03:10 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -248,6 +248,8 @@ Mutation requests accept JSON bodies no larger than 4 KiB. Unknown fields, actio
 The renderer produces two authoritative `128 × 64` one-bit framebuffers, each exactly 1,024 bytes in SSD1306 page order. The Native snapshot transports each framebuffer as a 2,048-character lowercase hexadecimal string. Browser Canvas code paints those bits without re-laying out text, ensuring screenshots show the same pixels intended for physical OLED transfer.
 
 The API may include structured public state for automation, but the visible browser panels must be generated from the framebuffers. Hidden AI state is not included in the normal player snapshot.
+
+The Map framebuffer deliberately omits every projectile even when its internal cell is legally visible. The HUD represents HP with five filled/outline heart glyphs and AMMO with three filled/outline cartridge glyphs. Numeric `player.hp` and `player.ammo` remain in the JSON envelope only for automation and accessibility; the visible OLED contract is icon-based.
 
 ### 7.3 JSON shapes
 

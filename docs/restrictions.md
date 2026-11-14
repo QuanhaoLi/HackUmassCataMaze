@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:09 EST
+Last Modified at: 2026-11-14 03:10 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -70,6 +70,8 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - Browser controls MUST use the same application command path as future physical controls.
 - The two visible virtual OLEDs MUST render authoritative 128×64 one-bit framebuffers, not independently recreated HTML text.
 - Normal browser state MUST NOT reveal hidden terrain, unseen enemies, private AI state, or future actions.
+- The player Map OLED MUST NOT render any projectile, muzzle flash, trajectory, or gunshot direction graphic. Projectile state remains internal and may remain in legal AI observations.
+- The HUD MUST render five HP slots as filled/outline hearts and three AMMO slots as filled/outline cartridge icons. Plain `current/max` text is not the product HUD.
 - Static-file serving MUST use an allow-list and MUST NOT expose repository paths.
 - Request bodies and field values MUST be bounded and validated.
 
@@ -79,8 +81,8 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - Flash ID, flash capacity, PSRAM mode, and PSRAM initialization MUST be checked before any future physical upload is accepted.
 - Serial-port discovery MUST use device metadata and MUST NOT hard-code `/dev/cu.*` paths.
 - The two OLEDs use independent hardware I²C controllers when both respond at `0x3C`.
-- Map display content is limited to the player's legal 5×5 view.
-- HUD content is limited to `TICK`, `HP`, `AMMO`, `QUEUE`, and `POS`.
+- Map display content is limited to the player's legal 5×5 terrain and visible enemies, with all projectile graphics intentionally omitted.
+- HUD content is limited to `TICK`, five HP hearts, three AMMO cartridges, `QUEUE`, and `POS`.
 - GPIO numbers and buzzer polarity MUST come from reconciled physical test evidence in `hardware.md`.
 - Any row still marked planned, pending, or unverified in `hardware.md` MUST remain provisional in code.
 - The active buzzer MUST be normally off and driven by a non-blocking state machine.

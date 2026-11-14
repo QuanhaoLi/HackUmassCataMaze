@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:59 EST
+Last Modified at: 2026-11-14 03:10 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -21,8 +21,8 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 |---|---|---|
 | M0 | Documentation and reproducible Native toolchain | `PASSED` |
 | M1 | Complete headless Native game | `PASSED` |
-| M2 | Browser-playable vertical slice with exact virtual OLEDs | `PASSED` |
-| M3 | Native product hardening and expanded verification | `PASSED` |
+| M2 | Browser-playable vertical slice with exact virtual OLEDs | `IN_PROGRESS` |
+| M3 | Native product hardening and expanded verification | `IN_PROGRESS` |
 | M4 | ESP32 adapter and compile-only integration | `NOT_STARTED` |
 | M5 | Physical hardware integration, only after explicit upload approval | `NOT_STARTED` |
 | M6 | Cross-platform determinism and release-candidate evidence | `NOT_STARTED` |

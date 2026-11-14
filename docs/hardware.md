@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 02:09 EST
+Last Modified at: 2026-11-14 03:10 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -24,8 +24,8 @@ Both displays are GME12864 128×64 white monochrome four-pin I²C OLEDs. Both va
 
 | Role | Content | Arduino bus | SDA | SCL | Address | Power |
 |---|---|---|---:|---:|---:|---|
-| Game screen / Map | Player's 5×5 local view, terrain, visible enemies, and projectiles | `Wire` / I²C controller 0 | GPIO8 | GPIO9 | `0x3C` | 3V3 + GND |
-| Data screen / HUD | `TICK`, `HP`, `AMMO`, `QUEUE`, and `POS` | `Wire2` / I²C controller 1 | GPIO18 | GPIO17 | `0x3C` | 3V3 + GND |
+| Game screen / Map | Player's 5×5 local terrain and visible enemies; never projectile sprites | `Wire` / I²C controller 0 | GPIO8 | GPIO9 | `0x3C` | 3V3 + GND |
+| Data screen / HUD | `TICK`, five heart slots, three ammo slots, `QUEUE`, and `POS` | `Wire2` / I²C controller 1 | GPIO18 | GPIO17 | `0x3C` | 3V3 + GND |
 
 ### Physical connections
 
@@ -199,6 +199,6 @@ At startup, scan each bus independently and require exactly one device at `0x3C`
 
 ## 7. Rendering Responsibilities
 
-- The game-screen renderer owns only the player-observable 5×5 map view described in `gamerules.md`. It refreshes after every game tick.
-- The HUD renderer owns only `TICK`, `HP`, `AMMO`, `QUEUE`, and `POS`. It refreshes after every tick and immediately when the input queue changes.
+- The game-screen renderer owns only the player-observable 5×5 terrain and enemy view described in `gamerules.md`. It never renders a projectile, muzzle flash, trajectory, or direction indicator and refreshes after every game tick.
+- The HUD renderer owns only `TICK`, five filled/outline HP hearts, three filled/outline ammo cartridges, `QUEUE`, and `POS`. It refreshes after every tick and immediately when the input queue changes.
 - Keep independent framebuffers and renderer objects. A render or bus failure on one screen must not redirect its content to the other or expose hidden game state.
