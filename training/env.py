@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 05:02 EST
+# Last Modified at: 2026-11-14 07:49 EST
 # Last Modified by: Codex
 # Coordinates batched Native episodes, player opponents, reward state, and partial resets.
 
@@ -19,6 +19,7 @@ from training.reward import RewardCalculator, RewardResult
 
 
 Snapshot = dict[str, npt.NDArray[np.generic]]
+SPAWN_MAX_PATH_DISTANCE = {"A": 12, "B": 30, "C": 0, "D": 0}
 
 
 @dataclass(frozen=True)
@@ -39,14 +40,28 @@ class CataMazeBatchEnv:
         *,
         curriculum_stage: str = "A",
         randomize_spawns: bool = True,
+        spawn_max_path_distance: int | None = None,
     ) -> None:
         if num_envs <= 0:
             raise ValueError("num_envs must be positive")
+        if curriculum_stage not in SPAWN_MAX_PATH_DISTANCE:
+            raise ValueError("curriculum stage must be A, B, C, or D")
+        if spawn_max_path_distance is not None and spawn_max_path_distance < 0:
+            raise ValueError("spawn_max_path_distance must be non-negative")
         self.num_envs = num_envs
         self.curriculum_stage = curriculum_stage
+        self._spawn_max_path_distance = (
+            SPAWN_MAX_PATH_DISTANCE[curriculum_stage]
+            if spawn_max_path_distance is None
+            else spawn_max_path_distance
+        )
         self._seed_rng = np.random.Generator(np.random.PCG64(seed))
         initial_seeds = self._next_seeds(num_envs)
-        self._native = _native.NativeBatch(initial_seeds, randomize_spawns=randomize_spawns)
+        self._native = _native.NativeBatch(
+            initial_seeds,
+            randomize_spawns=randomize_spawns,
+            spawn_max_path_distance=self._spawn_max_path_distance,
+        )
         self._observation: Snapshot = self._native.snapshot()
         self._reward = RewardCalculator(self._observation)
         opponent_seed = int(self._seed_rng.integers(0, 2**63, dtype=np.uint64))
@@ -112,6 +127,8 @@ class CataMazeBatchEnv:
         if self._forced_strategy is not None:
             raise RuntimeError("cannot change curriculum while an opponent is forced")
         self.curriculum_stage = stage
+        self._spawn_max_path_distance = SPAWN_MAX_PATH_DISTANCE[stage]
+        self._native.set_spawn_max_path_distance(self._spawn_max_path_distance)
 
     def state_dict(self) -> dict[str, object]:
         return {
@@ -122,11 +139,14 @@ class CataMazeBatchEnv:
             "strategies": self._strategies.copy(),
             "curriculum_stage": self.curriculum_stage,
             "forced_strategy": self._forced_strategy,
+            "spawn_max_path_distance": self._spawn_max_path_distance,
         }
 
     def load_state_dict(self, state: dict[str, object]) -> None:
         if state["curriculum_stage"] != self.curriculum_stage:
             raise ValueError("checkpoint curriculum stage does not match environment")
+        if int(state["spawn_max_path_distance"]) != self._spawn_max_path_distance:
+            raise ValueError("checkpoint spawn curriculum does not match environment")
         self._native.load_state(state["native"])
         self._observation = self._native.snapshot()
         self._seed_rng.bit_generator.state = deepcopy(state["seed_rng"])

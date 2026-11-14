@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 03:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:38 EST
+# Last Modified at: 2026-11-14 07:49 EST
 # Last Modified by: Codex
 # Verifies the zero-network batched C++ training boundary.
 
@@ -91,6 +91,20 @@ def test_randomized_spawns_and_partial_reset_are_seeded_and_isolated() -> None:
 
     replay = NativeBatch(seeds, randomize_spawns=True)
     np.testing.assert_array_equal(replay.snapshot()["positions"], initial["positions"])
+
+
+def test_distance_banded_spawns_are_distinct_reachable_and_reproducible() -> None:
+    seeds = np.array([401, 402, 403, 404], dtype=np.uint64)
+    batch = NativeBatch(seeds, randomize_spawns=True, spawn_max_path_distance=12)
+
+    snapshot = batch.snapshot()
+
+    assert np.all(snapshot["distance_to_player"] > 0)
+    assert np.all(snapshot["distance_to_player"] <= 12)
+    for positions in snapshot["positions"]:
+        assert len({tuple(position) for position in positions}) == 4
+    replay = NativeBatch(seeds, randomize_spawns=True, spawn_max_path_distance=12)
+    np.testing.assert_array_equal(replay.snapshot()["positions"], snapshot["positions"])
 
 
 def test_canonical_state_restore_replays_the_next_transition() -> None:

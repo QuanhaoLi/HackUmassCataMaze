@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:24 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:35 EST
+# Last Modified at: 2026-11-14 07:49 EST
 # Last Modified by: Codex
 
 versions:
@@ -8,7 +8,7 @@ versions:
   observation: catamaze.observation.v1
   reward: catamaze.reward.v2
   model_arch: catamaze.model.rppo.v1
-  training_config: catamaze.training.ppo16gb.v8
+  training_config: catamaze.training.ppo16gb.v9
 
 seed: 20261113
 device: cuda
@@ -94,12 +94,16 @@ curriculum:
   A:
     minimum_agent_steps: 5000000
     evaluation_opponents: [stationary, random_valid]
+    spawn_max_path_distance: 12
   B:
     minimum_agent_steps: 20000000
     evaluation_opponents: [wall_follower]
+    spawn_max_path_distance: 30
   C:
     minimum_agent_steps: 50000000
     evaluation_opponents: [shortest_path_noisy, combat_planner]
+    spawn_max_path_distance: 0
   D:
     minimum_agent_steps: 100000000
     evaluation_opponents: [stationary, random_valid, wall_follower, shortest_path_noisy, combat_planner, frozen_pool]
+    spawn_max_path_distance: 0

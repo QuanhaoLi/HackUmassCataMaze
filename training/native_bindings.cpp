@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 03:43 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:38 EST
+// Last Modified at: 2026-11-14 07:49 EST
 // Last Modified by: Codex
 // Binds batched in-memory C++ environments to fixed-shape NumPy tensors.
 
@@ -226,7 +226,7 @@ core::WorldState deserializeEngine(const std::string& input) {
   return state;
 }
 
-core::GameSetup randomizedSetup(std::uint64_t seed) {
+core::GameSetup randomizedSetup(std::uint64_t seed, std::int16_t max_ai_player_distance) {
   const core::GeneratedWorld generated = core::MazeGenerator::generate(seed);
   core::GameSetup setup{generated.map, generated.spawns, seed};
   std::array<core::Position, core::kMapCellCount> candidates{};
@@ -240,11 +240,39 @@ core::GameSetup randomizedSetup(std::uint64_t seed) {
     }
   }
   core::Pcg32 random(seed, 0x545241494e53504eULL);
-  for (std::size_t entity = 0; entity < core::kEntityCount; ++entity) {
-    const std::size_t selected =
-        entity + random.bounded(static_cast<std::uint32_t>(candidate_count - entity));
-    std::swap(candidates[entity], candidates[selected]);
-    setup.spawns[entity] = candidates[entity];
+  const std::size_t player_choice = random.bounded(static_cast<std::uint32_t>(candidate_count));
+  std::swap(candidates[0], candidates[player_choice]);
+  setup.spawns[core::entityIndex(EntityId::Player)] = candidates[0];
+
+  if (max_ai_player_distance > 0) {
+    const core::DistanceField distances =
+        core::shortestDistances(setup.map, setup.spawns[core::entityIndex(EntityId::Player)]);
+    std::array<core::Position, core::kMapCellCount> nearby{};
+    std::size_t nearby_count = 0U;
+    for (std::size_t index = 1U; index < candidate_count; ++index) {
+      const std::int16_t distance = distances[positionIndex(candidates[index])];
+      if (distance > 0 && distance <= max_ai_player_distance) {
+        nearby[nearby_count++] = candidates[index];
+      }
+    }
+    if (nearby_count < core::kAiCount) {
+      throw std::runtime_error("spawn distance band contains fewer than three AI cells");
+    }
+    for (std::size_t ai = 0; ai < core::kAiCount; ++ai) {
+      const std::size_t selected =
+          ai + random.bounded(static_cast<std::uint32_t>(nearby_count - ai));
+      std::swap(nearby[ai], nearby[selected]);
+      setup.spawns[ai + 1U] = nearby[ai];
+    }
+  } else {
+    for (std::size_t ai = 0; ai < core::kAiCount; ++ai) {
+      const std::size_t first_available = ai + 1U;
+      const std::size_t selected = first_available +
+                                   random.bounded(static_cast<std::uint32_t>(
+                                       candidate_count - first_available));
+      std::swap(candidates[first_available], candidates[selected]);
+      setup.spawns[ai + 1U] = candidates[first_available];
+    }
   }
   return setup;
 }
@@ -294,12 +322,24 @@ Action shortestPathAction(const core::WorldState& state,
 
 class NativeBatch {
  public:
-  explicit NativeBatch(const CArray<std::uint64_t>& seeds, bool randomize_spawns)
-      : randomize_spawns_(randomize_spawns) {
+  explicit NativeBatch(const CArray<std::uint64_t>& seeds, bool randomize_spawns,
+                       std::int16_t spawn_max_path_distance)
+      : randomize_spawns_(randomize_spawns),
+        spawn_max_path_distance_(spawn_max_path_distance) {
+    if (spawn_max_path_distance_ < 0) {
+      throw py::value_error("spawn_max_path_distance must be non-negative");
+    }
     initialize(seeds);
   }
 
   std::size_t size() const noexcept { return engines_.size(); }
+
+  void setSpawnMaxPathDistance(std::int16_t value) {
+    if (value < 0) {
+      throw py::value_error("spawn_max_path_distance must be non-negative");
+    }
+    spawn_max_path_distance_ = value;
+  }
 
   py::dict reset(const CArray<std::uint64_t>& seeds) {
     if (seeds.ndim() != 1) {
@@ -583,7 +623,7 @@ class NativeBatch {
     engines_.reserve(static_cast<std::size_t>(input.shape(0)));
     for (py::ssize_t env = 0; env < input.shape(0); ++env) {
       if (randomize_spawns_) {
-        engines_.emplace_back(randomizedSetup(input(env)));
+        engines_.emplace_back(randomizedSetup(input(env), spawn_max_path_distance_));
       } else {
         engines_.emplace_back(input(env));
       }
@@ -592,7 +632,7 @@ class NativeBatch {
 
   void resetOne(std::size_t env, std::uint64_t seed) {
     if (randomize_spawns_) {
-      engines_[env] = GameEngine(randomizedSetup(seed));
+      engines_[env] = GameEngine(randomizedSetup(seed, spawn_max_path_distance_));
     } else {
       engines_[env].reset(seed);
     }
@@ -600,6 +640,7 @@ class NativeBatch {
 
   std::vector<GameEngine> engines_;
   bool randomize_spawns_{false};
+  std::int16_t spawn_max_path_distance_{0};
 };
 
 }  // namespace
@@ -639,9 +680,12 @@ PYBIND11_MODULE(_native, module) {
   module.attr("EVENT_DAMAGE_CREDIT") =
       static_cast<std::uint8_t>(catamaze::core::EventType::DamageCredit);
   py::class_<catamaze::training::NativeBatch>(module, "NativeBatch")
-      .def(py::init<const catamaze::training::CArray<std::uint64_t>&, bool>(), py::arg("seeds"),
-           py::arg("randomize_spawns") = false)
+      .def(py::init<const catamaze::training::CArray<std::uint64_t>&, bool, std::int16_t>(),
+           py::arg("seeds"), py::arg("randomize_spawns") = false,
+           py::arg("spawn_max_path_distance") = 0)
       .def_property_readonly("num_envs", &catamaze::training::NativeBatch::size)
+      .def("set_spawn_max_path_distance",
+           &catamaze::training::NativeBatch::setSpawnMaxPathDistance, py::arg("value"))
       .def("reset", &catamaze::training::NativeBatch::reset, py::arg("seeds"))
       .def("reset_at", &catamaze::training::NativeBatch::resetAt, py::arg("indices"),
            py::arg("seeds"))
