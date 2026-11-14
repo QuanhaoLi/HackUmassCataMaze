@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 05:00 EST
+Last Modified at: 2026-11-14 07:39 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -14,8 +14,8 @@ Last Modified by: Codex
 |-esp32_capture_serial.py — Captures bounded ESP32 Serial output without hard-coding a port.
 |-esp32_detect_port.sh — Resolves exactly one Espressif native USB-Serial/JTAG device.
 |-esp32_preflight.sh — Runs read-only chip and Flash identity checks before any upload.
-|-esp32_upload_product.sh — Refuses product upload unless a fresh physical diagnostic passes, then validates product boot evidence.
-|-esp32_upload_diagnostic.sh — Uploads only the bounded diagnostic firmware and validates its Serial evidence.
+|-esp32_upload_product.sh — Refuses product upload unless fresh diagnostic v2 evidence passes, then validates Home-mode product boot.
+|-esp32_upload_diagnostic.sh — Uploads only bounded six-input diagnostic firmware and validates dual buses, memory, idle inputs, and spare GPIOs.
 |-mac_audio_companion.py — Auto-discovers ESP32 Serial audio events, reconnects, validates, and plays through Mac speakers.
 |-native_smoke.sh — Builds and runs a bounded headless Native gameplay smoke check.
 |-pio_coverage.py — Adds Clang's profile runtime to the final Native coverage link.

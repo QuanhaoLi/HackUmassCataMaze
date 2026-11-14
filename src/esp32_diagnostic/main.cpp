@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:44 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 05:43 EST
+// Last Modified at: 2026-11-14 07:42 EST
 // Last Modified by: Codex
 // Reports bounded ESP32-S3, PSRAM, dual-I2C, and idle-button evidence before product upload.
 
@@ -18,7 +18,8 @@ constexpr std::uint32_t kI2cFrequency = 100000U;
 constexpr std::uint8_t kExpectedDisplayAddress = 0x3cU;
 constexpr std::uint32_t kExpectedFlashBytes = 16U * 1024U * 1024U;
 constexpr std::uint32_t kExpectedPsramBytes = 8U * 1024U * 1024U;
-constexpr std::array<std::uint8_t, 7> kButtonPins{5U, 6U, 7U, 15U, 16U, 10U, 11U};
+constexpr std::array<std::uint8_t, 6> kButtonPins{5U, 6U, 7U, 15U, 16U, 11U};
+constexpr std::uint8_t kAllButtonsReleasedMask = 0x3fU;
 
 TwoWire hud_wire(1U);
 
@@ -55,9 +56,10 @@ std::uint8_t releasedButtonMask() {
 
 void printButtons(std::uint8_t mask) {
   Serial0.printf(
-      "CATAMAZE_BUTTONS {\"schema\":\"catamaze.buttons.v1\","
-      "\"released_mask\":%u,\"all_released\":%s}\n",
-      static_cast<unsigned>(mask), mask == 0x7fU ? "true" : "false");
+      "CATAMAZE_BUTTONS {\"schema\":\"catamaze.buttons.v2\","
+      "\"button_count\":%u,\"released_mask\":%u,\"all_released\":%s}\n",
+      static_cast<unsigned>(kButtonPins.size()), static_cast<unsigned>(mask),
+      mask == kAllButtonsReleasedMask ? "true" : "false");
 }
 
 }  // namespace
@@ -79,13 +81,17 @@ void setup() {
   const std::uint32_t flash_bytes = ESP.getFlashChipSize();
   const bool psram_found = psramFound();
   const std::uint32_t psram_bytes = ESP.getPsramSize();
+  const std::uint8_t released_mask = releasedButtonMask();
   const bool pass = flash_bytes == kExpectedFlashBytes && psram_found &&
                     psram_bytes == kExpectedPsramBytes && map_bus_started && hud_bus_started &&
                     map_scan.count == 1U && map_scan.first_address == kExpectedDisplayAddress &&
-                    hud_scan.count == 1U && hud_scan.first_address == kExpectedDisplayAddress;
+                    map_scan.errors == 0U && hud_scan.count == 1U &&
+                    hud_scan.first_address == kExpectedDisplayAddress && hud_scan.errors == 0U &&
+                    map_sda_high && map_scl_high && hud_sda_high && hud_scl_high &&
+                    released_mask == kAllButtonsReleasedMask;
 
   Serial0.printf(
-      "CATAMAZE_DIAG {\"schema\":\"catamaze.diag.v1\","
+      "CATAMAZE_DIAG {\"schema\":\"catamaze.diag.v2\","
       "\"chip\":\"%s\",\"revision\":%u,\"cpu_mhz\":%u,"
       "\"flash_bytes\":%lu,\"psram_found\":%s,\"psram_bytes\":%lu,"
       "\"map_bus_started\":%s,\"map_i2c_count\":%u,"
@@ -94,7 +100,8 @@ void setup() {
       "\"hud_bus_started\":%s,\"hud_i2c_count\":%u,"
       "\"hud_i2c_address\":%u,\"hud_i2c_errors\":%u,"
       "\"hud_sda_high\":%s,\"hud_scl_high\":%s,"
-      "\"gpio4_configured\":false,\"pass\":%s}\n",
+      "\"button_count\":%u,\"released_mask\":%u,\"all_buttons_released\":%s,"
+      "\"gpio4_configured\":false,\"gpio10_configured\":false,\"pass\":%s}\n",
       ESP.getChipModel(), static_cast<unsigned>(ESP.getChipRevision()),
       static_cast<unsigned>(ESP.getCpuFreqMHz()), static_cast<unsigned long>(flash_bytes),
       psram_found ? "true" : "false", static_cast<unsigned long>(psram_bytes),
@@ -103,8 +110,10 @@ void setup() {
       map_sda_high ? "true" : "false", map_scl_high ? "true" : "false",
       hud_bus_started ? "true" : "false", static_cast<unsigned>(hud_scan.count),
       static_cast<unsigned>(hud_scan.first_address), static_cast<unsigned>(hud_scan.errors),
-      hud_sda_high ? "true" : "false", hud_scl_high ? "true" : "false", pass ? "true" : "false");
-  printButtons(releasedButtonMask());
+      hud_sda_high ? "true" : "false", hud_scl_high ? "true" : "false",
+      static_cast<unsigned>(kButtonPins.size()), static_cast<unsigned>(released_mask),
+      released_mask == kAllButtonsReleasedMask ? "true" : "false", pass ? "true" : "false");
+  printButtons(released_mask);
 }
 
 void loop() {

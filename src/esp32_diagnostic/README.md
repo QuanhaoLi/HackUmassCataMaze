@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 04:44 EST
 Created by: Codex
-Last Modified at: 2026-11-14 05:03 EST
+Last Modified at: 2026-11-14 07:39 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,7 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents diagnostic firmware scope and acceptance boundaries.
-|-main.cpp — Reports Flash/PSRAM, two I²C scans and line levels, released GPIO4, and idle button states.
+|-main.cpp — Reports Flash/PSRAM, two I²C scans and line levels, six idle inputs, and untouched GPIO4/GPIO10 status.
 
 ## To-Dos
-- Re-run after displays are connected; do not promote the product image until both buses pass.
+- Do not promote the product image until both buses, six released inputs, and both spare-GPIO claims pass.
