@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:33 EST
 Created by: Codex
-Last Modified at: 2026-11-15 00:52 EST
+Last Modified at: 2026-11-14 18:52 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -20,6 +20,7 @@ Last Modified by: Codex
 |-reward.md — Defines the planned reinforcement-learning objective, reward contract, neural network, 16GB-GPU training pipeline, evaluation, and release gates.
 |-adr/ — Records durable architecture decisions that clarify or change frozen contracts.
 |-structure.md — Freezes the C++17 architecture, pinned toolchain, target matrix, directory plan, browser contract, and quality strategy.
+|-v2/ — Defines the isolated V2 persona-model candidate line and its complete engineering-to-deployment sequence.
 
 ## To-Dos
 - Keep all specifications synchronized whenever the environment contract, hardware interface, observation schema, action space, reward function, or model architecture changes.
