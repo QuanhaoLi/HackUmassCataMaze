@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:24 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:07 EST
+# Last Modified at: 2026-11-14 07:24 EST
 # Last Modified by: Codex
 
 versions:
@@ -8,7 +8,7 @@ versions:
   observation: catamaze.observation.v1
   reward: catamaze.reward.v1
   model_arch: catamaze.model.rppo.v1
-  training_config: catamaze.training.ppo16gb.v6
+  training_config: catamaze.training.ppo16gb.v7
 
 seed: 20261113
 device: cuda
@@ -79,7 +79,7 @@ checkpoint:
   keep_best: 5
 
 evaluation:
-  every_agent_steps: 500000
+  every_agent_steps: 5000000
   episodes_per_persona_per_opponent: 300
 
 distributed:

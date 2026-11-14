@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:07 EST
+Last Modified at: 2026-11-14 07:24 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -492,9 +492,11 @@ checkpoint:
   keep_best: 5
 
 evaluation:
-  every_agent_steps: 500_000
+  every_agent_steps: 5_000_000
   episodes_per_persona_per_opponent: 300
 ```
+
+正式 DDP 训练每 `5M` agent steps 执行一次固定评估，恰好覆盖首个课程晋级点并在后续阶段持续复查。NaN/Inf、非法动作、KL、梯度、reward component 和环境不变量仍按每个 update 监控；因此降低固定评估频率不会降低数值故障检测频率。
 
 每次 rollout 理论上最多产生：
 
