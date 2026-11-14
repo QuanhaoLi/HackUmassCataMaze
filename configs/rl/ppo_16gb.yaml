@@ -1,14 +1,14 @@
 # Created at: 2026-11-14 04:24 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:24 EST
+# Last Modified at: 2026-11-14 07:35 EST
 # Last Modified by: Codex
 
 versions:
   environment: catamaze.environment.v1
   observation: catamaze.observation.v1
-  reward: catamaze.reward.v1
+  reward: catamaze.reward.v2
   model_arch: catamaze.model.rppo.v1
-  training_config: catamaze.training.ppo16gb.v7
+  training_config: catamaze.training.ppo16gb.v8
 
 seed: 20261113
 device: cuda

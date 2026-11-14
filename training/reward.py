@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 03:51 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:38 EST
+# Last Modified at: 2026-11-14 07:35 EST
 # Last Modified by: Codex
 # Computes versioned per-agent reward components from structured Native transitions.
 
@@ -15,7 +15,7 @@ import numpy.typing as npt
 from training import _native
 
 
-REWARD_VERSION = "catamaze.reward.v1"
+REWARD_VERSION = "catamaze.reward.v2"
 GAMMA = np.float32(0.995)
 EXPLORATION_CAP = np.float32(5.0)
 
@@ -25,7 +25,7 @@ SELF_DAMAGE = np.asarray([-0.75, -1.5, -1.0], dtype=np.float32)
 SELF_DEATH = np.asarray([-8.0, -15.0, -10.0], dtype=np.float32)
 AMMO_COST = np.asarray([-0.01, -0.05, -0.03], dtype=np.float32)
 NEW_CELL = np.asarray([0.002, 0.005, 0.015], dtype=np.float32)
-REVISIT = np.asarray([-0.002, -0.002, -0.008], dtype=np.float32)
+REVISIT = np.asarray([0.0, 0.0, 0.0], dtype=np.float32)
 TICK_COST = np.asarray([-0.002, -0.0005, -0.0015], dtype=np.float32)
 POTENTIAL_BETA = np.asarray([0.10, 0.02, 0.0], dtype=np.float32)
 

@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:51 EST
+Last Modified at: 2026-11-14 07:35 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,7 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Introduces reward fixtures.
-|-v1.yaml — Defines reviewed terminal, combat-credit, timeout, and movement-cost trajectories.
+|-v2.yaml — Defines reviewed terminal, combat-credit, timeout, and movement-shaping trajectories.
 
 ## To-Dos
 - Add one isolated fixture for every future reward defect before changing its implementation.

@@ -1,9 +1,9 @@
 # Created at: 2026-11-14 04:50 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 05:02 EST
+# Last Modified at: 2026-11-14 07:35 EST
 # Last Modified by: Codex
 
-version: catamaze.reward.v1
+version: catamaze.reward.v2
 cases:
   - name: simultaneous_player_kill
     current:
@@ -84,8 +84,8 @@ cases:
     current:
       last_result: [0, 1, 1, 1]
     expected:
-      exploration: [-0.002, -0.002, -0.008]
-      total: [-0.00395, -0.00248, -0.0095]
+      exploration: [0.0, 0.0, 0.0]
+      total: [-0.00195, -0.00048, -0.0015]
 
   - name: collision_costs
     current:
