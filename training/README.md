@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:50 EST
+Last Modified at: 2026-11-14 06:58 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -27,6 +27,7 @@ Last Modified by: Codex
 |-reward.py — Converts structured events and state deltas into independently logged per-agent reward components.
 |-smoke.py — Runs the bounded end-to-end correctness qualification before long GPU work.
 |-train_ppo.py — Runs resumable production training, schedules, evaluation gates, metrics, and checkpoint retention.
+|-train_ddp.py — Runs one resumable production model across four synchronized V100 ranks.
 |-validate_env.py — Runs bounded seeded environment invariants without a neural policy.
 |-validate_reward.py — Executes reviewed YAML reward trajectories independently from pytest.
 |-validate_system.py — Verifies the pinned V100 runtime, real CUDA compute, and CPU/GPU numerical parity.
