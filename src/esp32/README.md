@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 04:44 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:39 EST
+Last Modified at: 2026-11-15 00:24 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -16,6 +16,9 @@ Last Modified by: Codex
 |-display_adapter.hpp — Declares the dual-display adapter and diagnostics.
 |-hardware_config.hpp — Freezes verified pins, bus rate, address, and timing without assigning GPIO4.
 |-main.cpp — Composes shared Home/Game coordination, exact dual-screen rendering, audio, and ESP32 adapters.
+|-model/ — Holds the ignored release `.espdl` artifact injected by the guarded build.
+|-policy_adapter.cpp — Loads one resident ESP-DL model and performs masked recurrent inference for all three AI.
+|-policy_adapter.hpp — Declares policy health, memory, latency, and fallback diagnostics.
 |-serial_audio_adapter.cpp — Emits best-effort canonical audio lines without blocking or replay.
 |-serial_audio_adapter.hpp — Declares the USB Serial audio adapter and drop counter.
 

@@ -1,12 +1,13 @@
 # Created at: 2026-11-14 10:48 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 11:02 EST
+# Last Modified at: 2026-11-15 00:52 EST
 # Last Modified by: Codex
 # Quantizes the one-step ONNX policy for ESP32-S3 from real recurrent rollouts.
 
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 import json
 from pathlib import Path
 from typing import Any
@@ -169,6 +170,7 @@ def quantize(
         "max_hidden_error": maximum["hidden"],
         "masked_action_agreement": action_matches / evaluated,
         "espdl_bytes": espdl_path.stat().st_size,
+        "espdl_sha256": sha256(espdl_path.read_bytes()).hexdigest(),
         "checkpoint": str(checkpoint),
         "onnx": str(onnx_path),
     }

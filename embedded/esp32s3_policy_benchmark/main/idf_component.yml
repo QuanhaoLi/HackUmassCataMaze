@@ -1,0 +1,8 @@
+## Created at: 2026-11-14 23:59 EST
+## Created by: Codex
+## Last Modified at: 2026-11-14 23:59 EST
+## Last Modified by: Codex
+
+dependencies:
+  espressif/esp-dl: "==3.3.15"
+  idf: ">=5.3.0"

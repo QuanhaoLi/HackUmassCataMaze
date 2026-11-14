@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 07:46 EST
+Last Modified at: 2026-11-15 00:52 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -120,7 +120,7 @@ The electrical and logical contract is:
 - CLEAR short press clears pending actions only on release. CLEAR long press commits at 800 ms and suppresses the later short release event.
 - GPIO10 is `UNASSIGNED_SPARE` and must not be initialized as a button.
 
-The currently deployed ESP32 image is now the six-button Home/Setup build. Its `catamaze.boot.v2` record reports `button_count=6`, `gpio4_configured=false`, `gpio10_configured=false`, `system_mode=HOME`, `confirmed_map_size=30`, `tick_budget=1200`, and `ready=true`. Idle-high evidence is automated; physical press/release and gameplay checks remain pending user verification.
+The currently deployed ESP32 image is the six-button Home/Setup model build. Its `catamaze.boot.v3` record reports `button_count=6`, `gpio4_configured=false`, `gpio10_configured=false`, `system_mode=HOME`, `confirmed_map_size=30`, `tick_budget=1200`, `policy_ready=true`, `policy_fallback_latched=false`, and `ready=true`. The resident W8A16 policy passed the physical decoded-output and three-inference latency gates. Idle-high evidence is automated; physical press/release and complete-game checks remain pending user verification.
 
 Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically installed. GPIO5 and GPIO6 each passed a complete HIGH → LOW → HIGH test with exactly one debounced press count and no duplicate events during the observation period. GPIO7 is not yet fully validated.
 

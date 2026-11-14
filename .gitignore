@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 00:16 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 03:41 EST
+# Last Modified at: 2026-11-15 00:52 EST
 # Last Modified by: Codex
 
 # macOS Finder metadata must not be committed.
@@ -16,6 +16,10 @@ compile_commands.json
 *.profdata
 *.so
 build/
+embedded/esp32s3_policy_benchmark/managed_components/
+embedded/esp32s3_policy_benchmark/sdkconfig
+embedded/esp32s3_policy_benchmark/sdkconfig.old
+embedded/esp32s3_policy_benchmark/main/model/*.espdl
 *.egg-info/
 __pycache__/
 .pytest_cache/

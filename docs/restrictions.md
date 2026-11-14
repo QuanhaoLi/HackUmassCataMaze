@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:27 EST
+Last Modified at: 2026-11-15 00:52 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -167,7 +167,7 @@ Interfaces MAY reserve extension points, but speculative implementations are pro
 - The first RL implementation targets Native training, evaluation, export, and optional Native gameplay inference.
 - It MUST NOT introduce a network or cloud inference dependency into standalone gameplay.
 - TorchScript and ONNX artifacts MUST NOT be represented as ESP32-compatible artifacts.
-- ESP32 MUST retain the deterministic heuristic policy until a later documented decision defines and physically validates an embedded model runtime, quantization format, memory budget, and latency budget.
+- ESP32 MUST retain the deterministic heuristic policy as a fail-closed fallback. ADR-0007 authorizes the embedded model only while its artifact identity, tensor contract, startup reference envelope, memory allocation, legal-action mask, and latency gate all pass.
 - Multi-GPU training MUST first reproduce a correct single-GPU baseline. The default four-V100 topology is one isolated training seed per GPU, not synchronous DDP.
 
 ## 16. China training-host dependency source

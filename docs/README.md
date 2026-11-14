@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:33 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:27 EST
+Last Modified at: 2026-11-15 00:52 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -15,6 +15,7 @@ Last Modified by: Codex
 |-gamerules.md — Defines the complete normative game rules, state transitions, observations, actions, combat, terminal conditions, and edge cases.
 |-hardware.md — Records the current controller, display, input, audio, power, and wiring constraints.
 |-home.md — Defines the dual-screen retro launcher, six-button navigation, map presets, pause flow, and Native acceptance gates.
+|-model.md — Records the released recurrent policy, quantization evidence, ESP32 residency, memory, latency, and fallback behavior.
 |-restrictions.md — Defines non-negotiable architecture, determinism, safety, hardware, scope, and testing restrictions.
 |-reward.md — Defines the planned reinforcement-learning objective, reward contract, neural network, 16GB-GPU training pipeline, evaluation, and release gates.
 |-adr/ — Records durable architecture decisions that clarify or change frozen contracts.

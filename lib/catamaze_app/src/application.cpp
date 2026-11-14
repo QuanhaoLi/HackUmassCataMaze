@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:02 EST
+// Last Modified at: 2026-11-15 00:20 EST
 // Last Modified by: Codex
 // Implements deterministic legal-observation AI policies and application tick ownership.
 
@@ -93,11 +93,18 @@ Application::Application(core::GameConfig config) noexcept : engine_(config) {
 void Application::reset(std::uint64_t seed) noexcept {
   engine_.reset(seed);
   initializeAiMemory(seed);
+  if (ai_action_provider_ != nullptr) ai_action_provider_->reset();
 }
 
 void Application::reset(core::GameConfig config) noexcept {
   engine_.reset(config);
   initializeAiMemory(config.seed);
+  if (ai_action_provider_ != nullptr) ai_action_provider_->reset();
+}
+
+void Application::setAiActionProvider(AiActionProvider* provider) noexcept {
+  ai_action_provider_ = provider;
+  if (ai_action_provider_ != nullptr) ai_action_provider_->reset();
 }
 
 bool Application::enqueuePlayerAction(core::Action action) noexcept {
@@ -143,12 +150,8 @@ bool Application::legalMove(const Observation& observation, Direction direction)
   return cell.visible && cell.terrain != core::Terrain::Wall && cell.entity < 0;
 }
 
-Action Application::chooseAction(std::size_t ai_index) noexcept {
-  const EntityId id = static_cast<EntityId>(ai_index + 1U);
-  const Observation observation = engine_.observe(id);
-  if (!observation.self.alive) {
-    return Action::Wait;
-  }
+Action Application::chooseHeuristicAction(std::size_t ai_index,
+                                          const Observation& observation) noexcept {
   AiMemory& memory = ai_memory_[ai_index];
   const VisiblePlayer player = findVisiblePlayer(observation);
   Direction line_direction = Direction::Up;
@@ -261,14 +264,33 @@ Action Application::chooseAction(std::size_t ai_index) noexcept {
   return Action::Wait;
 }
 
+Action Application::chooseAction(std::size_t ai_index) noexcept {
+  const EntityId id = static_cast<EntityId>(ai_index + 1U);
+  const Observation observation = engine_.observe(id);
+  if (!observation.self.alive) return Action::Wait;
+  if (ai_action_provider_ != nullptr) {
+    const core::EncodedObservation encoded =
+        core::encodePolicyObservation(observation, engine_.state().tick);
+    Action selected = Action::Wait;
+    if (ai_action_provider_->select(ai_index, encoded, selected) &&
+        static_cast<std::size_t>(selected) < encoded.action_mask.size() &&
+        encoded.action_mask[static_cast<std::size_t>(selected)]) {
+      return selected;
+    }
+  }
+  return chooseHeuristicAction(ai_index, observation);
+}
+
 void Application::tick() noexcept {
   if (engine_.state().status != core::GameStatus::Running) {
     return;
   }
   std::array<Action, core::kAiCount> actions{};
+  if (ai_action_provider_ != nullptr) ai_action_provider_->beginTick();
   for (std::size_t ai = 0; ai < actions.size(); ++ai) {
     actions[ai] = chooseAction(ai);
   }
+  if (ai_action_provider_ != nullptr) ai_action_provider_->endTick();
   engine_.step(actions);
   for (std::size_t ai = 0; ai < ai_memory_.size(); ++ai) {
     const auto& entity = engine_.state().entities[ai + 1U];
@@ -297,6 +319,7 @@ std::uint64_t Application::stateHash() const noexcept {
       mix(visits);
     }
   }
+  if (ai_action_provider_ != nullptr) mix(ai_action_provider_->stateHash());
   return hash;
 }
 
