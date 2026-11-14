@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:58 EST
+Last Modified at: 2026-11-14 10:39 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -20,6 +20,7 @@ Last Modified by: Codex
 |-native_bindings.cpp — Binds batched in-memory C++ Game Engines and policy-contract tensors to Python.
 |-env.py — Owns batched episode lifecycle, partial resets, opponent actions, and reward state.
 |-evaluator.py — Runs fixed-seed stochastic/deterministic evaluation and emits per-persona metrics.
+|-export_esp.py — Exports the one-step policy to ESP-DL-compatible ONNX with decomposed GroupNorm and parity evidence.
 |-model.py — Implements the CNN, scalar MLP, GRU actor-critic, initialization, and masked categorical policy.
 |-opponents.py — Implements the deterministic curriculum player-policy pool.
 |-rollout.py — Stores recurrent on-policy transitions and builds masked fixed-length sequence minibatches.

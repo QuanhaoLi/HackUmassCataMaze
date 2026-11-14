@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 03:41 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 06:34 EST
+# Last Modified at: 2026-11-14 10:39 EST
 # Last Modified by: Codex
 
 [build-system]
@@ -30,6 +30,10 @@ train = [
   "PyYAML==6.0.3",
   "tensorboard==2.20.0",
   "torch==2.6.0",
+]
+export = [
+  "onnx==1.23.1",
+  "onnxruntime==1.32.0",
 ]
 
 [tool.setuptools.packages.find]

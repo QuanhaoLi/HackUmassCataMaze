@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:51 EST
+Last Modified at: 2026-11-14 10:39 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -13,6 +13,7 @@ Last Modified by: Codex
 |-test_native_env.py — Verifies Native batch tensor shapes, deterministic reset/step replay, and input validation.
 |-test_env.py — Verifies batched episode coordination, policy legality checks, rewards, and deterministic replay.
 |-test_evaluator.py — Verifies fixed-seed evaluation emits complete outcome and per-persona metrics.
+|-test_export_esp.py — Verifies GroupNorm decomposition, one-step outputs, ONNX operator support, and numerical parity.
 |-test_curriculum.py — Verifies step-plus-evaluation promotion gates for every curriculum stage.
 |-test_collector.py — Verifies real recurrent rollout collection, terminal resets, and a subsequent PPO update.
 |-test_checkpoint.py — Verifies save/resume reproduces the exact next recurrent rollout.
