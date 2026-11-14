@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 07:34 EST
+Last Modified at: 2026-11-14 07:46 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -32,9 +32,9 @@ Read-only preflight evidence from the active replacement board:
 
 The PlatformIO base board `esp32-s3-devkitc-1` defaults to an 8 MB/no-PSRAM variant, so the project configuration must explicitly override it to 16 MB Flash and `qio_opi` memory type. Runtime diagnostic firmware must still assert the observed capacities before the product firmware is accepted.
 
-The active board passed a fresh diagnostic with exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, correct Flash/PSRAM, the six active button inputs plus then-reserved GPIO10 released, and GPIO4 unconfigured.
+The active board passed fresh `catamaze.diag.v2` twice before the Home/Setup product release: exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, correct Flash/PSRAM, six active inputs released, and both GPIO4/GPIO10 unconfigured.
 
-An early product build exposed loop-task stack pressure during maze generation. The accepted build stores BFS/candidate cell references as 16-bit indices, defers `Application` construction into `setup()`, and provisions a 48 KiB loop-task stack. Physical boot evidence reports `loop_stack_high_water_words=26188`, both displays present, and `ready=true` without rebooting.
+An early product build exposed loop-task stack pressure during maze generation. The accepted build stores BFS/candidate cell references as 16-bit indices, defers `SystemController` construction into `setup()`, and provisions a 48 KiB loop-task stack. The Home/Setup product boot reports `loop_stack_high_water_words=26144`, both displays present, and `ready=true` without rebooting.
 
 ## 2. Dual OLED Assignment and Wiring
 
@@ -42,8 +42,8 @@ Both displays are GME12864 128×64 white monochrome four-pin I²C OLEDs. Both va
 
 | Role | Content | Arduino bus | SDA | SCL | Address | Power |
 |---|---|---|---:|---:|---:|---|
-| Game screen / Map | Player's 9×5 local terrain and visible enemies; 12×12 square tiles; never projectile sprites | `Wire` / I²C controller 0 | GPIO8 | GPIO9 | `0x3C` | 3V3 + GND |
-| Data screen / HUD | `TICK`, five heart slots, three ammo slots, `QUEUE`, and `POS` | `Wire2` / I²C controller 1 | GPIO18 | GPIO17 | `0x3C` | 3V3 + GND |
+| Left / focus screen | Home/Setup focus and menus; during play, player's 9×5 map with 12×12 square tiles and no projectile sprites | `Wire` / I²C controller 0 | GPIO8 | GPIO9 | `0x3C` | 3V3 + GND |
+| Right / context screen | Home/Setup context and Pause/Result menus; during play, `TICK`, hearts, ammo, `QUEUE`, and `POS` | `Wire2` / I²C controller 1 | GPIO18 | GPIO17 | `0x3C` | 3V3 + GND |
 
 ### Physical connections
 
@@ -120,7 +120,7 @@ The electrical and logical contract is:
 - CLEAR short press clears pending actions only on release. CLEAR long press commits at 800 ms and suppresses the later short release event.
 - GPIO10 is `UNASSIGNED_SPARE` and must not be initialized as a button.
 
-The currently deployed/pre-Home ESP32 image contains the former seven-button mapping. The user approved migration on 2026-11-14; it remains historical evidence until a fresh six-button diagnostic and product boot pass. The new diagnostic and product images must both leave GPIO10 and GPIO4 unconfigured.
+The currently deployed ESP32 image is now the six-button Home/Setup build. Its `catamaze.boot.v2` record reports `button_count=6`, `gpio4_configured=false`, `gpio10_configured=false`, `system_mode=HOME`, `confirmed_map_size=30`, `tick_budget=1200`, and `ready=true`. Idle-high evidence is automated; physical press/release and gameplay checks remain pending user verification.
 
 Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically installed. GPIO5 and GPIO6 each passed a complete HIGH → LOW → HIGH test with exactly one debounced press count and no duplicate events during the observation period. GPIO7 is not yet fully validated.
 

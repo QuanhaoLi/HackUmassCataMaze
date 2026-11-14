@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:34 EST
+Last Modified at: 2026-11-14 07:46 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -178,11 +178,11 @@ Pass conditions:
 
 ### Completion evidence — 2026-11-14
 
-- Normal Native suite: 59/59 tests passed.
-- AddressSanitizer suite: 59/59 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
-- UndefinedBehaviorSanitizer suite: 59/59 tests passed with no recovery.
+- Normal Native suite: 67/67 tests passed.
+- AddressSanitizer suite: 67/67 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
+- UndefinedBehaviorSanitizer suite: 67/67 tests passed with no recovery.
 - Randomized invariant run: 100,000 ticks across 61 games, repeated output hash `0xe0a00023687fb22a`.
-- Portable core/application coverage: 90.13% lines and 80.74% branches, above the 85% / 75% gates.
+- Portable core/application coverage: 90.51% lines and 81.29% branches, above the 85% / 75% gates; the portable six-button interpreter itself has 100% line and 92.86% branch coverage.
 - Browser smoke: random loopback port, versioned API, malformed requests, commands, reset, and graceful SIGTERM passed.
 - Visual QA: 1440×1050 desktop and true 390×1800 CSS-viewport screenshots passed overflow checks and manual inspection.
 - Horror-visibility revision: player Map has blank roads, solid walls, one-slash fog, no projectile pixels under any projectile state, and an outline-diamond player; HUD has five filled/outline hearts and three filled/outline ammo cartridges.
@@ -270,6 +270,15 @@ Pass conditions:
 - The old image is not accepted as evidence for Home/Setup, CLEAR long/short, map presets, or GPIO10 spare status.
 - A new product upload is permitted only through `scripts/esp32_upload_product.sh` after the new portable input tests, both ESP32 compile gates, read-only identity preflight, and diagnostic v2 pass.
 - M5 remains `IN_PROGRESS` after automated upload until the user completes the six-button and full-game physical checks.
+
+### Home/Setup automated hardware evidence — 2026-11-14
+
+- The release script passed 54 focused core/input tests immediately before hardware operations and both firmware environments compiled with pinned Espressif32 8.0.0 / Arduino 3.3.12.
+- Product size is 46,476 bytes static RAM (14.2%) and 389,971 bytes application Flash (6.0% of the partition); the dependency graph contains only shared CataMaze libraries and Wire.
+- Read-only preflight reconfirmed active-board serial `5CE6032515`, MAC `84:fc:e6:53:bf:94`, ESP32-S3 rev 0.2, 16 MB Quad Flash at 3.3 V, and 8 MB embedded PSRAM.
+- Two consecutive diagnostic v2 runs passed with one `0x3C` device per bus, zero I²C errors, four HIGH bus lines, six released inputs, and GPIO4/GPIO10 unconfigured.
+- Product write and hash verification passed. `catamaze.boot.v2` returned `ready=true`, `system_mode=HOME`, map 30×30, tick budget 1,200, six buttons, both displays at `0x3C`, and stack high-water 26,144.
+- No full-chip erase command was issued. M5 remains `IN_PROGRESS` because visual content, all six physical transitions, CLEAR timing, FIRE sampling, audio during a shot, and a complete game require user observation.
 
 ## M6 — Cross-platform determinism and release-candidate evidence
 
