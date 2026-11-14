@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:38 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Verifies deterministic movement, combat, visibility, terminal conditions, and replay hashing.
 
@@ -86,8 +86,7 @@ TEST(GameEngine, SimultaneousLethalHitsPreserveActualDamageAndEveryShooterCredit
   setup.spawns[1] = Position{1, 2};
   setup.spawns[2] = Position{3, 2};
   GameEngine engine(setup);
-  const std::array<Action, kAiCount> crossfire{Action::ShootRight, Action::ShootLeft,
-                                               Action::Wait};
+  const std::array<Action, kAiCount> crossfire{Action::ShootRight, Action::ShootLeft, Action::Wait};
 
   engine.step(crossfire);
   engine.step(kAiWaits);
@@ -206,6 +205,24 @@ TEST(GameEngine, ObservationHidesCellsBehindWallsAndReportsNearbyShots) {
   EXPECT_EQ(after.sound.direction_x, 1);
   EXPECT_EQ(after.sound.direction_y, 0);
   EXPECT_EQ(after.sound.distance, 2U);
+}
+
+TEST(GameEngine, PlayerGetsNineByFiveWhileAiContractRemainsFiveByFive) {
+  GameSetup setup = openSetup();
+  setup.spawns[1] = Position{6, 2};
+  GameEngine engine(setup);
+
+  const PlayerObservation player = engine.observePlayer();
+  EXPECT_EQ(player.cells.size(), 45U);
+  EXPECT_TRUE(player.atOffset(4, 0).visible);
+  EXPECT_EQ(player.atOffset(4, 0).entity,
+            static_cast<std::int8_t>(entityIndex(EntityId::Aggressive)));
+  EXPECT_EQ(player.atOffset(0, 0).entity, static_cast<std::int8_t>(entityIndex(EntityId::Player)));
+
+  const Observation ai = engine.observe(EntityId::Aggressive);
+  EXPECT_EQ(ai.cells.size(), 25U);
+  EXPECT_FALSE(ai.atOffset(-4, 0).visible);
+  EXPECT_EQ(ai.atOffset(-4, 0).entity, -1);
 }
 
 TEST(GameEngine, SameSeedAndCommandsProduceTheSameHash) {

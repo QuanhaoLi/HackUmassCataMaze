@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:34 EST
+Last Modified at: 2026-11-14 06:39 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -83,7 +83,8 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - Flash ID, flash capacity, PSRAM mode, and PSRAM initialization MUST be checked before any future physical upload is accepted.
 - Serial-port discovery MUST use device metadata and MUST NOT hard-code `/dev/cu.*` paths.
 - The two OLEDs use independent hardware I²C controllers when both respond at `0x3C`.
-- Map display content is limited to the player's legal 5×5 terrain and visible enemies, with all projectile graphics intentionally omitted.
+- Map display content is limited to the player's legal 9×5 terrain and visible enemies, with all projectile graphics intentionally omitted.
+- Every AI observation remains exactly 5×5. Player-only peripheral cells MUST NOT enter AI policies, action masks, recurrent memory, rewards, Native RL bindings, or training tensors.
 - HUD content is limited to `TICK`, five HP hearts, three AMMO cartridges, `QUEUE`, and `POS`.
 - GPIO4 MUST remain unconfigured and unassigned in production firmware; it is a released spare.
 - Any row still marked planned, pending, or unverified in `hardware.md` MUST remain provisional in code.

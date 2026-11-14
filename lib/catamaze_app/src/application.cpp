@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Implements deterministic legal-observation AI policies and application tick ownership.
 
@@ -273,8 +273,8 @@ void Application::tick() noexcept {
   }
 }
 
-core::Observation Application::playerObservation() const noexcept {
-  return engine_.observe(EntityId::Player);
+core::PlayerObservation Application::playerObservation() const noexcept {
+  return engine_.observePlayer();
 }
 
 std::uint64_t Application::stateHash() const noexcept {

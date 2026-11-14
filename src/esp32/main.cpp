@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:50 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 05:12 EST
+// Last Modified at: 2026-11-14 06:34 EST
 // Last Modified by: Codex
 // Composes deterministic gameplay with verified buttons, two OLED buses, and optional Serial audio.
 
@@ -16,7 +16,7 @@
 #include "hardware_config.hpp"
 #include "serial_audio_adapter.hpp"
 
-SET_LOOP_TASK_STACK_SIZE(32U * 1024U);
+SET_LOOP_TASK_STACK_SIZE(48U * 1024U);
 
 namespace {
 
@@ -39,7 +39,7 @@ void renderBoth() {
 
 void printBootDiagnostics() {
   const auto& display = displays.diagnostics();
-  Serial.printf(
+  Serial0.printf(
       "CATAMAZE_BOOT {\"schema\":\"catamaze.boot.v1\","
       "\"flash_bytes\":%lu,\"psram_found\":%s,\"psram_bytes\":%lu,"
       "\"map_i2c_count\":%u,\"map_i2c_address\":%u,"
@@ -57,7 +57,7 @@ void printBootDiagnostics() {
 }  // namespace
 
 void setup() {
-  Serial.begin(catamaze::esp32::kSerialBaud);
+  Serial0.begin(catamaze::esp32::kSerialBaud);
   static catamaze::app::Application application_instance(catamaze::esp32::kDefaultSeed);
   application = &application_instance;
   buttons.begin(millis());
@@ -70,7 +70,7 @@ void setup() {
 
 void loop() {
   const std::uint32_t now = millis();
-  if (boot_diagnostics_pending && Serial) {
+  if (boot_diagnostics_pending) {
     printBootDiagnostics();
     boot_diagnostics_pending = false;
   }

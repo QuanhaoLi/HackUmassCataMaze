@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Declares the one-owner application coordinator and deterministic heuristic AI lifecycle.
 
@@ -23,7 +23,7 @@ class Application {
   void clearPlayerQueue() noexcept;
   void tick() noexcept;
 
-  core::Observation playerObservation() const noexcept;
+  core::PlayerObservation playerObservation() const noexcept;
   const core::WorldState& state() const noexcept { return engine_.state(); }
   std::uint64_t stateHash() const noexcept;
 

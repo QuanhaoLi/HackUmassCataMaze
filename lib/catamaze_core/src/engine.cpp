@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:38 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Implements deterministic simultaneous movement, combat, observations, and terminal rules.
 
@@ -60,6 +60,15 @@ const ObservedCell& Observation::atOffset(std::int8_t dx, std::int8_t dy) const 
     return kHidden;
   }
   const auto index = static_cast<std::size_t>(dy + 2) * 5U + static_cast<std::size_t>(dx + 2);
+  return cells[index];
+}
+
+const ObservedCell& PlayerObservation::atOffset(std::int8_t dx, std::int8_t dy) const noexcept {
+  static const ObservedCell kHidden{};
+  if (dx < -4 || dx > 4 || dy < -2 || dy > 2) {
+    return kHidden;
+  }
+  const auto index = static_cast<std::size_t>(dy + 2) * 9U + static_cast<std::size_t>(dx + 4);
   return cells[index];
 }
 
@@ -280,8 +289,8 @@ void GameEngine::step(const std::array<Action, kAiCount>& ai_actions) noexcept {
     }
     if (entity.hp == 0U) {
       entity.alive = false;
-      addEvent(Event{EventType::EntityDied, entity.id, entity.id, entity.position, Direction::Up,
-                     0});
+      addEvent(
+          Event{EventType::EntityDied, entity.id, entity.id, entity.position, Direction::Up, 0});
     }
   }
 
@@ -390,24 +399,67 @@ Observation GameEngine::observe(EntityId observer) const noexcept {
     }
   }
 
+  observation.sound = soundAt(self.position);
+  return observation;
+}
+
+PlayerObservation GameEngine::observePlayer() const noexcept {
+  PlayerObservation observation{};
+  const auto& self = state_.entities[entityIndex(EntityId::Player)];
+  observation.self = self;
+
+  for (std::int8_t dy = -2; dy <= 2; ++dy) {
+    for (std::int8_t dx = -4; dx <= 4; ++dx) {
+      const std::size_t observed_index =
+          static_cast<std::size_t>(dy + 2) * 9U + static_cast<std::size_t>(dx + 4);
+      auto& cell = observation.cells[observed_index];
+      const Position position{static_cast<std::int16_t>(self.position.x + dx),
+                              static_cast<std::int16_t>(self.position.y + dy)};
+      if (!state_.map.inBounds(position)) {
+        cell.visible = true;
+        cell.terrain = Terrain::Wall;
+        continue;
+      }
+      cell.visible = hasLineOfSight(self.position, position);
+      if (!cell.visible) continue;
+      cell.terrain = state_.map.at(position);
+      cell.entity = entityAt(position, EntityId::Player);
+      if (position == self.position) {
+        cell.entity = static_cast<std::int8_t>(entityIndex(EntityId::Player));
+      }
+      for (std::size_t bullet = 0; bullet < state_.bullet_count; ++bullet) {
+        if (state_.bullets[bullet].position == position) {
+          cell.bullet = true;
+          cell.bullet_direction = state_.bullets[bullet].direction;
+          break;
+        }
+      }
+    }
+  }
+  observation.sound = soundAt(self.position);
+  return observation;
+}
+
+SoundObservation GameEngine::soundAt(Position observer) const noexcept {
+  SoundObservation sound{};
   std::uint8_t nearest = 255U;
   for (std::size_t index = 0; index < state_.event_count; ++index) {
     const Event& event = state_.events[index];
     if (event.type != EventType::Shot) {
       continue;
     }
-    const std::int16_t dx = static_cast<std::int16_t>(event.position.x - self.position.x);
-    const std::int16_t dy = static_cast<std::int16_t>(event.position.y - self.position.y);
+    const std::int16_t dx = static_cast<std::int16_t>(event.position.x - observer.x);
+    const std::int16_t dy = static_cast<std::int16_t>(event.position.y - observer.y);
     const auto distance = static_cast<std::uint8_t>(std::max(absolute(dx), absolute(dy)));
     if (distance <= 3U && distance < nearest) {
       nearest = distance;
-      observation.sound.heard = true;
-      observation.sound.direction_x = sign(dx);
-      observation.sound.direction_y = sign(dy);
-      observation.sound.distance = distance;
+      sound.heard = true;
+      sound.direction_x = sign(dx);
+      sound.direction_y = sign(dy);
+      sound.distance = distance;
     }
   }
-  return observation;
+  return sound;
 }
 
 std::uint64_t GameEngine::stateHash() const noexcept {

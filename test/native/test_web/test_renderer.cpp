@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:37 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Verifies SSD1306 page order, clipping, deterministic screens, and player-visible rendering.
 
@@ -28,11 +28,11 @@ std::size_t litPixels(const Framebuffer& frame) {
 }
 
 std::size_t litPixelsInCell(const Framebuffer& frame, std::size_t index) {
-  constexpr std::int16_t kGridX = 34;
+  constexpr std::int16_t kGridX = 10;
   constexpr std::int16_t kGridY = 2;
   constexpr std::int16_t kCellSize = 12;
-  const auto cell_x = static_cast<std::int16_t>(kGridX + (index % 5U) * kCellSize);
-  const auto cell_y = static_cast<std::int16_t>(kGridY + (index / 5U) * kCellSize);
+  const auto cell_x = static_cast<std::int16_t>(kGridX + (index % 9U) * kCellSize);
+  const auto cell_y = static_cast<std::int16_t>(kGridY + (index / 9U) * kCellSize);
   std::size_t count = 0U;
   for (std::int16_t y = cell_y; y < cell_y + kCellSize; ++y) {
     for (std::int16_t x = cell_x; x < cell_x + kCellSize; ++x) {
@@ -75,13 +75,13 @@ TEST(Renderer, ProducesDeterministicNonEmptyMapAndHudFrames) {
 }
 
 TEST(Renderer, HiddenCellPixelsDifferFromVisibleFloor) {
-  core::Observation hidden{};
+  core::PlayerObservation hidden{};
   hidden.self.position = core::Position{10, 10};
-  hidden.cells[12].visible = true;
-  hidden.cells[12].terrain = core::Terrain::Floor;
+  hidden.cells[22].visible = true;
+  hidden.cells[22].terrain = core::Terrain::Floor;
   const Framebuffer hidden_frame = Renderer::mapScreen(hidden);
 
-  core::Observation visible = hidden;
+  core::PlayerObservation visible = hidden;
   for (auto& cell : visible.cells) {
     cell.visible = true;
     cell.terrain = core::Terrain::Floor;
@@ -92,12 +92,13 @@ TEST(Renderer, HiddenCellPixelsDifferFromVisibleFloor) {
 }
 
 TEST(Renderer, RoadIsBlankFogIsOneSlashAndWallIsSolid) {
-  core::Observation observation{};
+  core::PlayerObservation observation{};
   for (auto& cell : observation.cells) {
     cell.visible = true;
     cell.terrain = core::Terrain::Floor;
   }
   const Framebuffer road = Renderer::mapScreen(observation);
+  EXPECT_EQ(observation.cells.size(), 45U);
   EXPECT_EQ(litPixelsInCell(road, 0U), 0U);
 
   observation.cells[0].visible = false;
@@ -108,10 +109,12 @@ TEST(Renderer, RoadIsBlankFogIsOneSlashAndWallIsSolid) {
   observation.cells[0].terrain = core::Terrain::Wall;
   const Framebuffer wall = Renderer::mapScreen(observation);
   EXPECT_EQ(litPixelsInCell(wall, 0U), 144U);
+  EXPECT_FALSE(wall.pixel(9, 2));
+  EXPECT_FALSE(wall.pixel(118, 2));
 }
 
 TEST(Renderer, ProjectileStateNeverChangesThePlayerMapFramebuffer) {
-  core::Observation observation{};
+  core::PlayerObservation observation{};
   for (auto& cell : observation.cells) {
     cell.visible = true;
     cell.terrain = core::Terrain::Floor;

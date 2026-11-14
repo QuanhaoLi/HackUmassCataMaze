@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:37 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Implements exact 128x64 Map and HUD pixel layouts without driver-specific code.
 
@@ -13,9 +13,11 @@
 namespace catamaze::render {
 namespace {
 
-constexpr std::int16_t kGridX = 34;
+constexpr std::int16_t kGridX = 10;
 constexpr std::int16_t kGridY = 2;
 constexpr std::int16_t kCellSize = 12;
+constexpr std::size_t kMapColumns = 9U;
+constexpr std::size_t kPlayerCellIndex = 22U;
 
 using IconRows = std::array<std::uint8_t, 7>;
 
@@ -63,8 +65,8 @@ void drawPlayer(Framebuffer& frame, std::int16_t x, std::int16_t y) noexcept {
 }
 
 void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell, std::size_t index) noexcept {
-  const std::int16_t column = static_cast<std::int16_t>(index % 5U);
-  const std::int16_t row = static_cast<std::int16_t>(index / 5U);
+  const std::int16_t column = static_cast<std::int16_t>(index % kMapColumns);
+  const std::int16_t row = static_cast<std::int16_t>(index / kMapColumns);
   const std::int16_t x = static_cast<std::int16_t>(kGridX + column * kCellSize);
   const std::int16_t y = static_cast<std::int16_t>(kGridY + row * kCellSize);
 
@@ -75,7 +77,7 @@ void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell, std::size_t
     }
   } else if (cell.terrain == core::Terrain::Wall) {
     frame.fillRect(x, y, kCellSize, kCellSize);
-  } else if (index != 12U && cell.entity < 0) {
+  } else if (index != kPlayerCellIndex && cell.entity < 0) {
     if (cell.terrain == core::Terrain::Entrance) {
       frame.drawChar(static_cast<std::int16_t>(x + 3), static_cast<std::int16_t>(y + 2), 'S');
     } else if (cell.terrain == core::Terrain::Exit) {
@@ -83,7 +85,7 @@ void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell, std::size_t
     }
   }
 
-  if (index == 12U) {
+  if (index == kPlayerCellIndex) {
     drawPlayer(frame, x, y);
   } else if (cell.entity >= 0) {
     frame.fillRect(static_cast<std::int16_t>(x + 3), static_cast<std::int16_t>(y + 3), 6, 6);
@@ -92,7 +94,7 @@ void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell, std::size_t
 
 }  // namespace
 
-Framebuffer Renderer::mapScreen(const core::Observation& observation) noexcept {
+Framebuffer Renderer::mapScreen(const core::PlayerObservation& observation) noexcept {
   Framebuffer frame;
   frame.clear();
   for (std::size_t index = 0; index < observation.cells.size(); ++index) {

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:38 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Declares deterministic state, observations, and one-tick world transitions.
 
@@ -39,6 +39,14 @@ struct Observation {
   const ObservedCell& atOffset(std::int8_t dx, std::int8_t dy) const noexcept;
 };
 
+struct PlayerObservation {
+  std::array<ObservedCell, 45> cells{};
+  EntityState self{};
+  SoundObservation sound{};
+
+  const ObservedCell& atOffset(std::int8_t dx, std::int8_t dy) const noexcept;
+};
+
 struct GameSetup {
   Map map{};
   std::array<Position, kEntityCount> spawns{};
@@ -70,6 +78,7 @@ class GameEngine {
   void step(const std::array<Action, kAiCount>& ai_actions) noexcept;
 
   Observation observe(EntityId observer) const noexcept;
+  PlayerObservation observePlayer() const noexcept;
   std::uint64_t stateHash() const noexcept;
 
   const WorldState& state() const noexcept { return state_; }
@@ -79,6 +88,7 @@ class GameEngine {
   void addEvent(const Event& event) noexcept;
   bool hasLineOfSight(Position from, Position to) const noexcept;
   std::int8_t entityAt(Position position, EntityId ignored) const noexcept;
+  SoundObservation soundAt(Position observer) const noexcept;
 
   WorldState state_{};
 };

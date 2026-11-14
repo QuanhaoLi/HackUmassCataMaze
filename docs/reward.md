@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 05:26 EST
+Last Modified at: 2026-11-14 06:39 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -96,7 +96,7 @@ step(actions) → observations, rewards, terminations, truncations, infos
 
 ### 4.1 空间输入
 
-5×5 observation 转为 `float32/uint8 [13, 5, 5]` 张量。通道固定如下：
+AI 的 5×5 observation 转为 `float32/uint8 [13, 5, 5]` 张量。玩家显示专用的 9×5 视野不属于训练 observation，不得进入本张量、action mask、reward 或循环状态。通道固定如下：
 
 | 通道 | 内容 |
 |---:|---|

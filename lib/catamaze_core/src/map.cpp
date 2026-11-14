@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 06:34 EST
 // Last Modified by: Codex
 // Implements the fixed 50x50 terrain map and versioned dfs-grid-v1 generator.
 
@@ -20,6 +20,11 @@ constexpr std::size_t kLogicalCellCount = static_cast<std::size_t>(kLogicalSide)
 
 std::size_t mapIndex(Position position) noexcept {
   return static_cast<std::size_t>(position.y) * kMapSize + static_cast<std::size_t>(position.x);
+}
+
+Position positionFromMapIndex(std::uint16_t index) noexcept {
+  return Position{static_cast<std::int16_t>(index % kMapSize),
+                  static_cast<std::int16_t>(index / kMapSize)};
 }
 
 std::size_t logicalIndex(Position position) noexcept {
@@ -82,16 +87,16 @@ DistanceField shortestDistances(const Map& map, Position start) noexcept {
     return distances;
   }
 
-  std::array<Position, kMapCellCount> queue{};
+  std::array<std::uint16_t, kMapCellCount> queue{};
   std::size_t head = 0U;
   std::size_t tail = 0U;
-  queue[tail++] = start;
+  queue[tail++] = static_cast<std::uint16_t>(mapIndex(start));
   distances[mapIndex(start)] = 0;
 
   constexpr std::array<Direction, 4> kDirections{Direction::Up, Direction::Right, Direction::Down,
                                                  Direction::Left};
   while (head < tail) {
-    const Position current = queue[head++];
+    const Position current = positionFromMapIndex(queue[head++]);
     const std::int16_t next_distance = static_cast<std::int16_t>(distances[mapIndex(current)] + 1);
     for (Direction direction : kDirections) {
       const Position next = moved(current, direction);
@@ -99,7 +104,7 @@ DistanceField shortestDistances(const Map& map, Position start) noexcept {
         continue;
       }
       distances[mapIndex(next)] = next_distance;
-      queue[tail++] = next;
+      queue[tail++] = static_cast<std::uint16_t>(mapIndex(next));
     }
   }
   return distances;
@@ -113,15 +118,15 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
 
   Pcg32 random(seed);
   std::array<bool, kLogicalCellCount> visited{};
-  std::array<Position, kLogicalCellCount> stack{};
+  std::array<std::uint16_t, kLogicalCellCount> stack{};
   std::size_t stack_size = 0U;
 
   visited[logicalIndex(world.entrance)] = true;
   world.map.set(world.entrance, Terrain::Floor);
-  stack[stack_size++] = world.entrance;
+  stack[stack_size++] = static_cast<std::uint16_t>(mapIndex(world.entrance));
 
   while (stack_size > 0U) {
-    const Position current = stack[stack_size - 1U];
+    const Position current = positionFromMapIndex(stack[stack_size - 1U]);
     std::array<Direction, 4> directions{Direction::Up, Direction::Right, Direction::Down,
                                         Direction::Left};
     shuffleDirections(directions, random);
@@ -136,7 +141,7 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
       visited[logicalIndex(next)] = true;
       world.map.set(one_step, Terrain::Floor);
       world.map.set(next, Terrain::Floor);
-      stack[stack_size++] = next;
+      stack[stack_size++] = static_cast<std::uint16_t>(mapIndex(next));
       advanced = true;
       break;
     }
@@ -178,19 +183,21 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
   world.map.set(world.exit, Terrain::Exit);
 
   world.spawns[entityIndex(EntityId::Player)] = world.entrance;
-  std::array<Position, kMapCellCount> candidates{};
+  std::array<std::uint16_t, kMapCellCount> candidates{};
   std::size_t candidate_count = 0U;
   for (std::int16_t y = 0; y < kMapSize; ++y) {
     for (std::int16_t x = 0; x < kMapSize; ++x) {
       const Position candidate{x, y};
       if (candidate != world.entrance && candidate != world.exit &&
           world.map.isWalkable(candidate)) {
-        candidates[candidate_count++] = candidate;
+        candidates[candidate_count++] = static_cast<std::uint16_t>(mapIndex(candidate));
       }
     }
   }
   std::sort(candidates.begin(), candidates.begin() + static_cast<std::ptrdiff_t>(candidate_count),
-            [&distances](Position lhs, Position rhs) {
+            [&distances](std::uint16_t lhs_index, std::uint16_t rhs_index) {
+              const Position lhs = positionFromMapIndex(lhs_index);
+              const Position rhs = positionFromMapIndex(rhs_index);
               const auto left_distance = distances[mapIndex(lhs)];
               const auto right_distance = distances[mapIndex(rhs)];
               if (left_distance != right_distance) {
@@ -203,7 +210,7 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
             });
 
   for (std::size_t ai = 0U; ai < kAiCount; ++ai) {
-    world.spawns[ai + 1U] = candidates[ai];
+    world.spawns[ai + 1U] = positionFromMapIndex(candidates[ai]);
   }
   return world;
 }

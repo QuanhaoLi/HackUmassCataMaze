@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:13 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 06:40 EST
 // Last Modified by: Codex
 // Runs the complete headless Native game without making a web server a core dependency.
 
@@ -50,7 +50,7 @@ char cellGlyph(const ObservedCell& cell, std::size_t center_index) {
   if (!cell.visible) {
     return '?';
   }
-  if (center_index == 12U) {
+  if (center_index == 22U) {
     return '@';
   }
   if (cell.entity >= 0) {
@@ -88,8 +88,8 @@ void printSnapshot(const Application& application) {
             << '\n'
             << "POS    " << player.position.x << ',' << player.position.y << '\n';
   for (std::size_t y = 0; y < 5U; ++y) {
-    for (std::size_t x = 0; x < 5U; ++x) {
-      const std::size_t index = y * 5U + x;
+    for (std::size_t x = 0; x < 9U; ++x) {
+      const std::size_t index = y * 9U + x;
       std::cout << cellGlyph(observation.cells[index], index) << ' ';
     }
     std::cout << '\n';

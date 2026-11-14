@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 05:33 EST
+Last Modified at: 2026-11-14 06:45 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -170,16 +170,17 @@ Pass conditions:
 
 ### Completion evidence — 2026-11-14
 
-- Normal Native suite: 41/41 tests passed.
-- AddressSanitizer suite: 41/41 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
-- UndefinedBehaviorSanitizer suite: 41/41 tests passed with no recovery.
+- Normal Native suite: 42/42 tests passed.
+- AddressSanitizer suite: 42/42 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
+- UndefinedBehaviorSanitizer suite: 42/42 tests passed with no recovery.
 - Randomized invariant run: 100,000 ticks across 61 games, repeated output hash `0xca19bec167ee6693`.
-- Portable core/application coverage: 87.61% lines and 76.65% branches, above the 85% / 75% gates.
+- Portable core/application coverage: 87.68% lines and 76.52% branches, above the 85% / 75% gates.
 - Browser smoke: random loopback port, versioned API, malformed requests, commands, reset, and graceful SIGTERM passed.
 - Visual QA: 1440×1050 desktop and true 390×1800 CSS-viewport screenshots passed overflow checks and manual inspection.
 - Horror-visibility revision: player Map has blank roads, solid walls, one-slash fog, no projectile pixels under any projectile state, and an outline-diamond player; HUD has five filled/outline hearts and three filled/outline ammo cartridges.
 - Audible-event adapter: successful own shot is observable as `PLAYER_SHOT`; player damage and nearby enemy shots use higher-priority Mac-speaker sounds without exposing shooter coordinates.
 - HUD revision: title removed; labels begin at `x=1`, every value/icon group begins at `x=44`, and row origins are `3/15/27/39/51`.
+- Player-only view revision: human display is 9×5 with 12×12 square tiles; AI policy/RL observation remains exactly 5×5 and is contract-tested.
 - Mac companion protocol/assets: 3/3 strict parser, sequence wrap/deduplication, and generated WAV tests passed.
 
 ## M4 — ESP32 adapter and compile-only integration
@@ -214,7 +215,7 @@ Pass conditions:
 
 - `esp32s3_diagnostic` compile passed on PlatformIO Espressif32 8.0.0 / Arduino Core 3.3.12.
 - Production `esp32s3` compile passed with only shared app/core/render and Wire dependencies.
-- Corrected production memory: 46,816 bytes static RAM (14.3%) and 394,468 bytes app Flash (6.0% of partition).
+- Current production memory: 46,444 bytes static RAM (14.2%) and 375,667 bytes app Flash (5.7% of partition).
 - Product firmware contains canonical `CATAMAZE_AUDIO` and boot diagnostics and contains no httplib/nlohmann dependency.
 - Static source audit found no GPIO4 pin initialization or write.
 - Display output is queued and serviced one 16-byte I²C chunk per loop to preserve input responsiveness at 100 kHz.
@@ -246,12 +247,12 @@ Pass conditions:
 
 ### Current physical evidence — 2026-11-14
 
-- Read-only preflight confirmed ESP32-S3 rev 0.2, 16 MB Quad Flash, 8 MB PSRAM, native USB-Serial/JTAG, and 3.3 V configuration.
+- Active replacement-board preflight confirmed ESP32-S3 rev 0.2, 16 MB Quad Flash, 8 MB PSRAM, CH343 USB-UART, and 3.3 V configuration.
 - Diagnostic firmware upload and verified Flash write succeeded; GPIO4 remained unconfigured.
 - All seven button inputs were HIGH/released during observation. Manual press/debounce sequences remain pending.
 - With displays reconnected, a fresh diagnostic found one `0x3C` device on each controller, all four lines HIGH, zero bus errors, and returned `pass=true`.
-- The first product upload exposed a pre-`setup()` stack overflow caused by global `Application` construction; USB did not re-enumerate.
-- The corrected image defers construction into a 32 KiB loop task and reports stack high-water evidence. It compiles successfully and is pending manual BOOT/RESET recovery before re-upload.
+- The accepted image uses 16-bit maze workspace indices, deferred construction, and a 48 KiB loop task.
+- Physical product boot returned `ready=true`, both `0x3C` displays, GPIO4 unconfigured, and loop stack high-water `26188` without rebooting.
 
 ## M6 — Cross-platform determinism and release-candidate evidence
 

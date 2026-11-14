@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 05:33 EST
+Last Modified at: 2026-11-14 06:45 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -12,31 +12,29 @@ Last Modified by: Codex
 ## 1. Verified Controller
 
 - Controller: ESP32-S3 revision v0.2 development board with 16 MB Quad Flash and 8 MB embedded OPI PSRAM (N16R8-class configuration), confirmed by read-only esptool probing on 2026-11-14.
-- Development connection: ESP32-S3 native USB-Serial/JTAG (USB VID:PID `303A:1001`); serial console runs at 115,200 baud. Port paths are discovered dynamically.
+- Development connection: onboard CH343 USB-UART bridge (USB VID:PID `1A86:55D3`, active-board serial `5CE6032515`); upload, diagnostics, and optional Mac audio run at 115,200 baud with dynamically discovered port paths. Product operation does not depend on native USB CDC.
 - Framework used for hardware validation: Arduino ESP32 Core 3.3.12.
 - Both displays run at 3.3 V and use 100 kHz I²C.
 - GPIO33–GPIO37 are reserved by the board's OPI PSRAM and must not be assigned to displays or other peripherals.
 - Avoid GPIO19/GPIO20 for project peripherals because they are the ESP32-S3 native USB pair; GPIO43/GPIO44 are the console UART. The current generic ESP32-S3 Arduino board profile assigns GPIO48 to its built-in RGB LED, so do not reuse it without first verifying the exact development-board schematic.
 
-Read-only preflight evidence from `/dev/cu.usbmodem1101` at the time of testing:
+Read-only preflight evidence from the active replacement board:
 
 | Property | Observed value |
 |---|---|
 | Chip | ESP32-S3 QFN56 revision v0.2 |
 | CPU/features | Dual core + LP core, 240 MHz, Wi-Fi, BT 5 LE |
-| USB mode | Native USB-Serial/JTAG |
-| MAC / USB serial identity | `98:3d:ae:ea:84:a0` |
+| Development transport | CH343 USB-UART bridge, `1A86:55D3`, serial `5CE6032515` |
+| ESP32 MAC | `84:fc:e6:53:bf:94` |
 | Flash JEDEC | Manufacturer `0x68`, device `0x4018` |
 | Flash | 16 MB, Quad data lines, 3.3 V |
 | PSRAM | 8 MB embedded PSRAM, 3.3 V |
 
 The PlatformIO base board `esp32-s3-devkitc-1` defaults to an 8 MB/no-PSRAM variant, so the project configuration must explicitly override it to 16 MB Flash and `qio_opi` memory type. Runtime diagnostic firmware must still assert the observed capacities before the product firmware is accepted.
 
-The first uploaded diagnostic ran while both OLED modules were intentionally disconnected. It observed all four configured I²C lines HIGH with no bus errors and zero responding devices on both controllers. That is expected for disconnected displays and is not recorded as a wiring failure. Product upload remains gated until the modules are reconnected and a fresh diagnostic sees exactly one `0x3C` device on each bus.
+The active board passed a fresh diagnostic with exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, correct Flash/PSRAM, all seven buttons released, and GPIO4 unconfigured.
 
-After both OLED modules were reconnected, a fresh diagnostic found exactly one `0x3C` device on each controller, all four lines HIGH, zero I²C errors, correct Flash/PSRAM, all seven buttons released, and GPIO4 unconfigured. The diagnostic gate passed.
-
-The first product image then exposed an early-boot stack defect: constructing `Application` as a global invoked maze generation before Arduino created its loop task, and USB failed to re-enumerate. The corrected image defers `Application` construction into `setup()` and explicitly provisions a 32 KiB loop-task stack while reporting its high-water mark. The corrected image is compiled but cannot be uploaded until the board is manually returned to download mode.
+An early product build exposed loop-task stack pressure during maze generation. The accepted build stores BFS/candidate cell references as 16-bit indices, defers `Application` construction into `setup()`, and provisions a 48 KiB loop-task stack. Physical boot evidence reports `loop_stack_high_water_words=26188`, both displays present, and `ready=true` without rebooting.
 
 ## 2. Dual OLED Assignment and Wiring
 
@@ -44,7 +42,7 @@ Both displays are GME12864 128×64 white monochrome four-pin I²C OLEDs. Both va
 
 | Role | Content | Arduino bus | SDA | SCL | Address | Power |
 |---|---|---|---:|---:|---:|---|
-| Game screen / Map | Player's 5×5 local terrain and visible enemies; never projectile sprites | `Wire` / I²C controller 0 | GPIO8 | GPIO9 | `0x3C` | 3V3 + GND |
+| Game screen / Map | Player's 9×5 local terrain and visible enemies; 12×12 square tiles; never projectile sprites | `Wire` / I²C controller 0 | GPIO8 | GPIO9 | `0x3C` | 3V3 + GND |
 | Data screen / HUD | `TICK`, five heart slots, three ammo slots, `QUEUE`, and `POS` | `Wire2` / I²C controller 1 | GPIO18 | GPIO17 | `0x3C` | 3V3 + GND |
 
 ### Physical connections
@@ -196,6 +194,6 @@ At startup, scan each bus independently and require exactly one device at `0x3C`
 
 ## 7. Rendering Responsibilities
 
-- The game-screen renderer owns only the player-observable 5×5 terrain and enemy view described in `gamerules.md`. It never renders a projectile, muzzle flash, trajectory, or direction indicator and refreshes after every game tick.
+- The game-screen renderer owns only the player-observable 9×5 terrain and enemy view described in `gamerules.md`. It uses 12×12 square tiles with 10-pixel horizontal and 2-pixel vertical margins, never renders a projectile, and refreshes after every game tick.
 - The HUD renderer owns only `TICK`, five filled/outline HP hearts, three filled/outline ammo cartridges, `QUEUE`, and `POS`. It refreshes after every tick and immediately when the input queue changes.
 - Keep independent framebuffers and renderer objects. A render or bus failure on one screen must not redirect its content to the other or expose hidden game state.

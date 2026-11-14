@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:44 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:58 EST
+// Last Modified at: 2026-11-14 05:43 EST
 // Last Modified by: Codex
 // Reports bounded ESP32-S3, PSRAM, dual-I2C, and idle-button evidence before product upload.
 
@@ -54,7 +54,7 @@ std::uint8_t releasedButtonMask() {
 }
 
 void printButtons(std::uint8_t mask) {
-  Serial.printf(
+  Serial0.printf(
       "CATAMAZE_BUTTONS {\"schema\":\"catamaze.buttons.v1\","
       "\"released_mask\":%u,\"all_released\":%s}\n",
       static_cast<unsigned>(mask), mask == 0x7fU ? "true" : "false");
@@ -63,11 +63,7 @@ void printButtons(std::uint8_t mask) {
 }  // namespace
 
 void setup() {
-  Serial.begin(kSerialBaud);
-  const std::uint32_t serial_deadline = millis() + 2000U;
-  while (!Serial && static_cast<std::int32_t>(serial_deadline - millis()) > 0) {
-    delay(10U);
-  }
+  Serial0.begin(kSerialBaud);
 
   for (std::uint8_t pin : kButtonPins) pinMode(pin, INPUT_PULLUP);
 
@@ -88,7 +84,7 @@ void setup() {
                     map_scan.count == 1U && map_scan.first_address == kExpectedDisplayAddress &&
                     hud_scan.count == 1U && hud_scan.first_address == kExpectedDisplayAddress;
 
-  Serial.printf(
+  Serial0.printf(
       "CATAMAZE_DIAG {\"schema\":\"catamaze.diag.v1\","
       "\"chip\":\"%s\",\"revision\":%u,\"cpu_mhz\":%u,"
       "\"flash_bytes\":%lu,\"psram_found\":%s,\"psram_bytes\":%lu,"

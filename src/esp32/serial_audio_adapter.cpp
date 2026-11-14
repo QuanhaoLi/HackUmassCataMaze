@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:50 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:50 EST
+// Last Modified at: 2026-11-14 05:43 EST
 // Last Modified by: Codex
 // Emits one complete canonical audio line only when USB Serial is connected and has capacity.
 
@@ -20,12 +20,12 @@ bool SerialAudioAdapter::emit(app::AudioEvent event, std::uint16_t tick) {
   const std::uint32_t event_sequence = sequence_++;
   const std::size_t length =
       app::formatAudioSerialLine(event, event_sequence, tick, line.data(), line.size());
-  if (length == 0U || !Serial || Serial.availableForWrite() < static_cast<int>(length)) {
+  if (length == 0U || Serial0.availableForWrite() < static_cast<int>(length)) {
     ++dropped_events_;
     return false;
   }
   const std::size_t written =
-      Serial.write(reinterpret_cast<const std::uint8_t*>(line.data()), length);
+      Serial0.write(reinterpret_cast<const std::uint8_t*>(line.data()), length);
   if (written != length) {
     ++dropped_events_;
     return false;

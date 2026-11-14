@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:37 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 04:33 EST
+Last Modified at: 2026-11-14 06:39 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
@@ -16,7 +16,8 @@ CataMaze is a **standalone, single-player maze escape game** running on an ESP32
 | Parameter | Rule |
 |---|---|
 | Map | 50 × 50 cells |
-| Player/AI vision | 5 × 5 cells, centered on each entity |
+| Player display vision | 9 × 5 cells, centered on the player |
+| AI policy vision | 5 × 5 cells, centered on that AI |
 | Gunshot hearing range | 7 × 7 cells (3 cells in every direction) |
 | Enemies | 3: aggressive, cautious, explorer |
 | HP | Starts at 5; maximum 5; no regeneration |
@@ -44,14 +45,18 @@ Both displays are **GME12864, 128 × 64, monochrome**. They show different infor
 
 ### Screen 1 — Map
 
-Shows **only the player's current 5 × 5 field of view**, not the full 50 × 50 maze:
+Shows **only the player's current 9 × 5 field of view**, not the full 50 × 50 maze:
 
-- `@` — player, always at the center of the view.
+- `@` — player, always at column 5 / row 3, the center of the 9×5 view.
 - `#` — visible wall; `.` — visible path; `S` / `E` — entrance or exit when visible.
 - `P` — visible AI enemy. Player projectiles and enemy projectiles are never drawn on the Map OLED.
 - `?` — obscured cell, including cells hidden behind walls; outside the map counts as a wall.
 
 Walls block line of sight, including diagonal views through a blocked corner. Enemies and terrain outside the current view must remain hidden. The map redraws after each tick. The player receives no projectile sprite, muzzle flash, trajectory line, or directional gunshot graphic; the intended horror feedback is audible gunfire followed by damage feedback and HP loss when a hit occurs.
+
+The player-only view is 9×5. The 128×64 Map OLED renders nine 12×12 square tiles across five rows, with 10-pixel left/right margins and 2-pixel top/bottom margins. This intentionally gives the human player wider peripheral vision. It does not change movement distance, shooting range, map geometry, or any AI observation.
+
+Every AI remains restricted to its own 5×5 observation. The player's extra left/right cells must never enter an AI policy input, recurrent state, action mask, reward feature, or 13×5×5 training tensor.
 
 ### Screen 2 — HUD
 
