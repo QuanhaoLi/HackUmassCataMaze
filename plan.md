@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:46 EST
+Last Modified at: 2026-11-14 11:27 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -22,6 +22,7 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 | M0 | Documentation and reproducible Native toolchain | `PASSED` |
 | M1 | Complete headless Native game | `PASSED` |
 | M2 | Browser-playable vertical slice with exact virtual OLEDs | `PASSED` |
+| C1 | Companion Idle, expressive dual eyes, Wake, and inactivity shell | `IN_PROGRESS` |
 | M3 | Native product hardening and expanded verification | `PASSED` |
 | M4 | ESP32 adapter and compile-only integration | `PASSED` |
 | M5 | Physical hardware integration after explicit upload approval | `IN_PROGRESS` |
@@ -142,6 +143,43 @@ Pass conditions:
 - Twelve renderer tests cover deterministic Home, Setup, Game, Pause, confirmation, About/System, and Result framebuffers; the browser transports exact left/right 1,024-byte OLED buffers through snapshot schema v2.
 - Real Chrome automation proved CLEAR long pauses without clearing, long release emits no short action, CLEAR short resumes the preserved queue, FIRE sampling shoots once, manual WAIT is rejected, and focused form input cannot leak into game controls.
 - Fresh 1440×1050 and 390×1800 screenshots passed overflow, console-error, legibility, alignment, and six-button visual inspection.
+
+## C1 — Companion Idle vertical slice
+
+### Deliverables
+
+- Portable product shell around the existing deterministic system/game controller.
+- Companion Idle boot, consumed Wake, 30-second activity tracking, and guarded active-session Sleep.
+- Nine reviewed dual-eye framebuffer expressions driven by an explicit monotonic timestamp.
+- Exact left/right browser OLED output with no independent HTML recreation.
+- ESP32 compile-only integration after Native acceptance; physical upload remains blocked by the open raw-button fault.
+
+### Automated acceptance
+
+```bash
+.venv/bin/pio test -e native
+./scripts/native_smoke.sh --mode browser
+./scripts/screenshot_native.sh
+./scripts/run_sanitizers.sh
+./scripts/run_coverage.sh
+```
+
+Pass conditions:
+
+- Boot is Companion Idle and every input wakes to Home without executing its normal Home/Game meaning.
+- Inactivity changes state at exactly 30,000 ms using wrap-safe explicit time.
+- Active-session prompt freezes state/queue, defaults to Continue, and requires explicit Sleep confirmation.
+- All reviewed eye frames and prompt layouts pass deterministic pixel tests.
+- Real Chrome verifies Wake, Continue, Sleep, exact OLED payloads, no console errors, and no horizontal overflow at 1440 px and 390 px.
+- Existing Game Core, AI/RL schema, system navigation, sanitizers, coverage, and randomized gates remain green.
+- The ESP32 product environment compiles with the current policy integration, but no companion image is uploaded until six raw buttons pass.
+
+### Human acceptance
+
+- The two screens read as one expressive face at physical scale.
+- Expression timing feels alive without rapid flashing or blocking input.
+- A user can distinguish Companion Idle, Home, Pause Menu, and Inactivity Prompt without instruction.
+- M5 remains separate: physical buttons, ESP-DL latency/fallback, eyes, audio, and a complete Game Session still require hardware observation.
 
 ## M3 — Native product hardening
 

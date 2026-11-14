@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 06:54 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:21 EST
+Last Modified at: 2026-11-14 11:27 EST
 Last Modified by: Codex
 
 本文档是 CataMaze 产品领域语言词汇表，不包含实现规格。
@@ -9,13 +9,29 @@ Last Modified by: Codex
 
 # CataMaze Product Context
 
-CataMaze is a handheld maze game whose launcher, setup flow, play session, and pause flow share six physical buttons across two monochrome screens.
+CataMaze is a dual-purpose desktop companion and handheld maze game whose Companion Idle, launcher, setup flow, Game Session, and pause flow share six physical buttons across two monochrome screens.
 
 ## Language
 
 **Home**:
 The top-level launcher from which the player starts a game, changes setup, or opens system information.
 _Avoid_: Main screen, start page, desktop
+
+**Companion Idle**:
+The resting product mode in which the two physical screens form one expressive pair of eyes and no Game Session exists.
+_Avoid_: Home, sleep screen, attract mode
+
+**Wake**:
+The consumed first button intent that leaves Companion Idle and reveals Home without also navigating, confirming, moving, or shooting.
+_Avoid_: Start game, resume
+
+**Inactivity Prompt**:
+The confirmation shown after 30 seconds without button activity during a live or paused Game Session; it freezes the session and offers Continue or Sleep.
+_Avoid_: Pause Menu, timeout, idle screen
+
+**Sleep**:
+The confirmed abandonment of a Game Session from Inactivity Prompt, or the automatic transition from an inactive non-game menu, into Companion Idle.
+_Avoid_: Pause, Home, power off
 
 **Setup**:
 The pre-game flow where the player chooses the next Game Session's configuration.
@@ -71,6 +87,8 @@ _Avoid_: Seven-button set, WAIT button
 
 **Home** and **Pause Menu** are not aliases. Home owns pre-game navigation; Pause Menu temporarily suspends one existing Game Session.
 
+**Idle** previously meant either an empty Action Queue or the product resting state. The empty queue produces Wait Action; the product resting state is always called Companion Idle.
+
 ## Example dialogue
 
 > **Developer:** What happens when CLEAR is held during a Game Session?
@@ -80,3 +98,7 @@ _Avoid_: Seven-button set, WAIT button
 > **Developer:** And a quick tap?
 >
 > **Domain expert:** That is CLEAR Short Press; it empties the Action Queue. If the player chooses Resume, the same Game Session continues. Restart creates a new Game Session from the same Setup and seed, while Home abandons the run after confirmation.
+>
+> **Developer:** Does the button that wakes the companion also select PLAY?
+>
+> **Domain expert:** No. Wake is consumed and reveals Home. A second deliberate FIRE starts the configured Game Session.

@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:28 EST
 Created by: Codex
-Last Modified at: 2026-11-14 10:39 EST
+Last Modified at: 2026-11-14 11:27 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -18,6 +18,7 @@ Last Modified by: Codex
 |-0006-calibrate-stage-a-promotion.md — Calibrates combat mastery before widening the search curriculum.
 |-0006-calibrate-stage-a-promotion.md — Calibrates the A→B gate so the search stage is not blocked by a search-dependent metric.
 |-0007-esp32-local-policy-inference.md — Defines ESP-DL export, quantization, sequential inference, fallback, and physical acceptance.
+|-0008-companion-shell-outside-game-core.md — Keeps expressive idle animation and inactivity timing outside deterministic game/model state.
 
 ## To-Dos
 - Add and index an ADR before implementing any future change to a frozen environment, reward, model, deployment, or hardware contract.

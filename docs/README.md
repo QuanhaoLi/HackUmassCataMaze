@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:33 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:57 EST
+Last Modified at: 2026-11-14 11:27 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Introduces and indexes the product documentation in this folder.
 |-audio.md — Defines optional USB Serial audio events, the Mac speaker companion, and disconnect behavior.
+|-companion.md — Defines Companion Idle eyes, wake behavior, inactivity confirmation, animation boundaries, and acceptance gates.
 |-gamerules.md — Defines the complete normative game rules, state transitions, observations, actions, combat, terminal conditions, and edge cases.
 |-hardware.md — Records the current controller, display, input, audio, power, and wiring constraints.
 |-home.md — Defines the dual-screen retro launcher, six-button navigation, map presets, pause flow, and Native acceptance gates.

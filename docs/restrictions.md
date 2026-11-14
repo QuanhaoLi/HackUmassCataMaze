@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:34 EST
+Last Modified at: 2026-11-14 11:27 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -67,6 +67,9 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - HTTP workers and future hardware callbacks may only enqueue bounded commands or read immutable snapshots.
 - No unbounded command, event, audio, log, or input queue is permitted.
 - Rendering and browser polling MUST NOT advance the simulation implicitly.
+- Companion Idle animation and inactivity timing MUST remain outside Game Core state, hashes, AI/RL observations, rewards, and recurrent model memory.
+- Wake MUST consume the first button intent so it cannot also mutate Home or a Game Session.
+- A live Game Session MUST freeze before Inactivity Prompt appears and MUST NOT be abandoned without explicit Sleep confirmation.
 
 ## 6. Browser simulator
 
