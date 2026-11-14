@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:43 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:43 EST
+# Last Modified at: 2026-11-14 07:18 EST
 # Last Modified by: Codex
 # Runs fixed-seed policy evaluation and reports outcome and personality metrics.
 
@@ -22,6 +22,77 @@ from training.opponents import OpponentStrategy
 
 
 PERSONAS = ("aggressive", "cautious", "explorer")
+
+
+def merge_evaluation_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    if not reports:
+        raise ValueError("at least one evaluation report is required")
+    opponent = reports[0]["opponent"]
+    mode = reports[0]["mode"]
+    if any(report["opponent"] != opponent or report["mode"] != mode for report in reports):
+        raise ValueError("evaluation reports must share opponent and mode")
+    episodes = sum(int(report["episodes"]) for report in reports)
+    outcomes = {
+        name: sum(int(report["outcomes"][name]) for report in reports)
+        for name in ("player_death", "player_escape", "timeout")
+    }
+    personality: dict[str, Any] = {}
+    for name in PERSONAS:
+        action_counts = np.sum(
+            np.asarray([report["personality"][name]["action_counts"] for report in reports]),
+            axis=0,
+            dtype=np.int64,
+        )
+        active_steps = max(int(action_counts.sum()), 1)
+        moves = max(int(action_counts[:4].sum()), 1)
+        weighted_return = sum(
+            float(report["personality"][name]["mean_return"]) * int(report["episodes"])
+            for report in reports
+        )
+        deaths = sum(
+            float(report["personality"][name]["death_rate"]) * int(report["episodes"])
+            for report in reports
+        )
+
+        def per_tick_total(metric: str) -> float:
+            return sum(
+                float(report["personality"][name][metric])
+                * sum(report["personality"][name]["action_counts"])
+                / 100.0
+                for report in reports
+            )
+
+        revisit_total = sum(
+            float(report["personality"][name]["revisit_rate"])
+            * sum(report["personality"][name]["action_counts"][:4])
+            for report in reports
+        )
+        personality[name] = {
+            "mean_return": weighted_return / episodes,
+            "death_rate": deaths / episodes,
+            "shots_per_100_ticks": per_tick_total("shots_per_100_ticks")
+            * 100.0
+            / active_steps,
+            "hits_per_100_ticks": per_tick_total("hits_per_100_ticks")
+            * 100.0
+            / active_steps,
+            "first_visits_per_100_ticks": per_tick_total("first_visits_per_100_ticks")
+            * 100.0
+            / active_steps,
+            "revisit_rate": revisit_total / moves,
+            "action_counts": action_counts.tolist(),
+        }
+    return {
+        "episodes": episodes,
+        "opponent": opponent,
+        "mode": mode,
+        "seeds": [int(report["seed"]) for report in reports],
+        "outcomes": outcomes,
+        "player_escape_rate": outcomes["player_escape"] / episodes,
+        "player_death_rate": outcomes["player_death"] / episodes,
+        "timeout_rate": outcomes["timeout"] / episodes,
+        "personality": personality,
+    }
 
 
 def evaluate_policy(

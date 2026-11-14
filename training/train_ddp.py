@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 06:58 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:10 EST
+# Last Modified at: 2026-11-14 07:19 EST
 # Last Modified by: Codex
 # Runs resumable four-rank DDP training of one production recurrent policy.
 
@@ -10,6 +10,7 @@ import argparse
 from dataclasses import replace
 from datetime import datetime, timezone
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -29,10 +30,12 @@ from training.config import load_config
 from training.curriculum import CurriculumController
 from training.ddp_smoke import _atomic_torch_save, _barrier
 from training.env import CataMazeBatchEnv
+from training.evaluator import evaluate_policy, merge_evaluation_reports
 from training.model import RecurrentActorCritic
+from training.opponents import OpponentStrategy
 from training.ppo import PPOConfig, PPOTrainer
 from training.reward import COMPONENT_NAMES
-from training.train_ppo import _linear, _stage_reports
+from training.train_ppo import _linear
 
 
 def _rank_state(
@@ -131,6 +134,46 @@ def _reduce_collection(collection: Any, device: torch.device) -> list[float]:
     )
     dist.all_reduce(values, op=dist.ReduceOp.SUM)
     return values.cpu().tolist()
+
+
+def _distributed_stage_reports(
+    model: RecurrentActorCritic,
+    config: dict[str, Any],
+    controller: CurriculumController,
+    *,
+    device: torch.device,
+    evaluation_index: int,
+    rank: int,
+    world_size: int,
+    control_group: dist.ProcessGroup,
+) -> dict[str, dict[str, Any]]:
+    total_episodes = int(config["evaluation"]["episodes_per_persona_per_opponent"])
+    local_episodes = math.ceil(total_episodes / world_size)
+    merged: dict[str, dict[str, Any]] = {}
+    for name in config["curriculum"][controller.stage]["evaluation_opponents"]:
+        opponent = OpponentStrategy[name.upper()]
+        local_report = evaluate_policy(
+            model,
+            episodes=local_episodes,
+            opponent=opponent,
+            mode="stochastic",
+            seed=(
+                int(config["seed"])
+                + 1_000_000
+                + evaluation_index * 10_000
+                + int(opponent) * 100
+                + rank
+            ),
+            num_envs=min(int(config["environment"]["num_envs"]), local_episodes),
+            device=device,
+        )
+        gathered: list[dict[str, Any] | None] = [None] * world_size
+        dist.all_gather_object(gathered, local_report, group=control_group)
+        if rank == 0:
+            merged[name] = merge_evaluation_reports(
+                [report for report in gathered if report is not None]
+            )
+    return merged
 
 
 def run(arguments: argparse.Namespace) -> None:
@@ -323,15 +366,17 @@ def run(arguments: argparse.Namespace) -> None:
 
             if int(state["agent_steps"]) >= int(state["next_evaluation"]):
                 dist.barrier(group=control_group)
-                reports: dict[str, dict[str, Any]] = {}
+                reports = _distributed_stage_reports(
+                    base_model,
+                    config,
+                    controller,
+                    device=device,
+                    evaluation_index=int(state["evaluation_index"]),
+                    rank=rank,
+                    world_size=world_size,
+                    control_group=control_group,
+                )
                 if rank == 0:
-                    reports = _stage_reports(
-                        base_model,
-                        config,
-                        controller,
-                        device=device,
-                        evaluation_index=int(state["evaluation_index"]),
-                    )
                     evaluation_path = (
                         run_dir
                         / "evaluations"
