@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:46 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:46 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Runs resumable production recurrent-PPO training with fixed evaluation gates.
 
@@ -227,7 +227,7 @@ def train(
             update = trainer.update(rollout, generator=generator)
             state["agent_steps"] = int(state["agent_steps"]) + collection.agent_steps
             state["update"] = int(state["update"]) + 1
-            if update.approx_kl > float(config["ppo"]["target_kl"]):
+            if update.max_approx_kl > float(config["ppo"]["hard_stop_kl"]):
                 state["high_kl_updates"] = int(state["high_kl_updates"]) + 1
             else:
                 state["high_kl_updates"] = 0

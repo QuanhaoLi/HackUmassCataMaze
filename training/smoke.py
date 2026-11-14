@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:38 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:38 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Runs bounded end-to-end recurrent-PPO correctness qualification.
 
@@ -9,10 +9,12 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 from datetime import datetime, timezone
+from importlib.metadata import version
 import json
 import platform
 from pathlib import Path
 import random
+import resource
 import subprocess
 from time import perf_counter
 from typing import Any
@@ -41,6 +43,11 @@ def _git_revision() -> str:
 
 def _write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _max_rss_bytes() -> int:
+    maximum = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return int(maximum if platform.system() == "Darwin" else maximum * 1024)
 
 
 def run_smoke(
@@ -80,6 +87,10 @@ def run_smoke(
             "platform": platform.platform(),
             "torch_version": torch.__version__,
             "cuda_version": torch.version.cuda,
+            "dependencies": {
+                name: version(name)
+                for name in ("numpy", "pybind11", "PyYAML", "tensorboard", "torch")
+            },
             "started_at": datetime.now(timezone.utc).isoformat(),
             "parameter_count": None,
             "target_agent_steps": target_agent_steps,
@@ -147,6 +158,7 @@ def run_smoke(
             "completed_episodes": collection.completed_episodes,
             "reward_sum": collection.reward_sum,
             "reward_components": collection.component_sums,
+            "process_max_rss_bytes": _max_rss_bytes(),
             **update_metrics.as_dict(),
         }
         if device.type == "cuda":
@@ -186,6 +198,7 @@ def run_smoke(
         "elapsed_seconds": elapsed,
         "agent_steps_per_second": global_agent_steps / elapsed,
         "parameter_count": parameter_count,
+        "process_max_rss_bytes": _max_rss_bytes(),
         "checkpoint": str(output_dir / "checkpoints" / "latest.pt"),
     }
 

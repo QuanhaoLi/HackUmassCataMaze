@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:19 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:19 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Implements clipped recurrent PPO with masked actions and KL safety stops.
 
@@ -34,10 +34,12 @@ class PPOMetrics:
     value_loss: float
     entropy: float
     approx_kl: float
+    max_approx_kl: float
     clip_fraction: float
     grad_norm: float
     explained_variance: float
     updates: int
+    early_stopped: bool
 
     def as_dict(self) -> dict[str, float]:
         return {
@@ -45,10 +47,12 @@ class PPOMetrics:
             "value_loss": self.value_loss,
             "entropy": self.entropy,
             "approx_kl": self.approx_kl,
+            "max_approx_kl": self.max_approx_kl,
             "clip_fraction": self.clip_fraction,
             "grad_norm": self.grad_norm,
             "explained_variance": self.explained_variance,
             "updates": float(self.updates),
+            "early_stopped": float(self.early_stopped),
         }
 
 
@@ -78,6 +82,7 @@ class PPOTrainer:
         }
         updates = 0
         stop = False
+        max_approx_kl = 0.0
         self.model.train()
         for _epoch in range(self.config.update_epochs):
             for batch in rollout.sequence_batches(
@@ -88,6 +93,7 @@ class PPOTrainer:
                 metrics = self._update_batch(batch)
                 for name in totals:
                     totals[name] += metrics[name]
+                max_approx_kl = max(max_approx_kl, metrics["approx_kl"])
                 updates += 1
                 if metrics["approx_kl"] > self.config.hard_stop_kl:
                     stop = True
@@ -97,20 +103,25 @@ class PPOTrainer:
         if updates == 0:
             raise RuntimeError("PPO rollout contained no active sequences")
         averaged = {name: value / updates for name, value in totals.items()}
-        return PPOMetrics(**averaged, updates=updates)
+        return PPOMetrics(
+            **averaged,
+            max_approx_kl=max_approx_kl,
+            updates=updates,
+            early_stopped=stop,
+        )
 
     def _update_batch(self, batch: SequenceBatch) -> dict[str, float]:
-        spatial = batch.spatial.to(self.device, dtype=torch.float32)
-        scalar = batch.scalar.to(self.device, dtype=torch.float32)
-        action_mask = batch.action_mask.to(self.device)
-        actions = batch.actions.to(self.device)
-        old_log_prob = batch.old_log_prob.to(self.device)
-        old_values = batch.old_values.to(self.device)
-        advantages = batch.advantages.to(self.device)
-        returns = batch.returns.to(self.device)
-        episode_starts = batch.episode_starts.to(self.device)
-        hidden = batch.initial_hidden.to(self.device)
-        loss_mask = batch.loss_mask.to(self.device)
+        spatial = batch.spatial.to(self.device, dtype=torch.float32, non_blocking=True)
+        scalar = batch.scalar.to(self.device, dtype=torch.float32, non_blocking=True)
+        action_mask = batch.action_mask.to(self.device, non_blocking=True)
+        actions = batch.actions.to(self.device, non_blocking=True)
+        old_log_prob = batch.old_log_prob.to(self.device, non_blocking=True)
+        old_values = batch.old_values.to(self.device, non_blocking=True)
+        advantages = batch.advantages.to(self.device, non_blocking=True)
+        returns = batch.returns.to(self.device, non_blocking=True)
+        episode_starts = batch.episode_starts.to(self.device, non_blocking=True)
+        hidden = batch.initial_hidden.to(self.device, non_blocking=True)
+        loss_mask = batch.loss_mask.to(self.device, non_blocking=True)
         safe_mask = action_mask.clone()
         safe_mask[~loss_mask] = False
         safe_mask[..., 8] |= ~loss_mask

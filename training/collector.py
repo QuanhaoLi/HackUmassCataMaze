@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:38 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Collects legal recurrent rollouts and preserves terminal bootstrap observations.
 
@@ -77,6 +77,7 @@ class RolloutCollector:
             environment_steps=environment_steps,
             num_envs=self.environment.num_envs,
             agents_per_env=3,
+            pin_memory=self.device.type == "cuda",
         )
         component_sums: dict[str, float] = {}
         agent_steps = 0

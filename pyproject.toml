@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 03:41 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 03:41 EST
+# Last Modified at: 2026-11-14 04:59 EST
 # Last Modified by: Codex
 
 [build-system]
@@ -19,6 +19,7 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "numpy==2.5.4",
+  "pybind11==3.1.0",
 ]
 
 [project.optional-dependencies]

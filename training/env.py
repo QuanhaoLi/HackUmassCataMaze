@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:51 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Coordinates batched Native episodes, player opponents, reward state, and partial resets.
 
@@ -89,6 +89,7 @@ class CataMazeBatchEnv:
         seeds = self._next_seeds(indices.size)
         self._observation = self._native.reset_at(indices, seeds)
         self._reward.reset(self._observation, finished)
+        self._opponents.reset(finished)
         if self._forced_strategy is None:
             sampled = self._opponents.sample_strategies(self.curriculum_stage)
             self._strategies[finished] = sampled[finished]

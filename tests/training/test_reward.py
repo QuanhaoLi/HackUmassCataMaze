@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 03:49 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 03:49 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Verifies exact vectorized reward components from reviewed synthetic transitions.
 
@@ -104,3 +104,37 @@ def test_movement_exploration_potential_efficiency_and_block_costs() -> None:
     )
     summed = sum(result.components.values(), start=np.zeros_like(result.total))
     np.testing.assert_allclose(result.total, summed, atol=1e-7)
+
+
+def test_explorer_positive_coverage_reward_is_capped_at_five() -> None:
+    previous = snapshot()
+    calculator = RewardCalculator(previous)
+    exploration_total = 0.0
+    for cell in range(400):
+        if cell == 4 * 50 + 4:
+            continue
+        current = snapshot()
+        current["positions"][0, 3] = [cell % 50, cell // 50]
+        current["last_result"][0, 3] = _native.RESULT_MOVED
+        result = calculator.calculate(previous, current)
+        exploration_total += float(result.components["exploration"][0, 2])
+        previous = current
+
+    assert np.isclose(exploration_total, 5.0, atol=1e-6)
+
+
+def test_dead_historical_shooter_receives_no_delayed_reward() -> None:
+    previous = snapshot()
+    current = snapshot()
+    previous["alive"][0, 0] = False
+    current["alive"][0, 0] = False
+    set_events(
+        current,
+        [
+            event(_native.EVENT_DAMAGE_APPLIED, 0, 0, 1),
+            event(_native.EVENT_DAMAGE_CREDIT, 1, 0, 1),
+        ],
+    )
+    result = RewardCalculator(previous).calculate(previous, current)
+    assert result.total[0, 0] == 0.0
+    assert result.components["player_combat"][0, 0] == 0.0

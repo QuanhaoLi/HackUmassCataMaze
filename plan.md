@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:38 EST
+Last Modified at: 2026-11-14 05:02 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -21,15 +21,15 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 |---|---|---|
 | M0 | Documentation and reproducible Native toolchain | `PASSED` |
 | M1 | Complete headless Native game | `PASSED` |
-| M2 | Browser-playable vertical slice with exact virtual OLEDs | `IN_PROGRESS` |
-| M3 | Native product hardening and expanded verification | `IN_PROGRESS` |
-| M4 | ESP32 adapter and compile-only integration | `IN_PROGRESS` |
-| M5 | Physical hardware integration, only after explicit upload approval | `NOT_STARTED` |
+| M2 | Browser-playable vertical slice with exact virtual OLEDs | `PASSED` |
+| M3 | Native product hardening and expanded verification | `PASSED` |
+| M4 | ESP32 adapter and compile-only integration | `PASSED` |
+| M5 | Physical hardware integration after explicit upload approval | `IN_PROGRESS` |
 | M6 | Cross-platform determinism and release-candidate evidence | `NOT_STARTED` |
 | RL0 | Training contract, deployment boundary, and event attribution | `PASSED` |
-| RL1 | In-memory environment, observation, mask, and reward foundation | `IN_PROGRESS` |
+| RL1 | In-memory environment, observation, mask, and reward foundation | `PASSED` |
 | RL2 | Recurrent actor-critic and PPO implementation | `IN_PROGRESS` |
-| RL3 | CPU smoke, deterministic replay, and checkpoint recovery | `IN_PROGRESS` |
+| RL3 | CPU smoke, deterministic replay, and checkpoint recovery | `PASSED` |
 | RL4 | Single-V100 benchmark and two-hour stability qualification | `NOT_STARTED` |
 | RL5 | Four-GPU isolated multi-seed training and final evaluation | `NOT_STARTED` |
 | RL6 | Versioned Native export, integration, fallback, and rollback | `NOT_STARTED` |
@@ -170,15 +170,17 @@ Pass conditions:
 
 ### Completion evidence — 2026-11-14
 
-- Normal Native suite: 30/30 tests passed.
-- AddressSanitizer suite: 30/30 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
-- UndefinedBehaviorSanitizer suite: 30/30 tests passed with no recovery.
-- Randomized invariant run: 100,000 ticks across 61 games, repeated output hash `0x0739ad1063a70f69`.
-- Portable core/application coverage: 86.91% lines and 77.88% branches, above the 85% / 75% gates.
+- Normal Native suite: 41/41 tests passed.
+- AddressSanitizer suite: 41/41 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
+- UndefinedBehaviorSanitizer suite: 41/41 tests passed with no recovery.
+- Randomized invariant run: 100,000 ticks across 61 games, repeated output hash `0xca19bec167ee6693`.
+- Portable core/application coverage: 87.61% lines and 76.65% branches, above the 85% / 75% gates.
 - Browser smoke: random loopback port, versioned API, malformed requests, commands, reset, and graceful SIGTERM passed.
 - Visual QA: 1440×1050 desktop and true 390×1800 CSS-viewport screenshots passed overflow checks and manual inspection.
 - Horror-visibility revision: player Map has blank roads, solid walls, one-slash fog, no projectile pixels under any projectile state, and an outline-diamond player; HUD has five filled/outline hearts and three filled/outline ammo cartridges.
 - Audible-event adapter: successful own shot is observable as `PLAYER_SHOT`; player damage and nearby enemy shots use higher-priority Mac-speaker sounds without exposing shooter coordinates.
+- HUD revision: title removed; labels begin at `x=1`, every value/icon group begins at `x=44`, and row origins are `3/15/27/39/51`.
+- Mac companion protocol/assets: 3/3 strict parser, sequence wrap/deduplication, and generated WAV tests passed.
 
 ## M4 — ESP32 adapter and compile-only integration
 
@@ -208,6 +210,15 @@ Pass conditions:
 - No HTTP, JSON, or host-only dependency appears in the firmware dependency graph.
 - No `upload`, `flash`, or `erase` target is invoked.
 
+### Completion evidence — 2026-11-14
+
+- `esp32s3_diagnostic` compile passed on PlatformIO Espressif32 8.0.0 / Arduino Core 3.3.12.
+- Production `esp32s3` compile passed with only shared app/core/render and Wire dependencies.
+- Production memory: 46,776 bytes static RAM (14.3%) and 393,428 bytes app Flash (6.0% of partition).
+- Product firmware contains canonical `CATAMAZE_AUDIO` and boot diagnostics and contains no httplib/nlohmann dependency.
+- Static source audit found no GPIO4 pin initialization or write.
+- Display output is queued and serviced one 16-byte I²C chunk per loop to preserve input responsiveness at 100 kHz.
+
 ## M5 — Physical hardware integration
 
 ### Entry gate
@@ -232,6 +243,14 @@ Pass conditions:
 - GPIO4 remains unconfigured and the disconnected-Mac game remains fully playable.
 - Each canonical audio event reaches the Mac speaker without hidden-state fields or gameplay blocking.
 - One complete game is playable on the physical device.
+
+### Current physical evidence — 2026-11-14
+
+- Read-only preflight confirmed ESP32-S3 rev 0.2, 16 MB Quad Flash, 8 MB PSRAM, native USB-Serial/JTAG, and 3.3 V configuration.
+- Diagnostic firmware upload and verified Flash write succeeded; GPIO4 remained unconfigured.
+- All seven button inputs were HIGH/released during observation. Manual press/debounce sequences remain pending.
+- Both OLED modules were intentionally disconnected. Both I²C controllers started, all four lines read HIGH, and zero devices responded as expected.
+- Product firmware upload is intentionally gated until reconnected displays each respond once at `0x3C`.
 
 ## M6 — Cross-platform determinism and release-candidate evidence
 
@@ -288,6 +307,14 @@ Pass conditions:
 - Environment replay is identical for fixed seed and ordered actions.
 - A 64-environment CPU benchmark reports agent transitions per second and identifies the sampling bottleneck.
 
+### Completion evidence — 2026-11-14
+
+- The pybind11 batch bridge executes the portable C++ Game Core directly and returns only versioned legal tensors plus structured training labels.
+- Twelve reviewed golden trajectories plus focused tests cover terminal, combat, death, friendly-fire, ammo, exploration, collision, invalid-fallback, potential, and timeout-bootstrap rewards.
+- Exact reset/step replay, canonical environment serialization, partial reset isolation, seeded opponent policies, and randomized spawn replay pass.
+- A 64-environment, 10,000-tick CPU benchmark sustained approximately 38,053 agent transitions/s.
+- Seeds 1–1,000 completed 1,888,741 environment steps and 5,370,253 agent steps without illegal fallback, non-finite reward, component mismatch, capacity overflow, resource-range failure, or living-entity overlap.
+
 ## RL2 — Recurrent actor-critic and PPO
 
 ### Deliverables
@@ -315,6 +342,14 @@ Pass conditions:
 - A checkpoint resume produces the same next update as an uninterrupted reference run.
 - Fixed-seed stochastic and deterministic evaluations replay exactly on the same software and hardware configuration.
 - The run records resolved configuration, git revision, four contract versions, dependency versions, RNG states, and memory use.
+
+### Completion evidence — 2026-11-14
+
+- The final CPU qualification executed five full recurrent-PPO updates and 121,640 agent steps with zero illegal actions, NaN/Inf, component mismatch, or checkpoint failure.
+- The model contains 1,010,826 parameters; final average KL was approximately `0.01152`, maximum minibatch KL `0.02053`, entropy `1.74456`, and no KL early stop fired.
+- Exact checkpoint recovery reproduces the next environment hashes, observations, sampled actions, old log-probabilities, values, rewards, recurrent hidden state, and subsequent rollout.
+- Fixed-seed deterministic and stochastic evaluators replay exactly and emit per-opponent/per-persona outcome, return, death, action, shot, hit, visit, and revisit metrics.
+- The qualification artifact records resolved config, git revision, all four contract versions, Python/PyTorch/CUDA and dependency versions, peak RSS (`703,201,280` bytes), metrics JSONL, and a 12MB atomic checkpoint.
 
 ## RL4 — Single-V100 stability qualification
 

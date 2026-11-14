@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:19 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:19 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Stores recurrent on-policy transitions and produces fixed-length sequence batches.
 
@@ -60,7 +60,14 @@ def compute_gae(
 
 
 class RecurrentRollout:
-    def __init__(self, environment_steps: int, num_envs: int, agents_per_env: int = 3) -> None:
+    def __init__(
+        self,
+        environment_steps: int,
+        num_envs: int,
+        agents_per_env: int = 3,
+        *,
+        pin_memory: bool = False,
+    ) -> None:
         if environment_steps <= 0 or num_envs <= 0 or agents_per_env <= 0:
             raise ValueError("rollout dimensions must be positive")
         self.environment_steps = environment_steps
@@ -68,19 +75,20 @@ class RecurrentRollout:
         self.agents_per_env = agents_per_env
         self.batch_agents = num_envs * agents_per_env
         shape = (environment_steps, self.batch_agents)
-        self.spatial = torch.empty((*shape, 13, 5, 5), dtype=torch.uint8)
-        self.scalar = torch.empty((*shape, 46), dtype=torch.float32)
-        self.action_mask = torch.empty((*shape, 9), dtype=torch.bool)
-        self.actions = torch.empty(shape, dtype=torch.int64)
-        self.old_log_prob = torch.empty(shape, dtype=torch.float32)
-        self.values = torch.empty(shape, dtype=torch.float32)
-        self.rewards = torch.empty(shape, dtype=torch.float32)
-        self.next_values = torch.empty(shape, dtype=torch.float32)
-        self.terminated = torch.empty(shape, dtype=torch.bool)
-        self.truncated = torch.empty(shape, dtype=torch.bool)
-        self.active = torch.empty(shape, dtype=torch.bool)
-        self.episode_starts = torch.empty(shape, dtype=torch.bool)
-        self.hidden = torch.empty((*shape, 256), dtype=torch.float32)
+        memory = {"pin_memory": pin_memory}
+        self.spatial = torch.empty((*shape, 13, 5, 5), dtype=torch.uint8, **memory)
+        self.scalar = torch.empty((*shape, 46), dtype=torch.float32, **memory)
+        self.action_mask = torch.empty((*shape, 9), dtype=torch.bool, **memory)
+        self.actions = torch.empty(shape, dtype=torch.int64, **memory)
+        self.old_log_prob = torch.empty(shape, dtype=torch.float32, **memory)
+        self.values = torch.empty(shape, dtype=torch.float32, **memory)
+        self.rewards = torch.empty(shape, dtype=torch.float32, **memory)
+        self.next_values = torch.empty(shape, dtype=torch.float32, **memory)
+        self.terminated = torch.empty(shape, dtype=torch.bool, **memory)
+        self.truncated = torch.empty(shape, dtype=torch.bool, **memory)
+        self.active = torch.empty(shape, dtype=torch.bool, **memory)
+        self.episode_starts = torch.empty(shape, dtype=torch.bool, **memory)
+        self.hidden = torch.empty((*shape, 256), dtype=torch.float32, **memory)
         self.advantages: torch.Tensor | None = None
         self.returns: torch.Tensor | None = None
         self._position = 0

@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:01 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:38 EST
+# Last Modified at: 2026-11-14 05:02 EST
 # Last Modified by: Codex
 # Implements seeded legal-action player opponents for curriculum training.
 
@@ -83,6 +83,14 @@ class OpponentPool:
             raise ValueError("opponent heading state does not match num_envs")
         self._rng.bit_generator.state = deepcopy(state["rng"])
         self._heading[:] = heading
+
+    def reset(self, env_mask: npt.ArrayLike) -> None:
+        selected = np.asarray(env_mask, dtype=np.bool_)
+        if selected.shape != (self._num_envs,):
+            raise ValueError("opponent reset mask must have shape [num_envs]")
+        self._heading[selected] = self._rng.integers(
+            0, 4, size=int(selected.sum()), dtype=np.uint8
+        )
 
     def actions(
         self,
