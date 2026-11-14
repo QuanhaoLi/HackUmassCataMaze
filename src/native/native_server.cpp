@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:37 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 03:14 EST
 // Last Modified by: Codex
 // Implements a bounded-command Native adapter with one simulation owner and immutable snapshots.
 
@@ -154,6 +154,35 @@ bool parseJsonBody(const httplib::Request& request, httplib::Response& response,
     return false;
   }
   return true;
+}
+
+std::int16_t absolute(std::int16_t value) noexcept {
+  return value < 0 ? static_cast<std::int16_t>(-value) : value;
+}
+
+Json playerObservableEvents(const core::WorldState& state) {
+  Json events = Json::array();
+  const auto& player = state.entities[core::entityIndex(core::EntityId::Player)];
+  for (std::size_t index = 0; index < state.event_count; ++index) {
+    const core::Event& event = state.events[index];
+    if (event.type == core::EventType::Shot) {
+      if (event.actor == core::EntityId::Player) {
+        events.push_back({{"type", "OWN_SHOT"}});
+        continue;
+      }
+      const auto dx = static_cast<std::int16_t>(event.position.x - player.position.x);
+      const auto dy = static_cast<std::int16_t>(event.position.y - player.position.y);
+      if (absolute(dx) <= 3 && absolute(dy) <= 3) {
+        events.push_back({{"type", "HEARD_ENEMY_SHOT"}});
+      }
+    } else if (event.type == core::EventType::DamageApplied &&
+               event.target == core::EntityId::Player) {
+      events.push_back({{"type", "PLAYER_DAMAGE"}, {"value", event.value}});
+    } else if (event.type == core::EventType::GameEnded) {
+      events.push_back({{"type", std::string(core::toString(state.status))}});
+    }
+  }
+  return events;
 }
 
 }  // namespace
@@ -321,7 +350,7 @@ class NativeServer::Impl {
                     {"y", player.position.y}}},
                   {"map_frame_hex", frameHex(map_frame)},
                   {"hud_frame_hex", frameHex(hud_frame)},
-                  {"last_events", Json::array()}};
+                  {"last_events", playerObservableEvents(state)}};
     std::lock_guard<std::mutex> lock(snapshot_mutex_);
     snapshot_json_ = snapshot.dump();
   }

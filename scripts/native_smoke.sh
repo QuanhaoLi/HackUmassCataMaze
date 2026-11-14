@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 02:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 02:56 EST
+# Last Modified at: 2026-11-14 03:14 EST
 # Last Modified by: Codex
 # Builds and executes a bounded headless Native gameplay acceptance check.
 
@@ -80,6 +80,22 @@ for _ in {1..40}; do
 done
 [[ "${tick_value}" == "1" ]]
 
+curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"action":"SHOOT_RIGHT"}' "${base_url}/api/v1/action" | \
+  jq -e '.accepted == true' >/dev/null
+curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"command":"STEP"}' "${base_url}/api/v1/clock" | \
+  jq -e '.accepted == true' >/dev/null
+sound_tick="1"
+for _ in {1..40}; do
+  sound_snapshot="$(curl -fsS "${base_url}/api/v1/snapshot")"
+  sound_tick="$(jq -r '.tick' <<<"${sound_snapshot}")"
+  [[ "${sound_tick}" == "2" ]] && break
+  sleep 0.05
+done
+[[ "${sound_tick}" == "2" ]]
+jq -e '.last_events | any(.type == "OWN_SHOT")' <<<"${sound_snapshot}" >/dev/null
+
 invalid_status="$(curl -sS -o "${artifact_dir}/invalid.json" -w '%{http_code}' \
   -X POST -H 'Content-Type: application/json' -d '{"action":"FLY"}' \
   "${base_url}/api/v1/action")"
@@ -90,4 +106,5 @@ kill -TERM "${server_pid}"
 server_status=0
 wait "${server_pid}" || server_status=$?
 [[ "${server_status}" == "0" ]]
-printf 'CATAMAZE_BROWSER_OK url=%s tick=%s\n' "${base_url}" "${tick_value}"
+printf 'CATAMAZE_BROWSER_OK url=%s tick=%s sound=OWN_SHOT\n' \
+  "${base_url}" "${sound_tick}"

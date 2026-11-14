@@ -1,7 +1,7 @@
 /*
 Created at: 2026-11-14 02:37 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:37 EST
+Last Modified at: 2026-11-14 03:14 EST
 Last Modified by: Codex
 Resolves physical button semantics, calls the versioned API, and paints authoritative framebuffers.
 */
@@ -12,6 +12,8 @@ const state = {
   fireHeld: false,
   polling: false,
   lastSnapshot: null,
+  lastEventKey: "",
+  audioContext: null,
 };
 
 const elements = {
@@ -35,6 +37,51 @@ const elements = {
 function setConnection(mode, label) {
   elements.connection.dataset.state = mode;
   elements.connectionLabel.textContent = label;
+}
+
+function ensureAudio() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  if (!state.audioContext) state.audioContext = new AudioContext();
+  if (state.audioContext.state === "suspended") {
+    state.audioContext.resume().catch(() => {});
+  }
+}
+
+function scheduleBeeps(pulses) {
+  const context = state.audioContext;
+  if (!context || context.state !== "running") return;
+  const start = context.currentTime + 0.01;
+  pulses.forEach(([offset, duration]) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "square";
+    oscillator.frequency.value = 880;
+    gain.gain.value = 0.035;
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(start + offset);
+    oscillator.stop(start + offset + duration);
+  });
+}
+
+function playObservableEvents(snapshot) {
+  const events = Array.isArray(snapshot.last_events) ? snapshot.last_events : [];
+  const key = `${snapshot.seed}:${snapshot.tick}:${JSON.stringify(events)}`;
+  if (key === state.lastEventKey) return;
+  state.lastEventKey = key;
+  const types = new Set(events.map((event) => event.type));
+  if (types.has("DEATH")) {
+    scheduleBeeps([[0, 0.45]]);
+  } else if (types.has("VICTORY")) {
+    scheduleBeeps([[0, 0.07], [0.13, 0.07], [0.26, 0.1]]);
+  } else if (types.has("PLAYER_DAMAGE")) {
+    scheduleBeeps([[0, 0.08], [0.17, 0.08]]);
+  } else if (types.has("HEARD_ENEMY_SHOT")) {
+    scheduleBeeps([[0, 0.045], [0.1, 0.045]]);
+  } else if (types.has("OWN_SHOT")) {
+    scheduleBeeps([[0, 0.07]]);
+  }
 }
 
 async function api(path, options = {}) {
@@ -88,6 +135,7 @@ async function poll() {
   state.polling = true;
   try {
     const snapshot = await api("/api/v1/snapshot");
+    playObservableEvents(snapshot);
     render(snapshot);
     setConnection("online", "Native online");
   } catch (error) {
@@ -99,6 +147,7 @@ async function poll() {
 }
 
 async function sendAction(action) {
+  ensureAudio();
   try {
     await api("/api/v1/action", {
       method: "POST",
@@ -116,6 +165,7 @@ function directionAction(direction) {
 }
 
 function setFire(held) {
+  if (held) ensureAudio();
   state.fireHeld = held;
   elements.fire.classList.toggle("active", held);
 }
@@ -167,6 +217,7 @@ const keyDirections = new Map([
 ]);
 
 window.addEventListener("keydown", (event) => {
+  ensureAudio();
   if (event.code === "Space") {
     event.preventDefault();
     setFire(true);

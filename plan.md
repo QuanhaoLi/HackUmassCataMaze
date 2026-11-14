@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:10 EST
+Last Modified at: 2026-11-14 03:16 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -21,8 +21,8 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 |---|---|---|
 | M0 | Documentation and reproducible Native toolchain | `PASSED` |
 | M1 | Complete headless Native game | `PASSED` |
-| M2 | Browser-playable vertical slice with exact virtual OLEDs | `IN_PROGRESS` |
-| M3 | Native product hardening and expanded verification | `IN_PROGRESS` |
+| M2 | Browser-playable vertical slice with exact virtual OLEDs | `PASSED` |
+| M3 | Native product hardening and expanded verification | `PASSED` |
 | M4 | ESP32 adapter and compile-only integration | `NOT_STARTED` |
 | M5 | Physical hardware integration, only after explicit upload approval | `NOT_STARTED` |
 | M6 | Cross-platform determinism and release-candidate evidence | `NOT_STARTED` |
@@ -163,13 +163,15 @@ Pass conditions:
 
 ### Completion evidence — 2026-11-14
 
-- Normal Native suite: 27/27 tests passed.
-- AddressSanitizer suite: 27/27 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
-- UndefinedBehaviorSanitizer suite: 27/27 tests passed with no recovery.
+- Normal Native suite: 30/30 tests passed.
+- AddressSanitizer suite: 30/30 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
+- UndefinedBehaviorSanitizer suite: 30/30 tests passed with no recovery.
 - Randomized invariant run: 100,000 ticks across 61 games, repeated output hash `0x0739ad1063a70f69`.
 - Portable core/application coverage: 86.91% lines and 77.88% branches, above the 85% / 75% gates.
 - Browser smoke: random loopback port, versioned API, malformed requests, commands, reset, and graceful SIGTERM passed.
 - Visual QA: 1440×1050 desktop and true 390×1800 CSS-viewport screenshots passed overflow checks and manual inspection.
+- Horror-visibility revision: player Map has blank roads, solid walls, one-slash fog, no projectile pixels under any projectile state, and an outline-diamond player; HUD has five filled/outline hearts and three filled/outline ammo cartridges.
+- Audible-event adapter: successful own shot is observable as `OWN_SHOT`; player damage and nearby enemy shots use higher-priority buzzer rhythms without exposing shooter coordinates.
 
 ## M4 — ESP32 adapter and compile-only integration
 
