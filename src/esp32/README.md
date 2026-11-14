@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 04:44 EST
 Created by: Codex
-Last Modified at: 2026-11-15 00:24 EST
+Last Modified at: 2026-11-14 11:45 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,12 +10,12 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents production firmware ownership and hardware boundaries.
-|-button_adapter.cpp — Samples six active-low GPIO inputs and forwards portable debounced system intents.
+|-button_adapter.cpp — Samples six active-low GPIO inputs and forwards timed intents into the portable companion shell.
 |-button_adapter.hpp — Declares the bounded six-button physical-input adapter.
 |-display_adapter.cpp — Initializes and writes independent SSD1306-compatible framebuffers over two I²C controllers.
 |-display_adapter.hpp — Declares the dual-display adapter and diagnostics.
 |-hardware_config.hpp — Freezes verified pins, bus rate, address, and timing without assigning GPIO4.
-|-main.cpp — Composes shared Home/Game coordination, exact dual-screen rendering, audio, and ESP32 adapters.
+|-main.cpp — Composes Companion Idle/Home/Game coordination, exact dual-screen rendering, resident model inference, audio, and ESP32 adapters.
 |-model/ — Holds the ignored release `.espdl` artifact injected by the guarded build.
 |-policy_adapter.cpp — Loads one resident ESP-DL model and performs masked recurrent inference for all three AI.
 |-policy_adapter.hpp — Declares policy health, memory, latency, and fallback diagnostics.
@@ -24,3 +24,4 @@ Last Modified by: Codex
 
 ## To-Dos
 - Keep M5 open until physical press/release, FIRE-before-direction, CLEAR short/long, and complete-game checks pass.
+- Do not upload the companion/model image while GPIO7 starts LOW or GPIO15/GPIO16 lack raw diagnostic transitions.

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:48 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:23 EST
+// Last Modified at: 2026-11-14 11:41 EST
 // Last Modified by: Codex
 // Captures one exact CSS viewport through Chrome DevTools and rejects horizontal overflow.
 
@@ -83,6 +83,9 @@ const interactionResult = await rpc("Runtime.evaluate", {
     key("keydown", "Space", " ");
     key("keyup", "Space", " ");
     await sleep(100);
+    key("keydown", "Space", " ");
+    key("keyup", "Space", " ");
+    await sleep(100);
     key("keydown", "ArrowRight", "ArrowRight");
     await sleep(80);
     key("keydown", "KeyC", "c");
@@ -95,7 +98,8 @@ const interactionResult = await rpc("Runtime.evaluate", {
   returnByValue: true,
 });
 const paused = interactionResult.result.value;
-if (paused.mode !== "PAUSED" || paused.tick !== 0 || paused.player.queue !== 1) {
+if (paused.mode !== "ACTIVE" || paused.system_mode !== "PAUSED" ||
+    paused.tick !== 0 || paused.player.queue !== 1) {
   throw new Error(`CLEAR long did not pause and preserve queue: ${JSON.stringify(paused)}`);
 }
 
@@ -115,7 +119,8 @@ const resumedResult = await rpc("Runtime.evaluate", {
   returnByValue: true,
 });
 const resumed = resumedResult.result.value;
-if (resumed.mode !== "PLAYING" || resumed.tick !== 1 || resumed.player.queue !== 0) {
+if (resumed.mode !== "ACTIVE" || resumed.system_mode !== "PLAYING" ||
+    resumed.tick !== 1 || resumed.player.queue !== 0) {
   throw new Error(`CLEAR short did not resume preserved queue: ${JSON.stringify(resumed)}`);
 }
 
@@ -140,6 +145,55 @@ if (shooting.tick !== 2 || !shooting.last_events.some((event) => event.type === 
   throw new Error(`FIRE sampling did not enqueue one shot: ${JSON.stringify(shooting)}`);
 }
 
+const inactivityResult = await rpc("Runtime.evaluate", {
+  expression: `(async () => {
+    await fetch('/api/v1/clock', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({command: 'ELAPSE_INACTIVITY'})
+    });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    return fetch('/api/v1/snapshot').then((response) => response.json());
+  })()`,
+  awaitPromise: true,
+  returnByValue: true,
+});
+const inactive = inactivityResult.result.value;
+if (inactive.mode !== "INACTIVITY_PROMPT" || inactive.system_mode !== "PAUSED" ||
+    inactive.tick !== shooting.tick || inactive.state_hash !== shooting.state_hash ||
+    inactive.system.prompt_focus !== 0) {
+  throw new Error(`inactivity did not freeze into default-continue prompt: ${JSON.stringify(inactive)}`);
+}
+
+const sleepResult = await rpc("Runtime.evaluate", {
+  expression: `(async () => {
+    const key = (type, code, value) => window.dispatchEvent(
+      new KeyboardEvent(type, {code, key: value}));
+    const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+    key("keydown", "KeyC", "c");
+    key("keyup", "KeyC", "c");
+    await sleep(100);
+    const continued = await fetch('/api/v1/snapshot').then((response) => response.json());
+    if (continued.mode !== "ACTIVE" || continued.system_mode !== "PLAYING") return continued;
+    await fetch('/api/v1/clock', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({command: 'ELAPSE_INACTIVITY'})
+    });
+    await sleep(100);
+    key("keydown", "ArrowDown", "ArrowDown");
+    await sleep(50);
+    key("keydown", "Space", " ");
+    key("keyup", "Space", " ");
+    await sleep(100);
+    return fetch('/api/v1/snapshot').then((response) => response.json());
+  })()`,
+  awaitPromise: true,
+  returnByValue: true,
+});
+if (sleepResult.result.value.mode !== "IDLE" ||
+    sleepResult.result.value.system.has_active_session !== false) {
+  throw new Error(`explicit prompt Sleep did not return to companion: ${JSON.stringify(sleepResult.result.value)}`);
+}
+
 await rpc("Runtime.evaluate", {
   expression: `(() => {
     document.querySelector("#seed").value = "0x000000000134fd5a";
@@ -154,7 +208,8 @@ const resetResult = await rpc("Runtime.evaluate", {
   awaitPromise: true,
   returnByValue: true,
 });
-if (resetResult.result.value.mode !== "HOME" || resetResult.result.value.tick !== 0 ||
+if (resetResult.result.value.mode !== "IDLE" || resetResult.result.value.system_mode !== "HOME" ||
+    resetResult.result.value.tick !== 0 ||
     resetResult.result.value.player.queue !== 0) {
   throw new Error(`browser reset did not restore initial state: ${JSON.stringify(resetResult.result.value)}`);
 }
@@ -172,8 +227,41 @@ const inputIsolationResult = await rpc("Runtime.evaluate", {
   awaitPromise: true,
   returnByValue: true,
 });
-if (inputIsolationResult.result.value.mode !== "HOME") {
+if (inputIsolationResult.result.value.mode !== "IDLE") {
   throw new Error(`typing in seed input leaked into game controls: ${JSON.stringify(inputIsolationResult.result.value)}`);
+}
+
+if (width >= 1000) {
+  const reviewed = [
+    ["LOOK_RIGHT", "look-right"],
+    ["CURIOUS", "curious"],
+    ["SURPRISED", "surprised"],
+    ["NEUTRAL", "neutral-return"],
+  ];
+  for (const [expected, suffix] of reviewed) {
+    const expressionResult = await rpc("Runtime.evaluate", {
+      expression: `(async () => {
+        await fetch('/api/v1/clock', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({command: 'ELAPSE_INACTIVITY'})
+        });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return fetch('/api/v1/snapshot').then((response) => response.json());
+      })()`,
+      awaitPromise: true,
+      returnByValue: true,
+    });
+    if (expressionResult.result.value.mode !== "IDLE" ||
+        expressionResult.result.value.companion_frame !== expected) {
+      throw new Error(`companion expression did not reach ${expected}: ${JSON.stringify(expressionResult.result.value)}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    const expressionShot = await rpc("Page.captureScreenshot", {
+      format: "png", fromSurface: true, captureBeyondViewport: false,
+    });
+    const expressionPath = outputPath.replace(/\.png$/, `-${suffix}.png`);
+    fs.writeFileSync(expressionPath, Buffer.from(expressionShot.data, "base64"));
+  }
 }
 
 const layoutResult = await rpc("Runtime.evaluate", {

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:50 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:42 EST
+// Last Modified at: 2026-11-14 11:43 EST
 // Last Modified by: Codex
 // Samples six active-low GPIOs and forwards portable system intents without touching spare pins.
 
@@ -28,12 +28,13 @@ void ButtonAdapter::begin(std::uint32_t now_ms) {
   input_.begin(now_ms, readReleasedLevels());
 }
 
-bool ButtonAdapter::poll(std::uint32_t now_ms, app::SystemController& system) {
+bool ButtonAdapter::poll(std::uint32_t now_ms, app::ProductShell& product) {
   bool changed = false;
-  const bool game_playing = system.snapshot().mode == app::SystemMode::Playing;
+  const bool game_playing = product.snapshot().mode == app::ProductMode::Active &&
+                            product.snapshot().system.mode == app::SystemMode::Playing;
   const app::ButtonEvents events = input_.poll(now_ms, readReleasedLevels(), game_playing);
   for (std::size_t index = 0U; index < events.count; ++index) {
-    changed = system.handle(events.values[index]) || changed;
+    changed = product.handle(events.values[index], now_ms) || changed;
   }
   return changed;
 }

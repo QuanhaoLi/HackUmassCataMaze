@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:37 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:16 EST
+Last Modified at: 2026-11-14 11:42 EST
 Last Modified by: Codex
 Defines the accessible Native simulator shell around the two authoritative OLED canvases.
 -->
@@ -31,13 +31,13 @@ Defines the accessible Native simulator shell around the two authoritative OLED 
         <div class="device-mark">CATAMAZE // DEV-01</div>
         <div class="screens">
           <article class="screen-module">
-            <div class="screen-heading"><span>LEFT OLED / FOCUS</span><span>128×64</span></div>
+            <div class="screen-heading"><span>LEFT OLED / EYE + FOCUS</span><span>128×64</span></div>
             <div class="screen-bezel">
               <canvas id="map-screen" width="128" height="64" aria-label="Player local map OLED"></canvas>
             </div>
           </article>
           <article class="screen-module">
-            <div class="screen-heading"><span>RIGHT OLED / CONTEXT</span><span>128×64</span></div>
+            <div class="screen-heading"><span>RIGHT OLED / EYE + CONTEXT</span><span>128×64</span></div>
             <div class="screen-bezel">
               <canvas id="hud-screen" width="128" height="64" aria-label="Player HUD OLED"></canvas>
             </div>
@@ -73,7 +73,7 @@ Defines the accessible Native simulator shell around the two authoritative OLED 
       <aside class="utility-panel">
         <div class="utility-copy">
           <p class="eyebrow">SIMULATION CLOCK</p>
-          <p>Arrows navigate or move. <kbd>Space</kbd> confirms; hold it before a game direction to fire. Tap <kbd>C</kbd> to clear/back, or hold it for 0.8 seconds to pause/Home.</p>
+          <p>Any button wakes the companion. Arrows navigate or move. <kbd>Space</kbd> confirms; hold it before a game direction to fire. Tap <kbd>C</kbd> to clear/back, or hold it for 0.8 seconds to pause/Home.</p>
         </div>
         <div class="clock-actions">
           <button id="pause">Pause</button>
@@ -83,7 +83,7 @@ Defines the accessible Native simulator shell around the two authoritative OLED 
         <form id="reset-form">
           <label for="seed">Explicit seed</label>
           <input id="seed" name="seed" value="0x000000000134fd5a" spellcheck="false">
-          <button type="submit">Reboot to Home</button>
+          <button type="submit">Reboot Companion</button>
         </form>
       </aside>
     </main>

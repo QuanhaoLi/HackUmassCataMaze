@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:50 EST
 // Created by: Codex
-// Last Modified at: 2026-11-15 00:28 EST
+// Last Modified at: 2026-11-14 11:43 EST
 // Last Modified by: Codex
 // Composes deterministic gameplay with verified buttons, two OLED buses, and optional Serial audio.
 
@@ -11,8 +11,8 @@
 
 #include "button_adapter.hpp"
 #include "catamaze/app/audio_event.hpp"
-#include "catamaze/app/system_controller.hpp"
-#include "catamaze/render/system_renderer.hpp"
+#include "catamaze/app/product_shell.hpp"
+#include "catamaze/render/product_renderer.hpp"
 #include "display_adapter.hpp"
 #include "hardware_config.hpp"
 #include "policy_adapter.hpp"
@@ -22,7 +22,7 @@ SET_LOOP_TASK_STACK_SIZE(48U * 1024U);
 
 namespace {
 
-catamaze::app::SystemController* product_controller = nullptr;
+catamaze::app::ProductShell* product_controller = nullptr;
 catamaze::esp32::ButtonAdapter buttons;
 catamaze::esp32::DisplayAdapter displays;
 catamaze::esp32::SerialAudioAdapter audio;
@@ -31,10 +31,10 @@ bool hardware_ready = false;
 bool boot_diagnostics_pending = true;
 std::uint32_t next_tick_ms = 0U;
 
-catamaze::app::SystemController& product() { return *product_controller; }
+catamaze::app::ProductShell& product() { return *product_controller; }
 
 void renderBoth() {
-  const auto frames = catamaze::render::SystemRenderer::screens(
+  const auto frames = catamaze::render::ProductRenderer::screens(
       product().snapshot(), product().playerObservation(), product().application().state());
   displays.queueMap(frames.left);
   displays.queueHud(frames.right);
@@ -42,16 +42,21 @@ void renderBoth() {
 
 void printBootDiagnostics() {
   const auto& display = displays.diagnostics();
-  const auto& snapshot = product().snapshot();
+  const auto& product_snapshot = product().snapshot();
+  const auto& snapshot = product_snapshot.system;
   const auto& policy_status = policy.diagnostics();
-  const std::string_view mode = catamaze::app::systemModeName(snapshot.mode);
+  const std::string_view mode = catamaze::app::productModeName(product_snapshot.mode);
+  const std::string_view system_mode = catamaze::app::systemModeName(snapshot.mode);
+  const std::string_view companion_frame =
+      catamaze::app::companionFrameName(product_snapshot.companion_frame);
   Serial0.printf(
-      "CATAMAZE_BOOT {\"schema\":\"catamaze.boot.v3\","
+      "CATAMAZE_BOOT {\"schema\":\"catamaze.boot.v4\","
       "\"flash_bytes\":%lu,\"psram_found\":%s,\"psram_bytes\":%lu,"
       "\"map_i2c_count\":%u,\"map_i2c_address\":%u,"
       "\"hud_i2c_count\":%u,\"hud_i2c_address\":%u,"
       "\"button_count\":%u,\"gpio10_configured\":false,"
-      "\"system_mode\":\"%.*s\",\"confirmed_map_size\":%u,"
+      "\"mode\":\"%.*s\",\"system_mode\":\"%.*s\","
+      "\"companion_frame\":\"%.*s\",\"confirmed_map_size\":%u,"
       "\"tick_budget\":%u,"
       "\"policy\":\"ESP-DL-W8A16\",\"policy_runtime\":\"3.3.11\","
       "\"policy_artifact_bytes\":%u,\"policy_artifact_sha256\":\"%s\","
@@ -69,7 +74,9 @@ void printBootDiagnostics() {
       static_cast<unsigned>(display.map_device_count), static_cast<unsigned>(display.map_address),
       static_cast<unsigned>(display.hud_device_count), static_cast<unsigned>(display.hud_address),
       static_cast<unsigned>(catamaze::esp32::kButtonPins.size()), static_cast<int>(mode.size()),
-      mode.data(), static_cast<unsigned>(snapshot.confirmed_map_size),
+      mode.data(), static_cast<int>(system_mode.size()), system_mode.data(),
+      static_cast<int>(companion_frame.size()), companion_frame.data(),
+      static_cast<unsigned>(snapshot.confirmed_map_size),
       static_cast<unsigned>(snapshot.tick_budget),
       static_cast<unsigned>(catamaze::esp32::kPolicyArtifactBytes),
       catamaze::esp32::kPolicyArtifactSha256, policy_status.ready ? "true" : "false",
@@ -90,9 +97,11 @@ void printBootDiagnostics() {
 
 void setup() {
   Serial0.begin(catamaze::esp32::kSerialBaud);
-  static catamaze::app::SystemController system_instance(catamaze::esp32::kDefaultSeed);
-  product_controller = &system_instance;
-  buttons.begin(millis());
+  static catamaze::app::ProductShell product_instance(catamaze::esp32::kDefaultSeed);
+  product_controller = &product_instance;
+  const std::uint32_t started_ms = millis();
+  product().begin(started_ms);
+  buttons.begin(started_ms);
   const bool memory_ok = ESP.getFlashChipSize() == 16U * 1024U * 1024U && psramFound() &&
                          ESP.getPsramSize() == 8U * 1024U * 1024U;
   hardware_ready = memory_ok && displays.begin();
@@ -120,6 +129,7 @@ void loop() {
   }
 
   if (buttons.poll(now, product())) renderBoth();
+  if (product().update(now)) renderBoth();
 
   if (static_cast<std::int32_t>(now - next_tick_ms) >= 0) {
     const std::uint16_t previous_tick = product().application().state().tick;

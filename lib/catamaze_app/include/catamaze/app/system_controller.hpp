@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 07:02 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:02 EST
+// Last Modified at: 2026-11-14 11:30 EST
 // Last Modified by: Codex
 // Declares portable Home, Setup, Game, Pause, Result, and six-button navigation semantics.
 
@@ -56,6 +56,7 @@ class SystemController {
 
   bool handle(SystemInput input) noexcept;
   void tick() noexcept;
+  void abandonToHome() noexcept;
 
   const SystemSnapshot& snapshot() const noexcept { return snapshot_; }
   const Application& application() const noexcept { return application_; }

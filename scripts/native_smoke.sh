@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 02:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:21 EST
+# Last Modified at: 2026-11-14 11:38 EST
 # Last Modified by: Codex
 # Builds and executes a bounded headless Native gameplay acceptance check.
 
@@ -51,8 +51,11 @@ done
 
 curl -fsS "${base_url}/health" | jq -e '.status == "ok"' >/dev/null
 curl -fsS "${base_url}/api/v1/snapshot" | jq -e \
-  '.schema == "catamaze.snapshot.v2" and .mode == "HOME" and .system.confirmed_map_size == 30 and (.left_frame_hex | length) == 2048 and (.right_frame_hex | length) == 2048 and .tick == 0' \
+  '.schema == "catamaze.snapshot.v3" and .mode == "IDLE" and .system_mode == "HOME" and .companion_frame == "NEUTRAL" and .system.confirmed_map_size == 30 and (.left_frame_hex | length) == 2048 and (.right_frame_hex | length) == 2048 and .tick == 0' \
   >/dev/null
+curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"input":"FIRE"}' "${base_url}/api/v1/input" | \
+  jq -e '.accepted == true' >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
   -d '{"input":"FIRE"}' "${base_url}/api/v1/input" | \
   jq -e '.accepted == true' >/dev/null
@@ -96,10 +99,27 @@ done
 [[ "${sound_tick}" == "2" ]]
 jq -e '.last_events | any(.type == "PLAYER_SHOT")' <<<"${sound_snapshot}" >/dev/null
 
+pre_prompt_hash="$(jq -r '.state_hash' <<<"${sound_snapshot}")"
+curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"command":"ELAPSE_INACTIVITY"}' "${base_url}/api/v1/clock" | \
+  jq -e '.accepted == true' >/dev/null
+prompt_snapshot=""
+for _ in {1..40}; do
+  prompt_snapshot="$(curl -fsS "${base_url}/api/v1/snapshot")"
+  [[ "$(jq -r '.mode' <<<"${prompt_snapshot}")" == "INACTIVITY_PROMPT" ]] && break
+  sleep 0.05
+done
+jq -e --arg hash "${pre_prompt_hash}" \
+  '.mode == "INACTIVITY_PROMPT" and .system_mode == "PAUSED" and .tick == 2 and .state_hash == $hash and .system.prompt_focus == 0' \
+  <<<"${prompt_snapshot}" >/dev/null
+curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"input":"CLEAR_SHORT"}' "${base_url}/api/v1/input" | \
+  jq -e '.accepted == true' >/dev/null
+
 curl -fsS -X POST -H 'Content-Type: application/json' \
   -d '{"seed":"0x0000000000000042"}' "${base_url}/api/v1/reset" | \
   jq -e '.accepted == true' >/dev/null
-for input in DOWN FIRE LEFT LEFT DOWN FIRE; do
+for input in FIRE DOWN FIRE LEFT LEFT DOWN FIRE; do
   curl -fsS -X POST -H 'Content-Type: application/json' \
     -d "{\"input\":\"${input}\"}" "${base_url}/api/v1/input" | \
     jq -e '.accepted == true' >/dev/null
@@ -107,10 +127,10 @@ done
 configured_snapshot=""
 for _ in {1..40}; do
   configured_snapshot="$(curl -fsS "${base_url}/api/v1/snapshot")"
-  [[ "$(jq -r '.mode' <<<"${configured_snapshot}")" == "PLAYING" ]] && break
+  [[ "$(jq -r '.system_mode' <<<"${configured_snapshot}")" == "PLAYING" ]] && break
   sleep 0.05
 done
-jq -e '.mode == "PLAYING" and .system.confirmed_map_size == 12 and .system.tick_budget == 480' \
+jq -e '.mode == "ACTIVE" and .system_mode == "PLAYING" and .system.confirmed_map_size == 12 and .system.tick_budget == 480' \
   <<<"${configured_snapshot}" >/dev/null
 
 invalid_status="$(curl -sS -o "${artifact_dir}/invalid.json" -w '%{http_code}' \

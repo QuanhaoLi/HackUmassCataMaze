@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:27 EST
+Last Modified at: 2026-11-14 11:45 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -180,6 +180,15 @@ Pass conditions:
 - Expression timing feels alive without rapid flashing or blocking input.
 - A user can distinguish Companion Idle, Home, Pause Menu, and Inactivity Prompt without instruction.
 - M5 remains separate: physical buttons, ESP-DL latency/fallback, eyes, audio, and a complete Game Session still require hardware observation.
+
+### Native completion evidence — 2026-11-14
+
+- Portable shell tests prove all seven resolved Wake intents are consumed, 30,000 ms boundaries and `millis()` wrap are exact, and Continue/Sleep preserve or abandon the correct session.
+- All nine expressions have deterministic pixel coverage; Chrome captures Neutral, Look Right, Curious, Surprised, and Neutral return at desktop size plus a clean 390 px layout.
+- Normal, ASan, and UBSan suites each pass 81/81; randomized 100,000 ticks retain hash `0xe0a00023687fb22a`; coverage is 90.29% lines and 81.00% branches.
+- Native snapshot v3 and browser automation pass Wake, second-FIRE Play, 30-second prompt, Continue, explicit Sleep, and exact framebuffer checks.
+- Local model checks pass artifact SHA-256, the frozen 10,000-observation 98.61% agreement report, four export/recurrent tests, and the portable provider/fallback integration test.
+- Combined Companion Idle plus ESP-DL product firmware compiles at 54,924 bytes RAM and 2,908,791 bytes Flash. No upload occurred because GPIO7/GPIO15/GPIO16 still fail the physical raw-input gate, so C1 remains `IN_PROGRESS`.
 
 ## M3 — Native product hardening
 

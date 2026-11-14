@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 07:02 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:20 EST
+// Last Modified at: 2026-11-14 11:30 EST
 // Last Modified by: Codex
 // Implements deterministic launcher, preset, pause, confirmation, and result transitions.
 
@@ -270,6 +270,8 @@ void SystemController::tick() noexcept {
     snapshot_.focus = 0U;
   }
 }
+
+void SystemController::abandonToHome() noexcept { enterHome(); }
 
 core::PlayerObservation SystemController::playerObservation() const noexcept {
   return application_.playerObservation();

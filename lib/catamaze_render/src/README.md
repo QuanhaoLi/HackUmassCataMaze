@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:09 EST
+Last Modified at: 2026-11-14 11:34 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Documents renderer implementation ownership.
 |-framebuffer.cpp — Implements bounds-safe pixel, primitive, and fixed-font drawing.
+|-product_renderer.cpp — Implements expressive dual-eye frames and the guarded inactivity prompt.
 |-renderer.cpp — Implements the full-width 9×5 square-tile player Map and icon-based HP/AMMO HUD.
 |-system_renderer.cpp — Implements retro dual-screen launcher and menu framebuffers.
 

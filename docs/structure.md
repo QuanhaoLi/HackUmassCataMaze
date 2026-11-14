@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:34 EST
+Last Modified at: 2026-11-14 11:34 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -282,15 +282,20 @@ Clock requests:
 {"mode":"REALTIME"}
 {"mode":"PAUSED"}
 {"command":"STEP"}
+{"command":"ELAPSE_INACTIVITY"}
 ```
+
+`ELAPSE_INACTIVITY` advances only the Native companion activity clock by the canonical 30 seconds for deterministic browser acceptance. It does not advance Game Core ticks, AI, bullets, ammo, or model hidden state and is not compiled into ESP32 firmware.
 
 The snapshot response has a versioned envelope:
 
 ```json
 {
-  "schema":"catamaze.snapshot.v2",
+  "schema":"catamaze.snapshot.v3",
   "rules":"catamaze.rules.v1",
-  "mode":"HOME",
+  "mode":"IDLE",
+  "system_mode":"HOME",
+  "companion_frame":"NEUTRAL",
   "seed":"0x000000000134fd5a",
   "state_hash":"0x0000000000000000",
   "status":"RUNNING",

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:37 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:21 EST
+// Last Modified at: 2026-11-14 11:36 EST
 // Last Modified by: Codex
 // Implements a bounded-command Native adapter with one simulation owner and immutable snapshots.
 
@@ -28,9 +28,9 @@
 #include <thread>
 
 #include "catamaze/app/audio_event.hpp"
-#include "catamaze/app/system_controller.hpp"
+#include "catamaze/app/product_shell.hpp"
 #include "catamaze/core/version.hpp"
-#include "catamaze/render/system_renderer.hpp"
+#include "catamaze/render/product_renderer.hpp"
 
 namespace catamaze::native {
 namespace {
@@ -43,6 +43,7 @@ enum class CommandType : std::uint8_t {
   Pause,
   Realtime,
   Step,
+  ElapseInactivity,
 };
 
 struct Command {
@@ -166,17 +167,24 @@ Json playerObservableEvents(const core::WorldState& state) {
   return events;
 }
 
+std::uint32_t steadyMilliseconds() noexcept {
+  const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::steady_clock::now().time_since_epoch());
+  return static_cast<std::uint32_t>(elapsed.count());
+}
+
 }  // namespace
 
 class NativeServer::Impl {
  public:
   explicit Impl(NativeServerOptions options)
       : options_(std::move(options)),
-        system_(options_.seed),
+        product_(options_.seed),
         realtime_(!options_.start_paused),
         index_html_(readAsset(options_.web_root, "index.html")),
         app_css_(readAsset(options_.web_root, "app.css")),
         app_js_(readAsset(options_.web_root, "app.js")) {
+    product_.begin(shellNowMs());
     publishSnapshot();
     configureRoutes();
   }
@@ -206,6 +214,9 @@ class NativeServer::Impl {
 
  private:
   static constexpr std::size_t kCommandCapacity = 128U;
+  static constexpr std::chrono::milliseconds kShellUpdateInterval{100};
+
+  std::uint32_t shellNowMs() const noexcept { return steadyMilliseconds() + shell_time_offset_ms_; }
 
   bool enqueue(Command command) {
     std::lock_guard<std::mutex> lock(command_mutex_);
@@ -247,16 +258,16 @@ class NativeServer::Impl {
   }
 
   void simulationLoop() {
-    auto next_tick = std::chrono::steady_clock::now() + options_.tick_interval;
+    const auto started = std::chrono::steady_clock::now();
+    auto next_tick = started + options_.tick_interval;
+    auto next_shell_update = started + kShellUpdateInterval;
     while (running_.load()) {
       {
         std::unique_lock<std::mutex> lock(command_mutex_);
-        if (realtime_) {
-          command_ready_.wait_until(lock, next_tick,
-                                    [this] { return !running_.load() || command_size_ > 0U; });
-        } else {
-          command_ready_.wait(lock, [this] { return !running_.load() || command_size_ > 0U; });
-        }
+        const auto deadline =
+            realtime_ && next_tick < next_shell_update ? next_tick : next_shell_update;
+        command_ready_.wait_until(lock, deadline,
+                                  [this] { return !running_.load() || command_size_ > 0U; });
       }
       if (!running_.load()) {
         break;
@@ -267,12 +278,15 @@ class NativeServer::Impl {
       while (popCommand(command)) {
         switch (command.type) {
           case CommandType::Input:
-            system_.handle(command.input);
+            product_.handle(command.input, shellNowMs());
             changed = true;
             break;
           case CommandType::Reset:
-            system_ = app::SystemController(command.seed);
+            shell_time_offset_ms_ = 0U;
+            product_ = app::ProductShell(command.seed);
+            product_.begin(shellNowMs());
             next_tick = std::chrono::steady_clock::now() + options_.tick_interval;
+            next_shell_update = std::chrono::steady_clock::now() + kShellUpdateInterval;
             changed = true;
             break;
           case CommandType::Pause:
@@ -286,16 +300,26 @@ class NativeServer::Impl {
             break;
           case CommandType::Step:
             if (!realtime_) {
-              system_.tick();
+              product_.tick();
               changed = true;
             }
+            break;
+          case CommandType::ElapseInactivity:
+            shell_time_offset_ms_ += app::ProductShell::kInactivityMs;
+            product_.update(shellNowMs());
+            changed = true;
             break;
         }
       }
 
       const auto now = std::chrono::steady_clock::now();
+      if (now >= next_shell_update) {
+        changed = product_.update(shellNowMs()) || changed;
+        next_shell_update += kShellUpdateInterval;
+        if (next_shell_update <= now) next_shell_update = now + kShellUpdateInterval;
+      }
       if (realtime_ && now >= next_tick) {
-        system_.tick();
+        product_.tick();
         next_tick += options_.tick_interval;
         if (next_tick <= now) {
           next_tick = now + options_.tick_interval;
@@ -309,33 +333,38 @@ class NativeServer::Impl {
   }
 
   void publishSnapshot() {
-    const auto frames = render::SystemRenderer::screens(
-        system_.snapshot(), system_.playerObservation(), system_.application().state());
-    const auto& state = system_.application().state();
-    const auto& system_state = system_.snapshot();
+    const auto frames = render::ProductRenderer::screens(
+        product_.snapshot(), product_.playerObservation(), product_.application().state());
+    const auto& state = product_.application().state();
+    const auto& product_state = product_.snapshot();
+    const auto& system_state = product_state.system;
     const auto& player = state.entities[core::entityIndex(core::EntityId::Player)];
-    Json snapshot{{"schema", "catamaze.snapshot.v2"},
-                  {"rules", std::string(core::kRulesVersion)},
-                  {"mode", std::string(app::systemModeName(system_state.mode))},
-                  {"seed", hex64(state.seed)},
-                  {"state_hash", hex64(system_.application().stateHash())},
-                  {"status", std::string(core::toString(state.status))},
-                  {"tick", state.tick},
-                  {"system",
-                   {{"focus", system_state.focus},
-                    {"confirmed_map_size", system_state.confirmed_map_size},
-                    {"pending_map_size", system_state.pending_map_size},
-                    {"tick_budget", system_state.tick_budget},
-                    {"has_active_session", system_state.has_active_session}}},
-                  {"player",
-                   {{"hp", player.hp},
-                    {"ammo", player.ammo},
-                    {"queue", state.player_queue.size()},
-                    {"x", player.position.x},
-                    {"y", player.position.y}}},
-                  {"left_frame_hex", frameHex(frames.left)},
-                  {"right_frame_hex", frameHex(frames.right)},
-                  {"last_events", playerObservableEvents(state)}};
+    Json snapshot{
+        {"schema", "catamaze.snapshot.v3"},
+        {"rules", std::string(core::kRulesVersion)},
+        {"mode", std::string(app::productModeName(product_state.mode))},
+        {"system_mode", std::string(app::systemModeName(system_state.mode))},
+        {"companion_frame", std::string(app::companionFrameName(product_state.companion_frame))},
+        {"seed", hex64(state.seed)},
+        {"state_hash", hex64(product_.application().stateHash())},
+        {"status", std::string(core::toString(state.status))},
+        {"tick", state.tick},
+        {"system",
+         {{"focus", system_state.focus},
+          {"confirmed_map_size", system_state.confirmed_map_size},
+          {"pending_map_size", system_state.pending_map_size},
+          {"tick_budget", system_state.tick_budget},
+          {"has_active_session", system_state.has_active_session},
+          {"prompt_focus", product_state.prompt_focus}}},
+        {"player",
+         {{"hp", player.hp},
+          {"ammo", player.ammo},
+          {"queue", state.player_queue.size()},
+          {"x", player.position.x},
+          {"y", player.position.y}}},
+        {"left_frame_hex", frameHex(frames.left)},
+        {"right_frame_hex", frameHex(frames.right)},
+        {"last_events", playerObservableEvents(state)}};
     std::lock_guard<std::mutex> lock(snapshot_mutex_);
     snapshot_json_ = snapshot.dump();
   }
@@ -412,37 +441,41 @@ class NativeServer::Impl {
       response.set_content("{\"accepted\":true}", "application/json; charset=utf-8");
     });
 
-    server_.Post(
-        "/api/v1/clock", [this](const httplib::Request& request, httplib::Response& response) {
-          Json body;
-          if (!parseJsonBody(request, response, body)) return;
-          if (body.size() != 1U) {
-            jsonError(response, 400, "INVALID_CLOCK_COMMAND",
-                      "clock accepts exactly one mode or command field");
-            return;
-          }
-          CommandType type = CommandType::Pause;
-          if (body.contains("mode") && body["mode"] == "PAUSED") {
-            type = CommandType::Pause;
-          } else if (body.contains("mode") && body["mode"] == "REALTIME") {
-            type = CommandType::Realtime;
-          } else if (body.contains("command") && body["command"] == "STEP") {
-            type = CommandType::Step;
-          } else {
-            jsonError(response, 400, "INVALID_CLOCK_COMMAND", "use PAUSED, REALTIME, or STEP");
-            return;
-          }
-          if (!enqueue(Command{type, app::SystemInput::Fire, 0U})) {
-            jsonError(response, 409, "COMMAND_QUEUE_FULL", "Native command queue is full");
-            return;
-          }
-          response.status = 202;
-          response.set_content("{\"accepted\":true}", "application/json; charset=utf-8");
-        });
+    server_.Post("/api/v1/clock",
+                 [this](const httplib::Request& request, httplib::Response& response) {
+                   Json body;
+                   if (!parseJsonBody(request, response, body)) return;
+                   if (body.size() != 1U) {
+                     jsonError(response, 400, "INVALID_CLOCK_COMMAND",
+                               "clock accepts exactly one mode or command field");
+                     return;
+                   }
+                   CommandType type = CommandType::Pause;
+                   if (body.contains("mode") && body["mode"] == "PAUSED") {
+                     type = CommandType::Pause;
+                   } else if (body.contains("mode") && body["mode"] == "REALTIME") {
+                     type = CommandType::Realtime;
+                   } else if (body.contains("command") && body["command"] == "STEP") {
+                     type = CommandType::Step;
+                   } else if (body.contains("command") && body["command"] == "ELAPSE_INACTIVITY") {
+                     type = CommandType::ElapseInactivity;
+                   } else {
+                     jsonError(response, 400, "INVALID_CLOCK_COMMAND",
+                               "use PAUSED, REALTIME, STEP, or ELAPSE_INACTIVITY");
+                     return;
+                   }
+                   if (!enqueue(Command{type, app::SystemInput::Fire, 0U})) {
+                     jsonError(response, 409, "COMMAND_QUEUE_FULL", "Native command queue is full");
+                     return;
+                   }
+                   response.status = 202;
+                   response.set_content("{\"accepted\":true}", "application/json; charset=utf-8");
+                 });
   }
 
   NativeServerOptions options_;
-  app::SystemController system_;
+  app::ProductShell product_;
+  std::uint32_t shell_time_offset_ms_{0U};
   std::atomic<bool> running_{false};
   bool realtime_{true};
   std::array<Command, kCommandCapacity> commands_{};

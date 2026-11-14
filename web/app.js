@@ -1,7 +1,7 @@
 /*
 Created at: 2026-11-14 02:37 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:23 EST
+Last Modified at: 2026-11-14 11:36 EST
 Last Modified by: Codex
 Resolves physical button semantics, calls the versioned API, and paints authoritative framebuffers.
 */
@@ -121,14 +121,19 @@ function paint(canvas, hex) {
 }
 
 function render(snapshot) {
-  if (snapshot.schema !== "catamaze.snapshot.v2") {
+  if (snapshot.schema !== "catamaze.snapshot.v3") {
     throw new Error("unsupported snapshot schema");
   }
   paint(elements.map, snapshot.left_frame_hex);
   paint(elements.hud, snapshot.right_frame_hex);
-  const gameSuffix = snapshot.mode === "PLAYING" || snapshot.mode === "RESULT"
-    ? ` / ${snapshot.status}` : "";
-  elements.status.textContent = `${snapshot.mode}${gameSuffix}`;
+  let status = snapshot.mode;
+  if (snapshot.mode === "IDLE") status = `IDLE / ${snapshot.companion_frame}`;
+  if (snapshot.mode === "ACTIVE") status = snapshot.system_mode;
+  if (snapshot.mode === "ACTIVE" &&
+      (snapshot.system_mode === "PLAYING" || snapshot.system_mode === "RESULT")) {
+    status = `${snapshot.system_mode} / ${snapshot.status}`;
+  }
+  elements.status.textContent = status;
   elements.tick.textContent = String(snapshot.tick).padStart(5, "0");
   elements.hash.textContent = snapshot.state_hash;
   state.lastSnapshot = snapshot;
@@ -165,7 +170,8 @@ async function sendInput(input) {
 }
 
 function directionInput(direction) {
-  const playing = state.lastSnapshot?.mode === "PLAYING";
+  const playing = state.lastSnapshot?.mode === "ACTIVE" &&
+    state.lastSnapshot?.system_mode === "PLAYING";
   return playing && state.fireHeld ? `SHOOT_${direction}` : direction;
 }
 

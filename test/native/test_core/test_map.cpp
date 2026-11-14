@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:06 EST
+// Last Modified at: 2026-11-14 11:42 EST
 // Last Modified by: Codex
 // Verifies portable randomness, deterministic maze generation, and connectivity invariants.
 
@@ -78,7 +78,9 @@ TEST(MazeGenerator, EveryReviewedPresetIsDeterministicConnectedAndBounded) {
               << "preset " << static_cast<unsigned>(map_size) << " at " << x << ',' << y;
         }
         const bool boundary = x == 0 || y == 0 || x == map_size - 1 || y == map_size - 1;
-        if (boundary && position != first.exit) EXPECT_EQ(terrain, Terrain::Wall);
+        if (boundary && position != first.exit) {
+          EXPECT_EQ(terrain, Terrain::Wall);
+        }
       }
     }
     EXPECT_EQ(entrance_count, 1U);

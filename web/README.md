@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:16 EST
+Last Modified at: 2026-11-14 11:34 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,7 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Documents browser asset ownership.
 |-app.css — Styles the responsive handheld simulator and pixel-perfect OLED surfaces.
-|-app.js — Resolves FIRE sampling and CLEAR short/long gestures, calls versioned APIs, and paints exact framebuffer bytes.
+|-app.js — Resolves Wake/FIRE/CLEAR gestures, calls versioned shell APIs, and paints exact companion/system framebuffer bytes.
 |-index.html — Defines the accessible two-screen simulator shell and controls.
 
 ## To-Dos

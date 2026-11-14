@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 05:02 EST
 # Created by: Codex
-# Last Modified at: 2026-11-15 00:28 EST
+# Last Modified at: 2026-11-14 11:45 EST
 # Last Modified by: Codex
 # Gates product upload behind a fresh passing diagnostic and validates product boot evidence.
 
@@ -34,7 +34,7 @@ done
 boot_json="$(sed -n 's/^CATAMAZE_BOOT //p' "${artifact_dir}/product-serial.log" | head -n 1)"
 [[ -n "${boot_json}" ]]
 jq -e '
-  .schema == "catamaze.boot.v3" and
+  .schema == "catamaze.boot.v4" and
   .flash_bytes == 16777216 and
   .psram_found == true and
   .psram_bytes == 8388608 and
@@ -51,7 +51,8 @@ jq -e '
   .policy_boot_max_hidden_error <= 0.18 and
   .policy_boot_three_inference_us > 0 and .policy_boot_three_inference_us <= 900000 and
   .policy_fallback_latched == false and
-  .system_mode == "HOME" and .confirmed_map_size == 30 and .tick_budget == 1200 and
+  .mode == "IDLE" and .system_mode == "HOME" and .companion_frame == "NEUTRAL" and
+  .confirmed_map_size == 30 and .tick_budget == 1200 and
   .loop_stack_high_water_words > 4096 and .ready == true
 ' <<<"${boot_json}" >/dev/null
 
