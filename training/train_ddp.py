@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 06:58 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:01 EST
+# Last Modified at: 2026-11-14 07:05 EST
 # Last Modified by: Codex
 # Runs resumable four-rank DDP training of one production recurrent policy.
 
@@ -254,6 +254,7 @@ def run(arguments: argparse.Namespace) -> None:
     _barrier(device)
 
     started = perf_counter()
+    session_start_steps = int(state["agent_steps"])
     try:
         while int(state["agent_steps"]) < policy_target:
             progress = int(state["agent_steps"]) / int(config["total_agent_steps"])
@@ -298,7 +299,10 @@ def run(arguments: argparse.Namespace) -> None:
                 record = {
                     "update": state["update"],
                     "agent_steps": state["agent_steps"],
-                    "agent_steps_per_second": int(state["agent_steps"]) / (perf_counter() - started),
+                    "agent_steps_per_second": (
+                        int(state["agent_steps"]) - session_start_steps
+                    )
+                    / (perf_counter() - started),
                     "curriculum_stage": controller.stage,
                     "learning_rate": learning_rate,
                     "entropy_coef": entropy_coef,
