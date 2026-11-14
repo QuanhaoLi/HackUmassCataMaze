@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:37 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 00:16 EST
+Last Modified at: 2026-11-14 02:09 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
@@ -27,6 +27,16 @@ CataMaze is a **standalone, single-player maze escape game** running on an ESP32
 | Sound output | **Active buzzer**, controlled on/off by ESP32-S3 |
 
 The map uses `#` (wall), `.` (path), `S` (entrance marker), and `E` (single exit). Map edges are walls except at the exit. The player and three AI spawn on different reachable cells, never on `E`; spawning at `S` is not required.
+
+The v1 implementation uses versioned generator `dfs-grid-v1`:
+
+1. Fill the 50×50 map with walls. Logical maze cells are the 24×24 odd-coordinate cells where `x,y ∈ {1,3,...,47}`.
+2. Starting at `(1,1)`, run an iterative depth-first backtracker. Candidate directions begin in `UP, RIGHT, DOWN, LEFT` order and are shuffled only by the repository-owned PCG32 generator initialized from an explicit 64-bit seed.
+3. Mark `(1,1)` as `S`. Among reachable logical cells adjacent to an outer boundary, select the one with greatest shortest-path distance from `S`; break equal-distance ties by lower `y`, then lower `x`.
+4. Open exactly one adjacent boundary cell as `E`. If several boundary sides touch the selected logical cell, choose `RIGHT, DOWN, LEFT, UP` in that order.
+5. Place the player on `S`. Sort remaining walkable non-`E` cells by descending shortest-path distance from the player, then lower `y`, then lower `x`; assign the first three distinct cells to aggressive, cautious, and explorer respectively.
+
+General rules do not require every future generator to spawn the player at `S`, but `dfs-grid-v1` does. Reusing the same generator version and seed must reproduce the same terrain, exit, and initial entity positions on every target.
 
 ## 2. Two OLED Screens
 
@@ -66,12 +76,19 @@ There is **no `STATUS` field**. The HUD refreshes after ticks and immediately wh
 
 ## 3. Controls and Queue
 
-There are **nine actions**: move up/down/left/right, shoot up/down/left/right, and wait. No diagonal moves or shots. Physical button assignments will be specified in `hardware.md` after wiring.
+There are **nine queued actions**: move up/down/left/right, shoot up/down/left/right, and wait. No diagonal moves or shots. Seven physical buttons produce them:
+
+- A debounced direction press samples FIRE at that moment.
+- If FIRE is already held, the direction enqueues a shot; otherwise it enqueues movement.
+- FIRE pressed by itself has no action. Pressing FIRE after a direction event does not alter the queued action.
+- WAIT enqueues one wait action.
+- CLEAR immediately deletes all queued actions that have not begun execution.
+- Default debounce is 20 ms. Holding a button never repeats; a new event requires a debounced release followed by another press.
 
 - Inputs enter a **FIFO queue**; maximum length is 32.
 - Each tick consumes **one** queued player action; if empty, the player waits.
 - A full queue rejects new actions without overwriting previous ones.
-- Clearing the queue deletes pending actions only, not the action already executing.
+- CLEAR deletes pending actions only, not the action already executing.
 - Wall collisions, entity collisions, and ammo shortages are checked **when an action executes**, not when it is queued.
 
 ## 4. Tick Resolution and Movement
@@ -90,6 +107,8 @@ Blocked moves still consume their action. All AIs follow the same movement, HP, 
 
 - Shooting uses **1 ammo**. If ammo is `0`, no bullet or gunshot event is created.
 - New bullets spawn in the adjacent cell. Existing bullets advance **one cell per tick**, never through walls. A bullet disappears when it hits an entity, wall, or map edge.
+- A new shot aimed into an adjacent wall or outside the map still consumes ammo and disappears immediately. A new shot whose adjacent cell contains an entity hits during that same tick.
+- Bullets do not collide with other bullets. Opposing bullets may cross or share a cell; each continues until it hits an entity, wall, or map edge.
 - Every hit deals **1 HP**. Multiple hits in one tick add together and are applied simultaneously. A bullet cannot hurt its original shooter; AI can hit other AI.
 - Bullets remain in flight after their shooter dies. HP never regenerates.
 - Ammo regenerates by **1 after every 2 eligible tick completions**, capped at 3. Shooting does not erase partial recharge progress.

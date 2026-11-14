@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 01:48 EST
+Last Modified at: 2026-11-14 02:09 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -73,7 +73,7 @@ Seven momentary push buttons provide the physical game controls. Each button use
 | ↓ | Move down | GPIO6 | Connected; press/release and debounce verified |
 | ← | Move left | GPIO7 | Connected; idle HIGH verified; final press/release test pending |
 | → | Move right | GPIO15 | Planned; not connected or tested |
-| FIRE | Fire input; directional button interaction remains to be specified | GPIO16 | Planned; not connected or tested |
+| FIRE | Hold before pressing a direction to enqueue a directional shot; FIRE alone has no action | GPIO16 | Planned; not connected or tested |
 | WAIT | Enqueue wait | GPIO10 | Planned; not connected or tested |
 | CLEAR | Clear pending input queue | GPIO11 | Planned; not connected or tested |
 
@@ -97,7 +97,9 @@ The electrical and logical contract is:
 - Pressed: `LOW`.
 - No external pull-down resistor is used. A GPIO-to-GND pull-down conflicts with `INPUT_PULLUP` and makes the button appear permanently pressed.
 - On a four-pin tactile switch, connect GPIO and GND to different electrical contact groups. Verify continuity rather than relying only on the switch's physical orientation across the breadboard center channel.
-- Debounce each button for 30 ms. Emit one press event only after the state remains LOW for the full debounce interval; do not enqueue another action until a debounced release occurs.
+- Debounce each button for 20 ms. Emit one press event only after the state remains LOW for the full debounce interval; do not enqueue another action until a debounced release occurs.
+- Sample FIRE only when a debounced direction press event is emitted. FIRE must already be held to convert that direction into a shot; pressing FIRE afterward does not modify the queued movement.
+- FIRE alone emits no game action. WAIT emits one wait action. CLEAR bypasses the FIFO and immediately clears actions that have not begun execution.
 
 Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically installed. GPIO5 and GPIO6 each passed a complete HIGH → LOW → HIGH test with exactly one debounced press count and no duplicate events during the observation period. GPIO7 is not yet fully validated.
 
