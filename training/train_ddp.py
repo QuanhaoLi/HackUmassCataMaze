@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 06:58 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:05 EST
+# Last Modified at: 2026-11-14 07:10 EST
 # Last Modified by: Codex
 # Runs resumable four-rank DDP training of one production recurrent policy.
 
@@ -135,6 +135,7 @@ def _reduce_collection(collection: Any, device: torch.device) -> list[float]:
 
 def run(arguments: argparse.Namespace) -> None:
     dist.init_process_group("nccl")
+    control_group = dist.new_group(backend="gloo")
     rank = dist.get_rank()
     world_size = dist.get_world_size()
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -321,7 +322,7 @@ def run(arguments: argparse.Namespace) -> None:
                         writer.add_scalar(f"optimization/{name}", value, int(state["agent_steps"]))
 
             if int(state["agent_steps"]) >= int(state["next_evaluation"]):
-                _barrier(device)
+                dist.barrier(group=control_group)
                 reports: dict[str, dict[str, Any]] = {}
                 if rank == 0:
                     reports = _stage_reports(
@@ -342,9 +343,9 @@ def run(arguments: argparse.Namespace) -> None:
                     controller.try_promote(int(state["agent_steps"]), reports)
                 stage_tensor = torch.tensor(
                     CurriculumController.STAGES.index(controller.stage) if rank == 0 else 0,
-                    device=device,
+                    device="cpu",
                 )
-                dist.broadcast(stage_tensor, src=0)
+                dist.broadcast(stage_tensor, src=0, group=control_group)
                 stage = CurriculumController.STAGES[int(stage_tensor)]
                 if rank != 0:
                     controller.load_state_dict({"stage": stage, "last_failures": ()})
@@ -355,7 +356,7 @@ def run(arguments: argparse.Namespace) -> None:
                 interval = int(config["evaluation"]["every_agent_steps"])
                 while int(state["next_evaluation"]) <= int(state["agent_steps"]):
                     state["next_evaluation"] = int(state["next_evaluation"]) + interval
-                _barrier(device)
+                dist.barrier(group=control_group)
 
             if int(state["agent_steps"]) >= int(state["next_checkpoint"]):
                 interval = int(config["checkpoint"]["every_agent_steps"])
@@ -414,6 +415,7 @@ def run(arguments: argparse.Namespace) -> None:
     finally:
         if writer:
             writer.close()
+        dist.destroy_process_group(control_group)
         dist.destroy_process_group()
 
 
