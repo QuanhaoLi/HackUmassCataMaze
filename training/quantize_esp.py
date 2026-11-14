@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 10:48 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 10:56 EST
+# Last Modified at: 2026-11-14 11:02 EST
 # Last Modified by: Codex
 # Quantizes the one-step ONNX policy for ESP32-S3 from real recurrent rollouts.
 
@@ -19,7 +19,7 @@ from training.env import CataMazeBatchEnv
 from training.export_esp import EmbeddedPolicyStep, load_production_model, make_esp_compatible
 
 
-def collect_calibration_samples(
+def collect_recurrent_samples(
     model: torch.nn.Module,
     *,
     count: int,
@@ -27,7 +27,7 @@ def collect_calibration_samples(
     num_envs: int,
     seed: int,
     device: torch.device,
-) -> list[list[torch.Tensor]]:
+) -> tuple[list[list[torch.Tensor]], list[torch.Tensor]]:
     if count <= 0 or environment_steps <= 0 or num_envs <= 0:
         raise ValueError("calibration dimensions must be positive")
     environment = CataMazeBatchEnv(num_envs, seed, curriculum_stage="D")
@@ -44,6 +44,7 @@ def collect_calibration_samples(
         raise RuntimeError("rollout did not produce enough active calibration samples")
     choices = torch.linspace(0, active_indices.shape[0] - 1, steps=count).round().long()
     samples: list[list[torch.Tensor]] = []
+    masks: list[torch.Tensor] = []
     for selected in active_indices[choices]:
         step, agent = int(selected[0]), int(selected[1])
         samples.append(
@@ -53,6 +54,27 @@ def collect_calibration_samples(
                 rollout.hidden[step, agent].reshape(1, 1, 256).float().contiguous(),
             ]
         )
+        masks.append(rollout.action_mask[step, agent].unsqueeze(0).bool().contiguous())
+    return samples, masks
+
+
+def collect_calibration_samples(
+    model: torch.nn.Module,
+    *,
+    count: int,
+    environment_steps: int,
+    num_envs: int,
+    seed: int,
+    device: torch.device,
+) -> list[list[torch.Tensor]]:
+    samples, _masks = collect_recurrent_samples(
+        model,
+        count=count,
+        environment_steps=environment_steps,
+        num_envs=num_envs,
+        seed=seed,
+        device=device,
+    )
     return samples
 
 
@@ -64,6 +86,7 @@ def quantize(
     calibration_path: Path,
     report_path: Path,
     calibration_count: int,
+    evaluation_count: int,
     quant_type: str,
     device: torch.device,
 ) -> dict[str, Any]:
@@ -71,14 +94,17 @@ def quantize(
     from esp_ppq.api import espdl_quantize_onnx
 
     model = load_production_model(checkpoint).to(device).eval()
-    samples = collect_calibration_samples(
+    all_samples, all_masks = collect_recurrent_samples(
         model,
-        count=calibration_count,
-        environment_steps=64,
+        count=calibration_count + evaluation_count,
+        environment_steps=128,
         num_envs=64,
         seed=20261114,
         device=device,
     )
+    samples = all_samples[:calibration_count]
+    evaluation_samples = all_samples[calibration_count:]
+    evaluation_masks = all_masks[calibration_count:]
     calibration_path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(samples, calibration_path)
 
@@ -114,8 +140,8 @@ def quantize(
     ).eval()
     maximum = {"logits": 0.0, "value": 0.0, "hidden": 0.0}
     action_matches = 0
-    evaluated = min(256, len(samples))
-    for sample in samples[:evaluated]:
+    evaluated = len(evaluation_samples)
+    for sample, action_mask in zip(evaluation_samples, evaluation_masks):
         inputs = collate(sample)
         with torch.no_grad():
             expected = wrapper(*inputs)
@@ -129,7 +155,10 @@ def quantize(
         maximum["hidden"] = max(
             maximum["hidden"], float((expected[2] - actual[2]).abs().max().cpu())
         )
-        action_matches += int(expected[0].argmax(dim=-1).item() == actual[0].argmax(dim=-1).item())
+        mask = action_mask.to(device)
+        expected_action = expected[0].masked_fill(~mask, -torch.inf).argmax(dim=-1)
+        actual_action = actual[0].masked_fill(~mask, -torch.inf).argmax(dim=-1)
+        action_matches += int(expected_action.item() == actual_action.item())
     report = {
         "quant_type": quant_type,
         "target": "esp32s3",
@@ -138,7 +167,7 @@ def quantize(
         "max_logit_error": maximum["logits"],
         "max_value_error": maximum["value"],
         "max_hidden_error": maximum["hidden"],
-        "unmasked_action_agreement": action_matches / evaluated,
+        "masked_action_agreement": action_matches / evaluated,
         "espdl_bytes": espdl_path.stat().st_size,
         "checkpoint": str(checkpoint),
         "onnx": str(onnx_path),
@@ -155,6 +184,7 @@ def main() -> None:
     parser.add_argument("--calibration", required=True)
     parser.add_argument("--report", required=True)
     parser.add_argument("--calibration-count", type=int, default=512)
+    parser.add_argument("--evaluation-count", type=int, default=10_000)
     parser.add_argument(
         "--quant-type", choices=("w8a8", "w8a16", "w16a16"), default="w8a8"
     )
@@ -167,6 +197,7 @@ def main() -> None:
         calibration_path=Path(arguments.calibration),
         report_path=Path(arguments.report),
         calibration_count=arguments.calibration_count,
+        evaluation_count=arguments.evaluation_count,
         quant_type=arguments.quant_type,
         device=torch.device(arguments.device),
     )
