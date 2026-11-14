@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 10:39 EST
+Last Modified at: 2026-11-14 10:48 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -25,6 +25,7 @@ Last Modified by: Codex
 |-opponents.py — Implements the deterministic curriculum player-policy pool.
 |-rollout.py — Stores recurrent on-policy transitions and builds masked fixed-length sequence minibatches.
 |-ppo.py — Implements GAE, clipped recurrent PPO updates, KL stopping, and optimizer metrics.
+|-quantize_esp.py — Collects real recurrent calibration samples and exports/evaluates ESP32-S3 `.espdl` quantization.
 |-reward.py — Converts structured events and state deltas into independently logged per-agent reward components.
 |-smoke.py — Runs the bounded end-to-end correctness qualification before long GPU work.
 |-train_ppo.py — Runs resumable production training, schedules, evaluation gates, metrics, and checkpoint retention.

@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 10:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 10:40 EST
+# Last Modified at: 2026-11-14 10:48 EST
 # Last Modified by: Codex
 # Verifies the fixed-shape ESP policy export and ONNX numerical parity.
 
@@ -19,6 +19,7 @@ from training.export_esp import (
     validate_onnx,
 )
 from training.model import RecurrentActorCritic
+from training.quantize_esp import collect_calibration_samples
 
 
 def test_fixed_group_norm_matches_pytorch_group_norm() -> None:
@@ -57,3 +58,23 @@ def test_onnx_export_uses_supported_ops_and_matches_pytorch(tmp_path: Path) -> N
     assert report["max_logit_error"] <= 1e-5
     assert report["max_value_error"] <= 1e-5
     assert report["max_hidden_error"] <= 1e-5
+
+
+def test_calibration_samples_include_real_recurrent_hidden_state() -> None:
+    torch.manual_seed(113)
+    model = RecurrentActorCritic().eval()
+
+    samples = collect_calibration_samples(
+        model,
+        count=8,
+        environment_steps=4,
+        num_envs=2,
+        seed=127,
+        device=torch.device("cpu"),
+    )
+
+    assert len(samples) == 8
+    assert samples[0][0].shape == (1, 13, 5, 5)
+    assert samples[0][1].shape == (1, 46)
+    assert samples[0][2].shape == (1, 1, 256)
+    assert any(torch.count_nonzero(sample[2]) > 0 for sample in samples[1:])
