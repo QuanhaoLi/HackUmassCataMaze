@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:42 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:09 EST
+Last Modified at: 2026-11-14 02:11 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,9 +11,16 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Introduces the repository and indexes its top-level structure.
 |-.gitignore — Excludes local operating-system metadata from version control.
+|-platformio.ini — Pins Native build, test, and dependency configuration.
 |-plan.md — Defines ordered implementation milestones and their executable acceptance gates.
+|-requirements-dev.txt — Pins the project-local PlatformIO Core version.
 |-agents/ — Contains mandatory operating instructions for coding agents; see `agents/README.md`.
 |-docs/ — Contains the normative game, engineering, hardware, restriction, and reinforcement-learning specifications; see `docs/README.md`.
+|-lib/ — Contains portable C++ domain, application, and rendering libraries; see `lib/README.md`.
+|-scripts/ — Contains reproducible acceptance helpers; see `scripts/README.md`.
+|-src/ — Contains thin executable entry points; see `src/README.md`.
+|-test/ — Contains target-specific automated tests; see `test/README.md`.
+|-web/ — Contains the dependency-free Native browser UI; see `web/README.md`.
 
 ## To-Dos
 - Deliver milestones in `plan.md`, preserving playable-game-first ordering.

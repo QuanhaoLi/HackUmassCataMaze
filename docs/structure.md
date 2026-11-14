@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:09 EST
+Last Modified at: 2026-11-14 02:16 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -34,9 +34,9 @@ The following are intentionally deferred until after a playable Native game exis
 | Embedded platform | PlatformIO Espressif 32 | `platformio/espressif32@8.0.0` |
 | Embedded framework | Arduino Framework | Arduino ESP32 Core `3.3.12`, supplied by Espressif 32 platform 8.0.0 |
 | Native compiler on the development Mac | Apple Clang | detected version 17; C++17 flags are explicit |
-| Native unit tests | GoogleTest | `1.18.0`, Native only |
-| Native HTTP server | cpp-httplib | `0.53.1`, NativeAdapter only |
-| JSON serialization | JSON for Modern C++ | `3.12.0`, NativeAdapter only |
+| Native unit tests | GoogleTest | PlatformIO Registry `1.17.0`, Native only |
+| Native HTTP server | cpp-httplib | upstream single header `0.53.1`, SHA-256 pinned, NativeAdapter only |
+| JSON serialization | `johboh/nlohmann-json` wrapper for JSON for Modern C++ | `3.12.0`, NativeAdapter only |
 | Browser client | HTML, CSS, JavaScript, Canvas 2D | no package manager and no bundler |
 | Screenshot acceptance | Google Chrome headless | installed system browser; invoked from a repository script |
 

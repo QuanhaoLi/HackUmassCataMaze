@@ -1,0 +1,7 @@
+# Created at: 2026-11-14 02:11 EST
+# Created by: Codex
+# Last Modified at: 2026-11-14 02:11 EST
+# Last Modified by: Codex
+
+# Project-local build and test orchestrator.
+platformio==6.2.0

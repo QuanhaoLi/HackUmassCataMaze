@@ -1,7 +1,16 @@
 # Created at: 2026-11-14 00:16 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 00:16 EST
+# Last Modified at: 2026-11-14 02:11 EST
 # Last Modified by: Codex
 
 # macOS Finder metadata must not be committed.
 .DS_Store
+
+# Project-local tools, build products, diagnostics, and visual QA artifacts.
+.venv/
+.pio/
+.artifacts/
+coverage/
+compile_commands.json
+*.profraw
+*.profdata
