@@ -37,6 +37,6 @@ The production policy contains 1,010,826 parameters and uses Conv2D, GroupNorm, 
 
 ## Released evidence
 
-The released W8A16 artifact is 1,490,800 bytes with SHA-256 `0cc8bb5025ff22c435b0107fd739560f4c4e13c16e2683a1ad3f0e0ee7044322`. On the physical N16R8 board, three sequential reference inferences completed in 126,341 microseconds. Maximum decoded errors against the frozen FP32 reference were `0.021938` logits, `0.016793` value, and `0.032408` hidden state. Runtime allocation consumed 167,508 bytes of internal memory and 1,480,032 bytes of PSRAM. The guarded product release reported `policy_ready=true` and `policy_fallback_latched=false`.
+The released W8A16 artifact is 1,490,800 bytes with SHA-256 `0cc8bb5025ff22c435b0107fd739560f4c4e13c16e2683a1ad3f0e0ee7044322`. On the final physical N16R8 release, three sequential reference inferences completed in 126,210 microseconds. Maximum decoded errors against the frozen FP32 reference were `0.021938` logits, `0.016793` value, and `0.032408` hidden state. Runtime allocation consumed 167,508 bytes of internal memory and 1,480,032 bytes of PSRAM. The guarded product release reported `policy_ready=true` and `policy_fallback_latched=false`.
 
 The 10,000-tick endurance gate remains post-release validation; any runtime tensor, finite-output, legal-mask, or 900ms latency failure immediately latches the heuristic fallback.

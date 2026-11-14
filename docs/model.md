@@ -30,13 +30,13 @@ The portable C++ action mask remains authoritative. A model output can select on
 
 ## Physical ESP32-S3 evidence
 
-The guarded release ran on the verified 16MB-Flash/8MB-PSRAM board. The firmware occupies 2,902,559 of 6,553,600 application bytes and 54,860 static RAM bytes.
+The guarded final release ran on the verified 16MB-Flash/8MB-PSRAM board. The firmware occupies 2,903,175 of 6,553,600 application bytes and 54,860 static RAM bytes.
 
 At startup, the firmware writes a frozen real recurrent observation into the model and runs three complete sequential inferences. The accepted physical result was:
 
 | Measurement | Result | Gate |
 |---|---:|---:|
-| Three sequential inferences | 126,341µs | ≤900,000µs |
+| Three sequential inferences | 126,210µs | ≤900,000µs |
 | Maximum logit error | 0.021938 | ≤0.10 |
 | Value error | 0.016793 | ≤0.50 |
 | Maximum hidden error | 0.032408 | ≤0.18 |
