@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:16 EST
+Last Modified at: 2026-11-14 02:26 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,7 +10,8 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents acceptance-script ownership.
+|-native_smoke.sh — Builds and runs a bounded headless Native gameplay smoke check.
 |-pio_native_deps.py — Fetches and SHA-256-verifies the pinned cpp-httplib single header for Native builds.
 
 ## To-Dos
-- Add Native smoke and screenshot scripts during M1/M2.
+- Add the screenshot script during M2.

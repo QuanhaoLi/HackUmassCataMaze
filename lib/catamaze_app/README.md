@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:11 EST
+Last Modified at: 2026-11-14 02:26 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,7 +11,8 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Defines the application library boundary.
 |-include/ — Contains public application and port interfaces.
+|-library.json — Declares PlatformIO metadata and the public include directory.
 |-src/ — Contains platform-independent coordination implementations.
 
 ## To-Dos
-- Implement after the initial Game Core types and transitions stabilize.
+- Keep policy decisions constrained to legal observations while Native gameplay matures.

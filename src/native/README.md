@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:13 EST
+Last Modified at: 2026-11-14 02:26 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,7 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents the Native executable entry point.
-|-main.cpp — Boots the Native target and composes adapters around shared libraries.
+|-main.cpp — Provides the headless interactive Native game and composes shared libraries.
 
 ## To-Dos
-- Expand the bootstrap executable with the Native application and browser adapter during M1/M2.
+- Add the loopback browser adapter during M2 without moving rules into the executable.
