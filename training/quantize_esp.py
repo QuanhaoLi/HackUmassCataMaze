@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 10:48 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 10:48 EST
+# Last Modified at: 2026-11-14 10:56 EST
 # Last Modified by: Codex
 # Quantizes the one-step ONNX policy for ESP32-S3 from real recurrent rollouts.
 
@@ -64,6 +64,7 @@ def quantize(
     calibration_path: Path,
     report_path: Path,
     calibration_count: int,
+    quant_type: str,
     device: torch.device,
 ) -> dict[str, Any]:
     from esp_ppq import TorchExecutor
@@ -92,7 +93,7 @@ def quantize(
         input_shape=[[1, 13, 5, 5], [1, 46], [1, 1, 256]],
         inputs=samples[0],
         target="esp32s3",
-        quant_type="w8a8",
+        quant_type=quant_type,
         collate_fn=collate,
         device=str(device),
         error_report=True,
@@ -130,7 +131,7 @@ def quantize(
         )
         action_matches += int(expected[0].argmax(dim=-1).item() == actual[0].argmax(dim=-1).item())
     report = {
-        "quant_type": "w8a8",
+        "quant_type": quant_type,
         "target": "esp32s3",
         "calibration_samples": len(samples),
         "evaluation_samples": evaluated,
@@ -154,6 +155,9 @@ def main() -> None:
     parser.add_argument("--calibration", required=True)
     parser.add_argument("--report", required=True)
     parser.add_argument("--calibration-count", type=int, default=512)
+    parser.add_argument(
+        "--quant-type", choices=("w8a8", "w8a16", "w16a16"), default="w8a8"
+    )
     parser.add_argument("--device", default="cpu")
     arguments = parser.parse_args()
     report = quantize(
@@ -163,6 +167,7 @@ def main() -> None:
         calibration_path=Path(arguments.calibration),
         report_path=Path(arguments.report),
         calibration_count=arguments.calibration_count,
+        quant_type=arguments.quant_type,
         device=torch.device(arguments.device),
     )
     print(json.dumps(report, indent=2, sort_keys=True))
