@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:45 EST
+Last Modified at: 2026-11-14 18:46 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -33,7 +33,7 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 | RL3 | CPU smoke, deterministic replay, and checkpoint recovery | `PASSED` |
 | RL4 | Single-V100 benchmark and two-hour stability qualification | `NOT_STARTED` |
 | RL5 | Four-GPU DDP training of one production model and final evaluation | `NOT_STARTED` |
-| RL6 | Versioned Native export, integration, fallback, and rollback | `NOT_STARTED` |
+| RL6 | Atomic resident policy, manifest, parity, health, and fallback | `IN_PROGRESS` |
 
 ## M0 — Documentation and Native bootstrap
 
@@ -453,19 +453,23 @@ Pass conditions:
 - Player escape rate improves by at least 20% relative to the heuristic baseline while player death rate increases rather than only timeout rate.
 - Friendly fire, personality separation, confidence intervals, DDP throughput scaling, and failure cases are reported.
 
-## RL6 — Native export and rollback
+## RL6 — Atomic resident policy integration
 
 ### Deliverables
 
-- A versioned TorchScript or ONNX Native artifact passes numerical parity against PyTorch.
-- Native gameplay can select the model policy without changing Game Core rules and falls back to the heuristic policy on any model failure.
-- Previous production artifacts remain selectable for rollback.
+- One machine-readable release manifest generates or validates C++ identity/gate constants and upload acceptance.
+- `Application` submits one atomic three-AI Policy Tick; no world transition can mix model and heuristic actions.
+- Model hidden states commit only after all living-AI inferences and the complete-tick latency gate pass.
+- Bounded Policy Health exposes ACTIVE/FALLBACK, reason, inference/failure counts, recent/max latency, memory, and artifact identity through System and Serial diagnostics.
+- An offline Native parity adapter replays the frozen recurrent fixtures against a source ONNX artifact when that artifact is available; normal gameplay has no ONNX/Torch dependency.
+- Previous release manifests and artifacts remain selectable at build/release time for rollback, not through a player menu.
 
 ### Acceptance
 
-- Export parity, CPU p95 latency, batched three-agent latency, resident memory, timeout, invalid-output, and fallback tests pass.
-- Normal standalone ESP32 builds have no model runtime or network dependency.
-- No embedded-model compatibility is claimed without a later ADR and physical-device evidence.
+- Manifest drift, wrong artifact hash/size, tensor mismatch, non-finite output, illegal action, partial inference failure, and complete-tick timeout all have deterministic regression tests.
+- Normal, ASan, UBSan, coverage, randomized, ESP32 compile, startup envelope, and guarded upload gates pass.
+- Native and ESP32 recurrent traces match accepted tolerances when the source ONNX release artifact is present.
+- The 10,000-tick physical endurance run reports no watchdog, heap trend, hidden corruption, mixed-policy tick, or unexpected fallback.
 
 ## Change control
 

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 06:54 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:27 EST
+Last Modified at: 2026-11-14 18:46 EST
 Last Modified by: Codex
 
 本文档是 CataMaze 产品领域语言词汇表，不包含实现规格。
@@ -81,6 +81,22 @@ _Avoid_: Timer, time limit in seconds
 The physical controls UP, DOWN, LEFT, RIGHT, FIRE, and CLEAR shared by navigation and gameplay.
 _Avoid_: Seven-button set, WAIT button
 
+**Resident Policy**:
+The single released recurrent model kept in device memory and used atomically for all living AI during one Policy Tick.
+_Avoid_: AI mode, model option, persona model
+
+**Policy Tick**:
+One all-or-nothing decision for the three AI: every required model action and next hidden state commits together, or the entire tick uses Heuristic Fallback.
+_Avoid_: Per-agent model call, mixed-policy tick
+
+**Policy Health**:
+The bounded product-visible state describing Resident Policy readiness, failure reason, inference counts, latency, memory, and fallback latch.
+_Avoid_: Debug log, model internals
+
+**Heuristic Fallback**:
+The deterministic safe policy used for every AI after Resident Policy cannot produce one valid atomic Policy Tick; it remains latched until reboot.
+_Avoid_: AI switch, retry mode, degraded model
+
 ## Flagged ambiguities
 
 **WAIT** previously referred to both a physical button and a domain action. The physical WAIT button is removed; only Wait Action remains.
@@ -88,6 +104,8 @@ _Avoid_: Seven-button set, WAIT button
 **Home** and **Pause Menu** are not aliases. Home owns pre-game navigation; Pause Menu temporarily suspends one existing Game Session.
 
 **Idle** previously meant either an empty Action Queue or the product resting state. The empty queue produces Wait Action; the product resting state is always called Companion Idle.
+
+**Model switching** is not a player concept. The product has one Resident Policy and automatic Heuristic Fallback; there is no manual AI mode.
 
 ## Example dialogue
 
