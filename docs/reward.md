@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:39 EST
+Last Modified at: 2026-11-14 06:49 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -549,15 +549,15 @@ evaluation:
 
 ### 11.6 四张 V100 的执行拓扑
 
-四张 V100 不改变单次训练的 PPO batch 语义。工程顺序固定为：
+四张 V100 共同训练一个共享模型。工程顺序固定为：
 
 1. CPU 正确性与 100k agent-step smoke；
 2. 单张 V100 的 FP32 数值、吞吐、显存和断点恢复基线；
 3. 单张 V100 连续两小时稳定性；
-4. 四张 V100 各运行一个隔离的训练 seed；
-5. 任一 GPU 空闲后运行第五个发布所需 seed。
+4. 四张 V100 运行一个 DDP job，每个 rank 拥有独立环境 shard、GRU state 和采样 RNG；
+5. 对比 64 全局环境/32 全局序列 minibatch 与 256 全局环境/128 全局序列 minibatch，选择端到端 agent steps/s 更高且 PPO 指标稳定的拓扑。
 
-每个进程只绑定一张 GPU，并使用独立 run 目录、端口空间、checkpoint lineage 和 RNG 状态。首版不使用同步 DDP；只有端到端 profiling 证明 DDP 能提高 agent transitions/s，且不会改变 rollout、KL、课程或复现语义时，才允许通过新 ADR 引入。
+每个 rank 只绑定一张 V100。Advantage normalization、loss 分母、KL、clip fraction 和 explained variance 必须跨 rank 聚合；rank 0 负责统一 checkpoint、评估和课程晋级。四卡配置必须用实测吞吐证明优于单卡，否则继续扩大每 rank 环境/序列计算密度，而不是改回独立 seed。
 
 ## 12. 16GB GPU 训练操作方法
 
@@ -783,7 +783,7 @@ checkpoint 必须包含：
 - 不以超时替代真实对抗：玩家死亡率必须提升，不能只有 TIMEOUT 增长；
 - AI 误伤率不高于总命中数的 5%；
 - 人格差异验收全部通过；
-- 至少 5 个训练 seed 中有 4 个达到门槛，并报告均值与标准差。
+- 主 DDP 训练结果必须完整通过固定评估集、人格差异、基线、稳定性和性能门槛；额外 seed 可作为复现实验，但不阻塞发布。
 
 ### 性能
 

@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:19 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 06:42 EST
+# Last Modified at: 2026-11-14 06:48 EST
 # Last Modified by: Codex
 # Stores recurrent on-policy transitions and produces fixed-length sequence batches.
 
@@ -159,6 +159,7 @@ class RecurrentRollout:
         sequences_per_batch: int,
         generator: torch.Generator | None,
         shuffle: bool = True,
+        include_inactive: bool = False,
     ) -> Iterator[SequenceBatch]:
         if self.advantages is None or self.returns is None:
             raise RuntimeError("finish must be called before batching")
@@ -169,7 +170,9 @@ class RecurrentRollout:
         candidates: list[tuple[int, int]] = []
         for batch_agent in range(self.batch_agents):
             for start in range(0, self.environment_steps, sequence_length):
-                if self.active[start : start + sequence_length, batch_agent].any():
+                if include_inactive or self.active[
+                    start : start + sequence_length, batch_agent
+                ].any():
                     candidates.append((batch_agent, start))
         if shuffle:
             order = torch.randperm(len(candidates), generator=generator).tolist()

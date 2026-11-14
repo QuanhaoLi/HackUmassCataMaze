@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:24 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 06:34 EST
+# Last Modified at: 2026-11-14 06:49 EST
 # Last Modified by: Codex
 
 versions:
@@ -8,7 +8,7 @@ versions:
   observation: catamaze.observation.v1
   reward: catamaze.reward.v1
   model_arch: catamaze.model.rppo.v1
-  training_config: catamaze.training.ppo16gb.v3
+  training_config: catamaze.training.ppo16gb.v4
 
 seed: 20261113
 device: cuda
@@ -81,6 +81,14 @@ checkpoint:
 evaluation:
   every_agent_steps: 500000
   episodes_per_persona_per_opponent: 300
+
+distributed:
+  world_size: 4
+  physical_gpu_indices: [1, 2, 3, 4]
+  global_num_envs: 64
+  global_minibatch_sequences: 32
+  benchmark_global_num_envs: 256
+  benchmark_global_minibatch_sequences: 128
 
 curriculum:
   A:

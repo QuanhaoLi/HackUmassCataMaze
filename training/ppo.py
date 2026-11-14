@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:19 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 06:42 EST
+# Last Modified at: 2026-11-14 06:48 EST
 # Last Modified by: Codex
 # Implements clipped recurrent PPO with masked actions and KL safety stops.
 
@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import torch
+import torch.distributed as dist
 from torch import nn
 
-from training.model import RecurrentActorCritic, masked_categorical
+from training.model import masked_categorical
 from training.rollout import RecurrentRollout, SequenceBatch
 
 
@@ -59,7 +60,7 @@ class PPOMetrics:
 class PPOTrainer:
     def __init__(
         self,
-        model: RecurrentActorCritic,
+        model: nn.Module,
         optimizer: torch.optim.Optimizer,
         config: PPOConfig,
         *,
@@ -69,6 +70,14 @@ class PPOTrainer:
         self.optimizer = optimizer
         self.config = config
         self.device = device
+
+    @property
+    def distributed(self) -> bool:
+        return dist.is_available() and dist.is_initialized()
+
+    @property
+    def world_size(self) -> int:
+        return dist.get_world_size() if self.distributed else 1
 
     def update(self, rollout: RecurrentRollout, *, generator: torch.Generator) -> PPOMetrics:
         totals = {
@@ -90,6 +99,7 @@ class PPOTrainer:
                 sequence_length=self.config.sequence_length,
                 sequences_per_batch=self.config.sequences_per_batch,
                 generator=shuffle_generator,
+                include_inactive=self.distributed,
             ):
                 metrics = self._update_batch(batch)
                 for name in totals:
@@ -138,16 +148,19 @@ class PPOTrainer:
         entropy = distribution.entropy()
 
         selected_advantages = advantages[loss_mask]
-        normalized_advantages = (
-            selected_advantages - selected_advantages.mean()
-        ) / selected_advantages.std(unbiased=False).clamp_min(1e-8)
+        advantage_mean, advantage_variance, global_count = self._global_moments(
+            selected_advantages
+        )
+        normalized_advantages = (selected_advantages - advantage_mean) / advantage_variance.sqrt().clamp_min(1e-8)
         log_ratio = new_log_prob[loss_mask] - old_log_prob[loss_mask]
         ratio = log_ratio.exp()
         policy_loss_unclipped = -normalized_advantages * ratio
         policy_loss_clipped = -normalized_advantages * ratio.clamp(
             1.0 - self.config.clip_coef, 1.0 + self.config.clip_coef
         )
-        policy_loss = torch.maximum(policy_loss_unclipped, policy_loss_clipped).mean()
+        policy_terms = torch.maximum(policy_loss_unclipped, policy_loss_clipped)
+        loss_scale = float(self.world_size) / global_count
+        policy_loss = policy_terms.sum() * loss_scale
 
         values = output.values[loss_mask]
         selected_old_values = old_values[loss_mask]
@@ -157,8 +170,10 @@ class PPOTrainer:
             -self.config.value_clip_coef, self.config.value_clip_coef
         )
         value_clipped = (value_clipped_prediction - selected_returns).square()
-        value_loss = 0.5 * torch.maximum(value_unclipped, value_clipped).mean()
-        entropy_mean = entropy[loss_mask].mean()
+        value_terms = torch.maximum(value_unclipped, value_clipped)
+        value_loss = 0.5 * value_terms.sum() * loss_scale
+        selected_entropy = entropy[loss_mask]
+        entropy_mean = selected_entropy.sum() * loss_scale
         total_loss = (
             policy_loss
             + self.config.value_loss_coef * value_loss
@@ -175,20 +190,55 @@ class PPOTrainer:
         self.optimizer.step()
 
         with torch.no_grad():
-            approx_kl = ((ratio - 1.0) - log_ratio).mean()
-            clip_fraction = ((ratio - 1.0).abs() > self.config.clip_coef).float().mean()
-            return_variance = torch.var(selected_returns, unbiased=False)
+            policy_metric = self._global_mean(policy_terms)
+            value_metric = 0.5 * self._global_mean(value_terms)
+            entropy_metric = self._global_mean(selected_entropy)
+            approx_kl = self._global_mean((ratio - 1.0) - log_ratio)
+            clip_fraction = self._global_mean(
+                ((ratio - 1.0).abs() > self.config.clip_coef).float()
+            )
+            _return_mean, return_variance, _ = self._global_moments(selected_returns)
+            _residual_mean, residual_variance, _ = self._global_moments(
+                selected_returns - values
+            )
             explained_variance = torch.where(
                 return_variance > 1e-8,
-                1.0 - torch.var(selected_returns - values, unbiased=False) / return_variance,
+                1.0 - residual_variance / return_variance,
                 torch.zeros_like(return_variance),
             )
         return {
-            "policy_loss": float(policy_loss.detach()),
-            "value_loss": float(value_loss.detach()),
-            "entropy": float(entropy_mean.detach()),
+            "policy_loss": float(policy_metric),
+            "value_loss": float(value_metric),
+            "entropy": float(entropy_metric),
             "approx_kl": float(approx_kl.detach()),
             "clip_fraction": float(clip_fraction.detach()),
             "grad_norm": float(grad_norm.detach()),
             "explained_variance": float(explained_variance.detach()),
         }
+
+    def _global_mean(self, values: torch.Tensor) -> torch.Tensor:
+        total = values.detach().sum()
+        count = torch.tensor(float(values.numel()), device=values.device)
+        statistics = torch.stack((total, count))
+        if self.distributed:
+            dist.all_reduce(statistics, op=dist.ReduceOp.SUM)
+        if statistics[1] <= 0:
+            raise RuntimeError("distributed PPO minibatch contains no active transitions")
+        return statistics[0] / statistics[1]
+
+    def _global_moments(self, values: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, float]:
+        detached = values.detach()
+        statistics = torch.stack(
+            (
+                detached.sum(),
+                detached.square().sum(),
+                torch.tensor(float(detached.numel()), device=detached.device),
+            )
+        )
+        if self.distributed:
+            dist.all_reduce(statistics, op=dist.ReduceOp.SUM)
+        if statistics[2] <= 0:
+            raise RuntimeError("distributed PPO minibatch contains no active transitions")
+        mean = statistics[0] / statistics[2]
+        variance = (statistics[1] / statistics[2] - mean.square()).clamp_min(0.0)
+        return mean, variance, float(statistics[2])

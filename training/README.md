@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:51 EST
+Last Modified at: 2026-11-14 06:50 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -16,6 +16,7 @@ Last Modified by: Codex
 |-checkpoint.py — Atomically saves and restores model, optimizer, environment, recurrent, curriculum, and RNG state.
 |-config.py — Loads and validates immutable YAML run configurations.
 |-curriculum.py — Enforces step-plus-evaluation promotion gates without lowering failed criteria.
+|-ddp_smoke.py — Qualifies one shared model across four synchronized environment and PPO ranks.
 |-native_bindings.cpp — Binds batched in-memory C++ Game Engines and policy-contract tensors to Python.
 |-env.py — Owns batched episode lifecycle, partial resets, opponent actions, and reward state.
 |-evaluator.py — Runs fixed-seed stochastic/deterministic evaluation and emits per-persona metrics.

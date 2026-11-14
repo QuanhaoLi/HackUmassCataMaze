@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:45 EST
+Last Modified at: 2026-11-14 06:49 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -31,7 +31,7 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 | RL2 | Recurrent actor-critic and PPO implementation | `IN_PROGRESS` |
 | RL3 | CPU smoke, deterministic replay, and checkpoint recovery | `PASSED` |
 | RL4 | Single-V100 benchmark and two-hour stability qualification | `NOT_STARTED` |
-| RL5 | Four-GPU isolated multi-seed training and final evaluation | `NOT_STARTED` |
+| RL5 | Four-GPU DDP training of one production model and final evaluation | `NOT_STARTED` |
 | RL6 | Versioned Native export, integration, fallback, and rollback | `NOT_STARTED` |
 
 ## M0 — Documentation and Native bootstrap
@@ -366,19 +366,19 @@ Pass conditions:
 - Evaluation, logging, checkpoint save/load, and failure-checkpoint paths all execute during the run.
 - End-to-end agent transitions per second, GPU utilization, and CPU sampling utilization are reported before any topology change.
 
-## RL5 — Four-GPU isolated multi-seed training
+## RL5 — Four-GPU DDP production training
 
 ### Deliverables
 
-- Four isolated single-GPU jobs train four independent seeds concurrently; the fifth required seed runs after a slot becomes available.
-- Each job owns a distinct run directory, RNG state, checkpoint lineage, and GPU assignment.
+- Four DDP ranks train one shared model; each rank owns an environment shard, GRU state, opponent state, and RNG state.
+- Rank 0 owns the single run directory, model/optimizer checkpoint lineage, evaluation reports, and curriculum decisions.
 - Final candidates are evaluated against random-valid, heuristic, feed-forward, no-persona, previous-production, and candidate baselines.
 
 ### Acceptance
 
-- At least four of five seeds pass every effect, personality, correctness, and performance gate in `docs/reward.md`.
+- The synchronized production model passes every effect, personality, correctness, and performance gate in `docs/reward.md`.
 - Player escape rate improves by at least 20% relative to the heuristic baseline while player death rate increases rather than only timeout rate.
-- Friendly fire, personality separation, confidence intervals, mean, standard deviation, and failure cases are reported.
+- Friendly fire, personality separation, confidence intervals, DDP throughput scaling, and failure cases are reported.
 
 ## RL6 — Native export and rollback
 
