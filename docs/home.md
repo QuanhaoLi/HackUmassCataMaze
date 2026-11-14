@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 06:57 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:57 EST
+Last Modified at: 2026-11-14 07:34 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze 双屏复古 Home、Setup、Pause 和 Result 导航体验及六键输入合同。
@@ -300,7 +300,7 @@ The wider player display remains 9×5 for all presets. Every AI observation rema
 
 ## 9. Native implementation contract
 
-The first implementation target is Mac Native only. It must add:
+The first implementation target was Mac Native. It provides:
 
 - a portable system/navigation controller independent of HTTP and Arduino;
 - a versioned `GameConfig` containing map preset, active size, tick budget, and seed;
@@ -309,7 +309,7 @@ The first implementation target is Mac Native only. It must add:
 - a versioned Native snapshot describing system mode and confirmed/pending Setup;
 - no physical WAIT control or manual WAIT API entry;
 - continued automatic Wait Action behavior for empty queues and AI/RL;
-- no ESP32 upload until explicit user approval after Native screenshots and interaction tests.
+- completed Native screenshots, interaction tests, sanitizers, randomized testing, and coverage evidence before embedded migration.
 
 ## 10. Verification gates
 
@@ -334,3 +334,18 @@ The first implementation target is Mac Native only. It must add:
 - No saved-game resume in v1.
 - No touch, pointer drag, scrolling momentum, or animated carousel.
 - No change to AI view size, action schema, persona model, or RL tensor dimensions.
+
+## 12. Approved ESP32 migration contract
+
+The user explicitly approved careful ESP32 migration after the Native gates passed on 2026-11-14. Embedded work must proceed in this order:
+
+1. Implement a portable, allocation-free six-button interpreter and prove 20 ms debounce, no-repeat presses, FIRE-before-direction sampling, 800 ms CLEAR long commit, and post-long short suppression with Native unit tests.
+2. Remove GPIO10 from every product and diagnostic button array. GPIO10 and GPIO4 remain unconfigured spares.
+3. Compose the existing `SystemController` and `SystemRenderer` in ESP32 firmware; the two physical OLEDs display the same left/right framebuffers accepted on Native.
+4. Compile both diagnostic and product environments without uploading.
+5. Auto-detect exactly one approved serial device and run read-only chip, Flash, and PSRAM preflight.
+6. Upload diagnostic firmware only, then require 16 MB Flash, initialized 8 MB PSRAM, one `0x3C` display on each independent I²C bus, all four I²C lines HIGH, six released inputs, and explicit `gpio4_configured=false` / `gpio10_configured=false` evidence.
+7. Only after the diagnostic passes, upload the product image and require a bounded boot record proving Home mode, 30×30 default, six inputs, both displays, memory, and spare-GPIO status.
+8. Keep M5 open until the user physically verifies all six press/release paths, FIRE sampling, CLEAR short, CLEAR long, and a complete game.
+
+No Flash erase is authorized. A compile, upload acknowledgement, illuminated RGB LED, or idle button mask alone is not sufficient physical gameplay evidence.

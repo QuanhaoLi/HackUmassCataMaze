@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:22 EST
+Last Modified at: 2026-11-14 07:34 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -55,7 +55,8 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - Button debounce is 20 ms by default.
 - A held button MUST NOT auto-repeat; another event requires a debounced release followed by a new debounced press.
 - GPIO10 is an unassigned spare and MUST NOT be initialized as a button.
-- The pre-Home ESP32 adapter still present in the repository is legacy evidence, not an accepted six-button implementation; it MUST NOT be presented or uploaded as the Home/Setup revision before its deferred migration is approved and tested.
+- The user approved six-button Home/Setup ESP32 migration on 2026-11-14. The legacy seven-button adapter MUST be replaced and pass portable input tests, compile gates, read-only preflight, and fresh diagnostic evidence before product upload.
+- GPIO4 and GPIO10 MUST both remain absent from product and diagnostic `pinMode`, `digitalRead`, `digitalWrite`, and button arrays.
 
 ## 5. Timing and concurrency
 

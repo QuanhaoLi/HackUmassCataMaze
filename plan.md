@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:24 EST
+Last Modified at: 2026-11-14 07:34 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -237,6 +237,8 @@ Pass conditions:
 
 ### Deliverables
 
+- Portable six-button input interpreter with Native tests for debounce, no-repeat, FIRE sampling, and CLEAR short/long suppression.
+- ESP32 Home/Setup integration through the shared `SystemController` and exact `SystemRenderer` framebuffers.
 - Automated serial-port discovery by USB metadata.
 - Pre-upload flash identity check.
 - Physical display and input adapters validated in isolation, then together.
@@ -261,6 +263,13 @@ Pass conditions:
 - With displays reconnected, a fresh diagnostic found one `0x3C` device on each controller, all four lines HIGH, zero bus errors, and returned `pass=true`.
 - The accepted image uses 16-bit maze workspace indices, deferred construction, and a 48 KiB loop task.
 - Physical product boot returned `ready=true`, both `0x3C` displays, GPIO4 unconfigured, and loop stack high-water `26188` without rebooting.
+
+### Approved Home/Setup migration sequence — 2026-11-14
+
+- User approval has been received to replace the legacy seven-button ESP32 image.
+- The old image is not accepted as evidence for Home/Setup, CLEAR long/short, map presets, or GPIO10 spare status.
+- A new product upload is permitted only through `scripts/esp32_upload_product.sh` after the new portable input tests, both ESP32 compile gates, read-only identity preflight, and diagnostic v2 pass.
+- M5 remains `IN_PROGRESS` after automated upload until the user completes the six-button and full-game physical checks.
 
 ## M6 — Cross-platform determinism and release-candidate evidence
 

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 07:22 EST
+Last Modified at: 2026-11-14 07:34 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -120,7 +120,7 @@ The electrical and logical contract is:
 - CLEAR short press clears pending actions only on release. CLEAR long press commits at 800 ms and suppresses the later short release event.
 - GPIO10 is `UNASSIGNED_SPARE` and must not be initialized as a button.
 
-The currently deployed/pre-Home ESP32 source still contains the former seven-button mapping. It is intentionally not modified or uploaded during Native acceptance and must be migrated to the six-button `SystemController` only after explicit approval.
+The currently deployed/pre-Home ESP32 image contains the former seven-button mapping. The user approved migration on 2026-11-14; it remains historical evidence until a fresh six-button diagnostic and product boot pass. The new diagnostic and product images must both leave GPIO10 and GPIO4 unconfigured.
 
 Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically installed. GPIO5 and GPIO6 each passed a complete HIGH → LOW → HIGH test with exactly one debounced press count and no duplicate events during the observation period. GPIO7 is not yet fully validated.
 

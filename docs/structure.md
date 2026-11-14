@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:21 EST
+Last Modified at: 2026-11-14 07:34 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -112,6 +112,7 @@ The Game Core must not include or reference Arduino headers, GPIO numbers, HTTP 
 The coordinator translates platform input into domain commands and coordinates:
 
 - debounced input events;
+- an allocation-free six-button interpreter shared by Native tests and the ESP32 adapter;
 - Home, Setup, System, About, Game Session, Pause Menu, confirmation, and Result transitions;
 - one-second real-time scheduling or accelerated virtual ticks;
 - mode-aware action queue mutation, including separate CLEAR short and 800 ms long intents;
@@ -333,11 +334,13 @@ The eventual embedded compile command is:
 .venv/bin/pio run -e esp32s3
 ```
 
-The following remains forbidden until explicit later authorization:
+Direct upload targets remain forbidden because they bypass the diagnostic gate. The authorized embedded release command is:
 
 ```bash
-.venv/bin/pio run -e esp32s3 -t upload
+scripts/esp32_upload_product.sh
 ```
+
+That script must run read-only preflight, diagnostic compile/upload/evidence, product compile/upload, and bounded boot validation in order. It must never erase Flash.
 
 ## 10. Quality strategy and ordering
 
