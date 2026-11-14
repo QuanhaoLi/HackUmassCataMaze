@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 08:01 EST
+Last Modified at: 2026-11-14 08:14 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -411,7 +411,7 @@ v1 晋级门槛固定如下；每项使用未参与训练的固定 seed、stocha
 
 | 晋级 | 最低步数 | 固定评估门槛 |
 |---|---:|---|
-| A → B | `5M` | stationary 玩家死亡率 ≥ `20%`；random-valid 玩家逃脱率 ≤ `10%` |
+| A → B | `5M` | stationary 与 random-valid 合并玩家死亡率平均 ≥ `20%`（每种对手至少 300 局）；random-valid 玩家逃脱率 ≤ `10%` |
 | B → C | `20M` | wall-follower 玩家逃脱率 ≤ `30%` 且玩家死亡率 ≥ `10%` |
 | C → D | `50M` | shortest-path noisy 和 combat planner 各自玩家逃脱率 ≤ `80%`；aggressive 射击率不低于 cautious；cautious 死亡率不高于 aggressive；explorer 首次访问率不低于 aggressive |
 

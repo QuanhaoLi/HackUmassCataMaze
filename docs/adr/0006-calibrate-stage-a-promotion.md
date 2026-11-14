@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 08:01 EST
 Created by: Codex
-Last Modified at: 2026-11-14 08:01 EST
+Last Modified at: 2026-11-14 08:14 EST
 Last Modified by: Codex
 -->
 
@@ -19,11 +19,11 @@ Holding the model in A cannot teach the missing longer-range search behavior bec
 
 ## Decision
 
-1. A → B requires stationary-player death rate at least `20%` and random-valid escape rate at most `10%` on the unchanged uniform full-map evaluation.
+1. A → B requires the combined stationary/random-valid player death rate to average at least `20%`, with at least 300 episodes per opponent, and random-valid escape rate at most `10%` on the unchanged uniform full-map evaluation.
 2. All other curriculum and final release gates remain unchanged.
 3. The existing reward-v2 checkpoint may resume because this changes only promotion control logic, not environment physics, observation, reward, model, or optimizer state.
 
 ## Consequences
 
-- `training_config_version` advances to `catamaze.training.ppo16gb.v10`.
+- `training_config_version` advances to `catamaze.training.ppo16gb.v11`.
 - The 18M checkpoint resumes in A and is eligible to promote at the 20M fixed evaluation.

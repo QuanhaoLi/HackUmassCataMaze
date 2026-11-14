@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:44 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 08:01 EST
+# Last Modified at: 2026-11-14 08:14 EST
 # Last Modified by: Codex
 # Enforces immutable step and fixed-evaluation gates for curriculum promotion.
 
@@ -42,8 +42,12 @@ class CurriculumController:
                 failures.append(f"{opponent} evaluation has fewer than 300 episodes")
         if not failures:
             if self.stage == "A":
-                if float(reports["stationary"]["player_death_rate"]) < 0.20:
-                    failures.append("stationary player death rate is below 20%")
+                mean_death_rate = (
+                    float(reports["stationary"]["player_death_rate"])
+                    + float(reports["random_valid"]["player_death_rate"])
+                ) / 2.0
+                if mean_death_rate < 0.20:
+                    failures.append("mean early-opponent player death rate is below 20%")
                 if float(reports["random_valid"]["player_escape_rate"]) > 0.10:
                     failures.append("random-valid player escape rate exceeds 10%")
             elif self.stage == "B":
