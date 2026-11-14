@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:37 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 03:10 EST
+Last Modified at: 2026-11-14 04:33 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
@@ -24,7 +24,7 @@ CataMaze is a **standalone, single-player maze escape game** running on an ESP32
 | Damage | 1 HP per bullet hit |
 | Input queue | 32 pending actions maximum |
 | Duration | 2,000 ticks maximum |
-| Sound output | **Active buzzer**, controlled on/off by ESP32-S3 |
+| Sound output | Optional Mac speakers driven by best-effort USB Serial events |
 
 The map uses `#` (wall), `.` (path), `S` (entrance marker), and `E` (single exit). Map edges are walls except at the exit. The player and three AI spawn on different reachable cells, never on `E`; spawning at `S` is not required.
 
@@ -58,13 +58,14 @@ Walls block line of sight, including diagonal views through a blocked corner. En
 Displays these **five persistent fields only**:
 
 ```text
-CATAMAZE
-TICK   00125
-HP     ♥ ♥ ♥ ♥ ♡
-AMMO   ▮ ▮ □
-QUEUE  07/32
-POS    12,28
+TICK        00125
+HP          ♥ ♥ ♥ ♥ ♡
+AMMO        ▮ ▮ □
+QUEUE       07/32
+POS         12,28
 ```
+
+The HUD has no title row. All five labels begin at pixel `x=1`; all numeric values and icon groups begin at pixel `x=44`. Row origins are `y=3`, `15`, `27`, `39`, and `51`, keeping the right-hand content vertically aligned.
 
 - `TICK` — completed world updates (0–2,000).
 - `HP` — exactly five heart slots. Each remaining HP is one filled heart; each lost HP is one outline heart.
@@ -113,29 +114,29 @@ Blocked moves still consume their action. All AIs follow the same movement, HP, 
 - Bullets remain in flight after their shooter dies. HP never regenerates.
 - Ammo regenerates by **1 after every 2 eligible tick completions**, capped at 3. Shooting does not erase partial recharge progress.
 - An actual shot creates a **game-world sound event** heard by entities within 3 cells in either axis, even through walls. An observer receives approximate direction, not the hidden shooter's identity or exact location.
-- Projectile simulation is never rendered to the player. A successful own shot is communicated by its buzzer effect and the AMMO icon changing when the action executes. An enemy hit is communicated by the damage buzzer and one filled heart becoming an outline heart.
+- Projectile simulation is never rendered to the player. A successful own shot emits optional `PLAYER_SHOT` audio and changes the AMMO icon when the action executes. An enemy hit emits optional `PLAYER_DAMAGE` audio and changes one filled heart to an outline heart.
 
-## 6. Active Buzzer — Physical Audio
+## 6. Optional Mac Audio — USB Serial Events
 
-The ESP32-S3 controls an **active buzzer** for short audible notifications. An active buzzer generates its own fixed-pitch sound when switched on; use **on/off pulses**, not variable-frequency notes or melodies.
+CataMaze has no onboard buzzer. The ESP32-S3 may emit a best-effort audio event over USB Serial, and an optional Mac companion plays the corresponding sound through the Mac speakers.
 
-| Event | Buzzer feedback |
+| Game event | Serial audio event |
 |---|---|
-| Player fires successfully | One short beep |
-| Player takes damage | Two short beeps |
-| Nearby enemy fires **within the player's 7 × 7 hearing area** | Two quick beeps with a distinct rhythm |
-| Player reaches exit alive | Three celebratory beeps |
-| Player dies | One long beep |
-| Input rejected / no ammo | Silent by default |
+| Player fires successfully | `PLAYER_SHOT` |
+| Player takes damage | `PLAYER_DAMAGE` |
+| Nearby enemy fires **within the player's 7 × 7 hearing area** | `ENEMY_SHOT_HEARD` |
+| Player reaches exit alive | `PLAYER_VICTORY` |
+| Player dies | `PLAYER_DEATH` |
+| Input rejected / no ammo / timeout | No event |
 
-Buzzer output rules:
+Audio output rules:
 
 - **Only player-observable events produce audio**; off-screen or out-of-range enemy shots must remain silent.
-- Buzzer sound is **physical output only**. It does not create additional in-game sound events or affect AI hearing.
-- The buzzer is normally **off**. No continuous ticking or idle sound.
-- Play effects **without blocking game ticks or button input** (non-blocking timing; no long `delay()` calls).
-- If events overlap, play the most important one: **death/victory > damage > heard enemy shot > own shot**. Do not queue unlimited sound effects.
-- Pin number, trigger polarity, voltage, and any driver transistor are hardware details to verify in `hardware.md` before connecting the buzzer.
+- Serial audio output does not create additional in-game sound events or affect AI hearing.
+- Emit at most one highest-priority event per tick: **death/victory > damage > heard enemy shot > own shot**.
+- Serial transmission must never block game ticks, buttons, OLED refreshes, or AI.
+- If no Mac companion is connected, the game continues normally without sound and without replaying missed audio later.
+- The complete protocol and failure semantics are defined in `audio.md`.
 
 ## 7. End Conditions
 
@@ -149,7 +150,7 @@ Death overrides victory if both happen in the same tick. Eliminating all AI does
 
 ## 8. Standalone Implementation
 
-- The **ESP32-S3** owns the map, state, queue, tick loop, buzzer output, and both OLED renderers. No online server is required for play.
+- The **ESP32-S3** owns the map, state, queue, tick loop, and both OLED renderers. No Mac, audio companion, or online server is required for play.
 - Each AI sees only its own 5 × 5 view and permitted sound cues; no full-map access or opponents' private HP/ammo.
 - With the same map, rule version, AI policy, seed, and input sequence, game outcomes should be reproducible. If saving is implemented, preserve the tick, all entities, bullets, ammo recovery, and pending queue.
 - Network concurrency, API authentication, multi-session capacity, and database transactions from the earlier server-oriented draft are **out of scope** for this handheld version.

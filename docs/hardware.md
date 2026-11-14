@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 03:10 EST
+Last Modified at: 2026-11-14 04:33 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -106,40 +106,17 @@ Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically in
 - Prototyping: ELEGOO Upgraded Electronics Fun Kit (breadboard, jumper wires, buttons).
 - Development power: USB-C. Both OLED modules are powered from the board's 3.3 V rail.
 
-## 5. Verified Active Buzzer
+## 5. Optional Mac Audio and Released GPIO4
 
-The active buzzer is powered at 3.3 V and switched by GPIO4 through an NPN transistor. GPIO4 drives only the transistor base; it does not carry the buzzer current.
+The production product has no physical buzzer. Remove or disconnect the buzzer, transistor, base resistors, and flyback diode from the game hardware.
 
-| Connection | Wiring |
-|---|---|
-| Buzzer `+` | ESP32-S3 `3V3` |
-| Buzzer `-` | NPN collector (`C`) |
-| NPN emitter (`E`) | ESP32-S3 `GND` |
-| NPN base (`B`) | ESP32-S3 `GPIO4` through 1 kΩ |
-| Base pull-down | `GPIO4` to `GND` through 10 kΩ |
-| Flyback diode cathode (white stripe) | Buzzer `+` |
-| Flyback diode anode | Buzzer `-` / NPN collector |
-
-Verify the transistor's physical `C/B/E` pin order from its own part number; packages with the same shape do not necessarily share a pinout.
-
-The control is active-high:
-
-```cpp
-constexpr int BUZZER_PIN = 4;
-
-void initBuzzer() {
-  pinMode(BUZZER_PIN, OUTPUT);
-  digitalWrite(BUZZER_PIN, LOW); // normally off
-}
-
-void setBuzzer(bool on) {
-  digitalWrite(BUZZER_PIN, on ? HIGH : LOW);
-}
-```
-
-Validation on the physical device passed three 120 ms pulses and one continuous 5,000 ms pulse. The buzzer sounded as commanded and stopped when GPIO4 returned low. The validation firmware leaves GPIO4 low after the test.
-
-The production driver must use a non-blocking `millis()`/timer state machine. Do not call `tone()` for this active buzzer, do not use long `delay()` calls, and do not leave the buzzer on while idle. Apply the sound-event priority defined in `gamerules.md`: death/victory > damage > heard enemy shot > own shot.
+- GPIO4 is `UNASSIGNED_SPARE` and has no production connection.
+- Firmware must not call `pinMode`, `digitalWrite`, `analogWrite`, `tone`, or another peripheral allocator for GPIO4.
+- Historical buzzer validation remains available in Git history but is not a current product requirement.
+- Player-observable audio events are emitted best-effort over the existing 115,200-baud USB Serial connection.
+- A Mac companion may play those events through the Mac speakers.
+- Disconnecting the Mac makes the game silent without affecting gameplay.
+- The wire protocol and non-blocking failure behavior are defined in `audio.md`.
 
 ## 6. Arduino Display Driver Method
 

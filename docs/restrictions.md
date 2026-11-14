@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:29 EST
+Last Modified at: 2026-11-14 04:33 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -15,8 +15,9 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 
 - Native gameplay and training correctness gates MUST run locally before remote GPU training begins.
 - After those gates pass, RL benchmark, stability, training, and evaluation jobs MAY run on the approved remote training server.
-- No command may upload, flash, erase, reset, or otherwise mutate the connected ESP32.
-- ESP32 code MAY be planned and later compiled without upload, but only after the playable Native milestones pass.
+- The user authorized ESP32 compile, diagnostic upload, and product upload work on 2026-11-14.
+- Before the first upload, automation MUST discover the serial device, read chip/Flash identity without mutation, and verify the exact upload target. Flash erase remains prohibited unless separately authorized.
+- Uploads MUST progress from a bounded diagnostic firmware to the product firmware; a generic successful compile is not hardware evidence.
 - Unknown hardware values MUST be labeled `PENDING_HARDWARE_VERIFICATION`; they MUST NOT be inferred from a similar board.
 - Existing physical test evidence may be recorded, but no new hardware result may be claimed without an actual test.
 
@@ -84,11 +85,21 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - The two OLEDs use independent hardware I²C controllers when both respond at `0x3C`.
 - Map display content is limited to the player's legal 5×5 terrain and visible enemies, with all projectile graphics intentionally omitted.
 - HUD content is limited to `TICK`, five HP hearts, three AMMO cartridges, `QUEUE`, and `POS`.
-- GPIO numbers and buzzer polarity MUST come from reconciled physical test evidence in `hardware.md`.
+- GPIO4 MUST remain unconfigured and unassigned in production firmware; it is a released spare.
 - Any row still marked planned, pending, or unverified in `hardware.md` MUST remain provisional in code.
-- The active buzzer MUST be normally off and driven by a non-blocking state machine.
+- The product MUST NOT depend on a physical buzzer or another ESP32 audio transducer.
 
-## 8. Memory and embedded compatibility
+## 8. Optional audio transport
+
+- The Game Core MUST emit abstract player-observable audio events, never tones, files, Serial lines, or Mac APIs.
+- ESP32 audio output MUST use the versioned `CATAMAZE_AUDIO ` USB Serial protocol in `audio.md`.
+- Audio transmission MUST be best-effort and non-blocking; insufficient capacity drops the event.
+- No offline backlog or reconnect replay is permitted.
+- Mac disconnect, companion failure, malformed lines, or missing assets MUST NOT affect game timing, state, hash, input, displays, or AI.
+- Audio events MUST NOT expose coordinates, directions, hidden identities, HP, ammo, or map data.
+- At most one highest-priority audio event may be emitted per tick.
+
+## 9. Memory and embedded compatibility
 
 - Portable code MUST avoid exceptions, RTTI dependencies, recursion proportional to map size, and unbounded allocation.
 - Fixed game maxima MUST use fixed-capacity storage with explicit overflow handling.
@@ -96,7 +107,7 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - Heap allocation MAY occur during Native process setup, but steady-state core ticks MUST NOT require allocation.
 - No code may assume `sizeof(long)`, host endianness, or native struct padding for serialized state.
 
-## 9. Dependency and build reproducibility
+## 10. Dependency and build reproducibility
 
 - Build tools and libraries MUST be pinned to exact versions.
 - The project-local `.venv` MUST be ignored by Git.
@@ -105,7 +116,7 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - Native and embedded compilation flags MUST explicitly select C++17.
 - Warnings from project code MUST be treated as errors in Native CI once the playable slice is complete.
 
-## 10. Testing order
+## 11. Testing order
 
 - Essential rule tests MUST be written while implementing the playable core.
 - A complete playable game MUST precede million-tick stress testing, cross-platform hash gates, full CI hardening, and exhaustive hardware self-tests.
@@ -114,7 +125,7 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - Screenshot review is mandatory for browser milestones and MUST inspect both desktop and narrow viewport layouts.
 - Hardware tests and results MUST NOT be simulated and reported as physical evidence.
 
-## 11. Deferred features
+## 12. Deferred features
 
 The following MUST NOT be added to the current hackathon slice unless the plan is explicitly revised:
 
@@ -128,7 +139,7 @@ The following MUST NOT be added to the current hackathon slice unless the plan i
 
 Interfaces MAY reserve extension points, but speculative implementations are prohibited.
 
-## 12. Repository documentation
+## 13. Repository documentation
 
 - Every created folder and subfolder MUST contain the repository-standard `README.md` before code is added there.
 - Every project file MUST include creation and last-modification metadata in a comment-compatible form.
@@ -136,7 +147,7 @@ Interfaces MAY reserve extension points, but speculative implementations are pro
 - New non-negotiable constraints MUST be added here and indexed by `docs/README.md`.
 - User-owned uncommitted changes MUST NOT be staged or overwritten without explicit instruction.
 
-## 13. Remote-server power safety
+## 14. Remote-server power safety
 
 - Automation MUST NOT reboot, shut down, power off, halt, kexec, change init targets, trigger SysRq reboot, or cause any equivalent power transition on server `100.83.174.76` (`a-Default-string`).
 - Automation MUST NOT stop or disable SSH, Tailscale, or host networking on that server.

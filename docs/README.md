@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:33 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:29 EST
+Last Modified at: 2026-11-14 04:33 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,6 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Introduces and indexes the product documentation in this folder.
+|-audio.md — Defines optional USB Serial audio events, the Mac speaker companion, and disconnect behavior.
 |-gamerules.md — Defines the complete normative game rules, state transitions, observations, actions, combat, terminal conditions, and edge cases.
 |-hardware.md — Records the current controller, display, input, audio, power, and wiring constraints.
 |-restrictions.md — Defines non-negotiable architecture, determinism, safety, hardware, scope, and testing restrictions.

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:10 EST
+Last Modified at: 2026-11-14 04:33 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -13,12 +13,10 @@ Last Modified by: Codex
 
 This document is the implementation contract for the first playable CataMaze v1 vertical slice. It is subordinate to `gamerules.md` for game behavior and to `restrictions.md` for non-negotiable boundaries.
 
-The current delivery target is a product-quality macOS Native build. It must provide a complete playable game, automated tests, and a browser simulator showing the exact two 128×64 monochrome framebuffers. ESP32 source compatibility is preserved by architecture, but no hardware upload is permitted in the current phase.
+The Native build is the verified reference implementation. The current delivery target extends that reference to an ESP32-S3 N16R8-class device through a thin adapter, read-only hardware preflight, bounded diagnostic upload, and then product upload. The Game Core and the two 128×64 framebuffer renderers remain shared and unchanged by platform wiring.
 
 The following are intentionally deferred until after a playable Native game exists:
 
-- ESP32 upload and physical-device execution;
-- hardware-in-the-loop testing;
 - 10,000-tick host/device state-hash comparison;
 - million-tick stress testing;
 - OTA, persistence, cloud services, and online inference;
@@ -69,11 +67,11 @@ A caller may pass `--port <1..65535>` for a stable test port. Binding any non-lo
 The future embedded target will contain:
 
 - the same Game Core and application coordinator;
-- ESP32Adapter implementations for GPIO, dual I²C OLEDs, active buzzer, monotonic time, and USB Serial diagnostics;
+- ESP32Adapter implementations for GPIO, dual I²C OLEDs, monotonic time, USB Serial diagnostics, and non-blocking audio events;
 - no HTTP server and no network dependency;
 - no cloud or online inference requirement.
 
-The provisional hardware class is ESP32-S3 N16R8. Exact PlatformIO board ID, flash mode, PSRAM mode, partition table, and any button row still marked pending in `hardware.md` remain `PENDING_HARDWARE_VERIFICATION`. The documented dual-OLED buses and GPIO4 active-high buzzer circuit already have physical validation records and may be implemented from that evidence. A successful generic compilation is not evidence that remaining provisional settings match the board.
+The provisional hardware class is ESP32-S3 N16R8. Exact PlatformIO board ID, flash mode, PSRAM mode, partition table, and any button row still marked pending in `hardware.md` remain `PENDING_HARDWARE_VERIFICATION` until the physical preflight resolves them. The documented dual-OLED buses have physical validation records. GPIO4 is an unassigned spare and must remain untouched. A successful generic compilation is not hardware evidence.
 
 No `upload`, `flash`, `erase`, or equivalent target may be run during the Native phase.
 
@@ -121,7 +119,7 @@ The coordinator translates platform input into domain commands and coordinates:
 - sound-effect priority selection;
 - immutable snapshots for adapters.
 
-It depends on explicit ports such as `Clock`, `InputSource`, `DisplaySink`, `AudioSink`, and `DiagnosticsSink`. Platform implementations depend inward on these interfaces; the core never depends outward.
+It depends on explicit ports such as `Clock`, `InputSource`, `DisplaySink`, `AudioEventSink`, and `DiagnosticsSink`. Platform implementations depend inward on these interfaces; the core never depends outward.
 
 ### 4.3 NativeAdapter
 
@@ -141,8 +139,8 @@ HTTP handlers enqueue commands into one bounded application command queue. A sin
 
 The future adapter will be a thin translation layer:
 
-- `setup()` initializes validated peripherals and leaves the buzzer off;
-- `loop()` runs non-blocking input scanning, tick scheduling, rendering, audio timing, and diagnostics;
+- `setup()` initializes validated displays, buttons, and Serial while leaving GPIO4 unconfigured;
+- `loop()` runs non-blocking input scanning, tick scheduling, rendering, best-effort Serial audio events, and diagnostics;
 - no long `delay()` calls;
 - no heap allocation in steady-state gameplay;
 - no network service;

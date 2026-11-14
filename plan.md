@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:30 EST
+Last Modified at: 2026-11-14 04:33 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -21,9 +21,9 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 |---|---|---|
 | M0 | Documentation and reproducible Native toolchain | `PASSED` |
 | M1 | Complete headless Native game | `PASSED` |
-| M2 | Browser-playable vertical slice with exact virtual OLEDs | `PASSED` |
-| M3 | Native product hardening and expanded verification | `PASSED` |
-| M4 | ESP32 adapter and compile-only integration | `NOT_STARTED` |
+| M2 | Browser-playable vertical slice with exact virtual OLEDs | `IN_PROGRESS` |
+| M3 | Native product hardening and expanded verification | `IN_PROGRESS` |
+| M4 | ESP32 adapter and compile-only integration | `IN_PROGRESS` |
 | M5 | Physical hardware integration, only after explicit upload approval | `NOT_STARTED` |
 | M6 | Cross-platform determinism and release-candidate evidence | `NOT_STARTED` |
 | RL0 | Training contract, deployment boundary, and event attribution | `IN_PROGRESS` |
@@ -178,7 +178,7 @@ Pass conditions:
 - Browser smoke: random loopback port, versioned API, malformed requests, commands, reset, and graceful SIGTERM passed.
 - Visual QA: 1440×1050 desktop and true 390×1800 CSS-viewport screenshots passed overflow checks and manual inspection.
 - Horror-visibility revision: player Map has blank roads, solid walls, one-slash fog, no projectile pixels under any projectile state, and an outline-diamond player; HUD has five filled/outline hearts and three filled/outline ammo cartridges.
-- Audible-event adapter: successful own shot is observable as `OWN_SHOT`; player damage and nearby enemy shots use higher-priority buzzer rhythms without exposing shooter coordinates.
+- Audible-event adapter: successful own shot is observable as `PLAYER_SHOT`; player damage and nearby enemy shots use higher-priority Mac-speaker sounds without exposing shooter coordinates.
 
 ## M4 — ESP32 adapter and compile-only integration
 
@@ -190,7 +190,7 @@ Pass conditions:
 ### Deliverables
 
 - Pinned `esp32s3` PlatformIO environment.
-- Thin adapters for clock, USB Serial diagnostics, dual displays, buttons, and active buzzer.
+- Thin adapters for clock, USB Serial diagnostics/audio events, two independent displays, and buttons.
 - Compile-time GPIO configuration isolated from domain code.
 - Startup diagnostics for expected flash/PSRAM capabilities implemented but not claimed as physically passed.
 - Embedded build only; no upload.
@@ -212,14 +212,15 @@ Pass conditions:
 
 ### Entry gate
 
-- The user explicitly authorizes an ESP32 upload in a future request.
-- Board identity, flash mode, PSRAM mode, GPIO map, and buzzer polarity are reconciled with physical evidence.
+- The user explicitly authorized ESP32 diagnostic and product uploads on 2026-11-14.
+- Board identity, flash mode, PSRAM mode, and GPIO map are reconciled with physical evidence.
 
 ### Deliverables
 
 - Automated serial-port discovery by USB metadata.
 - Pre-upload flash identity check.
-- Physical display, input, and buzzer adapters validated in isolation, then together.
+- Physical display and input adapters validated in isolation, then together.
+- USB Serial audio events and the Mac speaker companion validated without creating a gameplay dependency.
 - Hardware results recorded in `docs/hardware.md` without inference.
 
 ### Pass conditions
@@ -228,7 +229,8 @@ Pass conditions:
 - Both I²C buses independently find exactly one display at `0x3C`.
 - All seven buttons pass HIGH → LOW → HIGH and 20 ms debounce tests without repeat.
 - FIRE modifier semantics match Native behavior.
-- Buzzer is off at boot and plays only approved non-blocking patterns.
+- GPIO4 remains unconfigured and the disconnected-Mac game remains fully playable.
+- Each canonical audio event reaches the Mac speaker without hidden-state fields or gameplay blocking.
 - One complete game is playable on the physical device.
 
 ## M6 — Cross-platform determinism and release-candidate evidence
