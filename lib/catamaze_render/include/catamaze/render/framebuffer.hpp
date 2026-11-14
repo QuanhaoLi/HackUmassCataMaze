@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:34 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Declares a fixed SSD1306 page-order framebuffer and bounds-safe drawing primitives.
 
@@ -22,18 +22,14 @@ class Framebuffer {
   void clear(bool on = false) noexcept;
   void setPixel(std::int16_t x, std::int16_t y, bool on = true) noexcept;
   bool pixel(std::int16_t x, std::int16_t y) const noexcept;
-  void fillRect(std::int16_t x, std::int16_t y, std::int16_t width,
-                std::int16_t height, bool on = true) noexcept;
-  void drawRect(std::int16_t x, std::int16_t y, std::int16_t width,
-                std::int16_t height, bool on = true) noexcept;
-  void drawChar(std::int16_t x, std::int16_t y, char character,
+  void fillRect(std::int16_t x, std::int16_t y, std::int16_t width, std::int16_t height,
                 bool on = true) noexcept;
-  void drawText(std::int16_t x, std::int16_t y, std::string_view text,
+  void drawRect(std::int16_t x, std::int16_t y, std::int16_t width, std::int16_t height,
                 bool on = true) noexcept;
+  void drawChar(std::int16_t x, std::int16_t y, char character, bool on = true) noexcept;
+  void drawText(std::int16_t x, std::int16_t y, std::string_view text, bool on = true) noexcept;
 
-  const std::array<std::uint8_t, kByteCount>& bytes() const noexcept {
-    return bytes_;
-  }
+  const std::array<std::uint8_t, kByteCount>& bytes() const noexcept { return bytes_; }
 
  private:
   std::array<std::uint8_t, kByteCount> bytes_{};

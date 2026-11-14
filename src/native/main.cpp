@@ -1,10 +1,13 @@
 // Created at: 2026-11-14 02:13 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:37 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Runs the complete headless Native game without making a web server a core dependency.
 
+#include <atomic>
 #include <cerrno>
+#include <chrono>
+#include <csignal>
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
@@ -12,6 +15,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include "catamaze/app/application.hpp"
@@ -27,6 +31,9 @@ using catamaze::core::ObservedCell;
 using catamaze::core::Terrain;
 
 constexpr std::uint64_t kDefaultSeed = 0x000000000134fd5aULL;
+volatile std::sig_atomic_t gStopRequested = 0;
+
+void handleStopSignal(int) { gStopRequested = 1; }
 
 bool parseUnsigned(const std::string& text, std::uint64_t& value) {
   errno = 0;
@@ -69,16 +76,16 @@ void printSnapshot(const Application& application) {
   const auto observation = application.playerObservation();
   const auto& state = application.state();
   const auto& player = state.entities[0];
-  std::cout << "\nCATAMAZE  " << catamaze::core::toString(state.status)
-            << "  HASH 0x" << std::hex << std::setw(16) << std::setfill('0')
-            << application.stateHash() << std::dec << std::setfill(' ') << '\n'
+  std::cout << "\nCATAMAZE  " << catamaze::core::toString(state.status) << "  HASH 0x" << std::hex
+            << std::setw(16) << std::setfill('0') << application.stateHash() << std::dec
+            << std::setfill(' ') << '\n'
             << "TICK   " << state.tick << '/' << catamaze::core::kMaxTicks << '\n'
             << "HP     " << static_cast<int>(player.hp) << '/'
             << static_cast<int>(catamaze::core::kMaxHp) << '\n'
             << "AMMO   " << static_cast<int>(player.ammo) << '/'
             << static_cast<int>(catamaze::core::kMaxAmmo) << '\n'
-            << "QUEUE  " << state.player_queue.size() << '/'
-            << state.player_queue.capacity() << '\n'
+            << "QUEUE  " << state.player_queue.size() << '/' << state.player_queue.capacity()
+            << '\n'
             << "POS    " << player.position.x << ',' << player.position.y << '\n';
   for (std::size_t y = 0; y < 5U; ++y) {
     for (std::size_t x = 0; x < 5U; ++x) {
@@ -115,22 +122,20 @@ bool commandAction(const std::string& command, Action& action) {
 }
 
 void printHelp() {
-  std::cout
-      << "Commands: u/d/l/r move, fu/fd/fl/fr shoot, w wait, clear, tick,\n"
-      << "          run <ticks>, reset <seed>, help, quit\n";
+  std::cout << "Commands: u/d/l/r move, fu/fd/fl/fr shoot, w wait, clear, tick,\n"
+            << "          run <ticks>, reset <seed>, help, quit\n";
 }
 
 int interactive(std::uint64_t seed) {
   Application application(seed);
-  std::cout << catamaze::core::kProductName << " Native "
-            << catamaze::core::kCoreVersion << " ("
+  std::cout << catamaze::core::kProductName << " Native " << catamaze::core::kCoreVersion << " ("
             << catamaze::core::kRulesVersion << ")\n";
   printHelp();
   printSnapshot(application);
 
   std::string line;
-  while (application.state().status == GameStatus::Running &&
-         std::cout << "catamaze> " && std::getline(std::cin, line)) {
+  while (application.state().status == GameStatus::Running && std::cout << "catamaze> " &&
+         std::getline(std::cin, line)) {
     std::istringstream input(line);
     std::string command;
     input >> command;
@@ -163,8 +168,7 @@ int interactive(std::uint64_t seed) {
         continue;
       }
       for (std::uint64_t index = 0;
-           index < ticks && application.state().status == GameStatus::Running;
-           ++index) {
+           index < ticks && application.state().status == GameStatus::Running; ++index) {
         application.tick();
       }
       printSnapshot(application);
@@ -220,8 +224,7 @@ int main(int argc, char** argv) {
         return 2;
       }
     } else if (option == "--auto") {
-      if (!parseUnsigned(argv[++index], auto_ticks) ||
-          auto_ticks > catamaze::core::kMaxTicks) {
+      if (!parseUnsigned(argv[++index], auto_ticks) || auto_ticks > catamaze::core::kMaxTicks) {
         std::cerr << "invalid auto tick count\n";
         return 2;
       }
@@ -254,7 +257,20 @@ int main(int argc, char** argv) {
     options.web_root = web_root;
     try {
       catamaze::native::NativeServer server(std::move(options));
-      return server.run();
+      gStopRequested = 0;
+      std::signal(SIGINT, handleStopSignal);
+      std::signal(SIGTERM, handleStopSignal);
+      std::atomic<bool> server_finished{false};
+      std::thread stop_watcher([&server, &server_finished] {
+        while (!server_finished.load() && gStopRequested == 0) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        if (gStopRequested != 0) server.requestStop();
+      });
+      const int result = server.run();
+      server_finished.store(true);
+      stop_watcher.join();
+      return gStopRequested != 0 ? 0 : result;
     } catch (const std::exception& error) {
       std::cerr << "Native server failed: " << error.what() << '\n';
       return 1;
@@ -266,13 +282,11 @@ int main(int argc, char** argv) {
   }
   Application application(seed);
   for (std::uint64_t tick = 0;
-       tick < auto_ticks && application.state().status == GameStatus::Running;
-       ++tick) {
+       tick < auto_ticks && application.state().status == GameStatus::Running; ++tick) {
     application.tick();
   }
   std::cout << "CATAMAZE_HEADLESS_OK tick=" << application.state().tick
-            << " status=" << catamaze::core::toString(application.state().status)
-            << " hash=0x" << std::hex << application.stateHash() << std::dec
-            << '\n';
+            << " status=" << catamaze::core::toString(application.state().status) << " hash=0x"
+            << std::hex << application.stateHash() << std::dec << '\n';
   return 0;
 }

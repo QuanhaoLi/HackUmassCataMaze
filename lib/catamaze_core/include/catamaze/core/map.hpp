@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Declares fixed terrain storage, path distances, and deterministic maze generation.
 
@@ -22,9 +22,7 @@ class Map {
   bool isWalkable(Position position) const noexcept;
   void fill(Terrain terrain) noexcept;
   bool set(Position position, Terrain terrain) noexcept;
-  const std::array<Terrain, kMapCellCount>& cells() const noexcept {
-    return cells_;
-  }
+  const std::array<Terrain, kMapCellCount>& cells() const noexcept { return cells_; }
 
  private:
   static std::size_t index(Position position) noexcept;

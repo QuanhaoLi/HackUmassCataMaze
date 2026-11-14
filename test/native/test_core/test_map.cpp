@@ -1,14 +1,14 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Verifies portable randomness, deterministic maze generation, and connectivity invariants.
+
+#include <gtest/gtest.h>
 
 #include <array>
 #include <cstddef>
 #include <cstdint>
-
-#include <gtest/gtest.h>
 
 #include "catamaze/core/map.hpp"
 #include "catamaze/core/random.hpp"
@@ -28,6 +28,8 @@ TEST(Pcg32, RepeatsExactlyForTheSameSeedAndSequence) {
     saw_difference = saw_difference || different.next() != expected;
   }
   EXPECT_TRUE(saw_difference);
+  EXPECT_NE(first.state(), 0U);
+  EXPECT_EQ(first.increment() & 1U, 1U);
 }
 
 TEST(Pcg32, BoundedValuesStayInsideTheRequestedRange) {
@@ -69,13 +71,12 @@ TEST(MazeGenerator, ProducesOneReachableExitAndDistinctSpawns) {
       entrance_count += terrain == Terrain::Entrance ? 1U : 0U;
       exit_count += terrain == Terrain::Exit ? 1U : 0U;
       if (world.map.isWalkable(position)) {
-        const std::size_t index = static_cast<std::size_t>(y) * kMapSize +
-                                  static_cast<std::size_t>(x);
+        const std::size_t index =
+            static_cast<std::size_t>(y) * kMapSize + static_cast<std::size_t>(x);
         EXPECT_NE(distances[index], kUnreachableDistance)
             << "unreachable walkable cell at " << x << ',' << y;
       }
-      const bool boundary = x == 0 || y == 0 || x == kMapSize - 1 ||
-                            y == kMapSize - 1;
+      const bool boundary = x == 0 || y == 0 || x == kMapSize - 1 || y == kMapSize - 1;
       if (boundary && position != world.exit) {
         EXPECT_EQ(terrain, Terrain::Wall);
       }

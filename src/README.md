@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:11 EST
+Last Modified at: 2026-11-14 02:51 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Introduces executable entry points.
 |-native/ — Contains the macOS/Linux simulator executable.
+|-tools/ — Contains bounded Native verification executables that are not product entry points.
 
 ## To-Dos
 - Add `esp32/` with its README only when M4 begins.

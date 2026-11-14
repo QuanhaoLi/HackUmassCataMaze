@@ -1,14 +1,14 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:48 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Verifies SSD1306 page order, clipping, deterministic screens, and player-visible rendering.
+
+#include <gtest/gtest.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-
-#include <gtest/gtest.h>
 
 #include "catamaze/app/application.hpp"
 #include "catamaze/render/framebuffer.hpp"

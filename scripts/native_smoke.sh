@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 02:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 02:48 EST
+# Last Modified at: 2026-11-14 02:56 EST
 # Last Modified by: Codex
 # Builds and executes a bounded headless Native gameplay acceptance check.
 
@@ -85,4 +85,9 @@ invalid_status="$(curl -sS -o "${artifact_dir}/invalid.json" -w '%{http_code}' \
   "${base_url}/api/v1/action")"
 [[ "${invalid_status}" == "400" ]]
 curl -fsS "${base_url}/" | grep -q 'CataMaze'
+trap - EXIT
+kill -TERM "${server_pid}"
+server_status=0
+wait "${server_pid}" || server_status=$?
+[[ "${server_status}" == "0" ]]
 printf 'CATAMAZE_BROWSER_OK url=%s tick=%s\n' "${base_url}" "${tick_value}"

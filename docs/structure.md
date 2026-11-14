@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:42 EST
+Last Modified at: 2026-11-14 02:51 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -193,6 +193,9 @@ src/
   native/
     README.md
     main.cpp
+  tools/
+    README.md
+    randomized.cpp
   esp32/
     README.md
     main.cpp

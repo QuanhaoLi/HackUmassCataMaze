@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Declares the one-owner application coordinator and deterministic heuristic AI lifecycle.
 
@@ -34,8 +34,7 @@ class Application {
   };
 
   core::Action chooseAction(std::size_t ai_index) noexcept;
-  static bool legalMove(const core::Observation& observation,
-                        core::Direction direction) noexcept;
+  static bool legalMove(const core::Observation& observation, core::Direction direction) noexcept;
   static std::size_t positionIndex(core::Position position) noexcept;
   void initializeAiMemory(std::uint64_t seed) noexcept;
 

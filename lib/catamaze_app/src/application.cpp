@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Implements deterministic legal-observation AI policies and application tick ownership.
 
@@ -22,8 +22,8 @@ using core::EntityId;
 using core::Observation;
 using core::Persona;
 
-constexpr std::array<Direction, 4> kDirections{
-    Direction::Up, Direction::Right, Direction::Down, Direction::Left};
+constexpr std::array<Direction, 4> kDirections{Direction::Up, Direction::Right, Direction::Down,
+                                               Direction::Left};
 
 std::size_t directionIndex(Direction direction) noexcept {
   return static_cast<std::size_t>(direction);
@@ -49,8 +49,7 @@ VisiblePlayer findVisiblePlayer(const Observation& observation) noexcept {
     for (std::int8_t dx = -2; dx <= 2; ++dx) {
       const auto& cell = observation.atOffset(dx, dy);
       if (cell.visible &&
-          cell.entity == static_cast<std::int8_t>(
-                             core::entityIndex(EntityId::Player))) {
+          cell.entity == static_cast<std::int8_t>(core::entityIndex(EntityId::Player))) {
         return VisiblePlayer{true, dx, dy};
       }
     }
@@ -85,9 +84,7 @@ Direction directionToward(std::int8_t dx, std::int8_t dy) noexcept {
 
 }  // namespace
 
-Application::Application(std::uint64_t seed) noexcept : engine_(seed) {
-  initializeAiMemory(seed);
-}
+Application::Application(std::uint64_t seed) noexcept : engine_(seed) { initializeAiMemory(seed); }
 
 void Application::reset(std::uint64_t seed) noexcept {
   engine_.reset(seed);
@@ -116,8 +113,7 @@ void Application::initializeAiMemory(std::uint64_t seed) noexcept {
   }
 }
 
-bool Application::legalMove(const Observation& observation,
-                            Direction direction) noexcept {
+bool Application::legalMove(const Observation& observation, Direction direction) noexcept {
   std::int8_t dx = 0;
   std::int8_t dy = 0;
   switch (direction) {
@@ -158,8 +154,7 @@ Action Application::chooseAction(std::size_t ai_index) noexcept {
     return core::shootAction(line_direction);
   }
   if (observation.self.persona == Persona::Explorer && player_on_line &&
-      observation.self.ammo > 0U &&
-      (absolute(player.dx) + absolute(player.dy)) <= 2) {
+      observation.self.ammo > 0U && (absolute(player.dx) + absolute(player.dy)) <= 2) {
     return core::shootAction(line_direction);
   }
 
@@ -169,10 +164,9 @@ Action Application::chooseAction(std::size_t ai_index) noexcept {
       memory.heading = primary;
       return core::moveAction(primary);
     }
-    const Direction secondary =
-        primary == Direction::Left || primary == Direction::Right
-            ? (player.dy > 0 ? Direction::Down : Direction::Up)
-            : (player.dx > 0 ? Direction::Right : Direction::Left);
+    const Direction secondary = primary == Direction::Left || primary == Direction::Right
+                                    ? (player.dy > 0 ? Direction::Down : Direction::Up)
+                                    : (player.dx > 0 ? Direction::Right : Direction::Left);
     if ((player.dx != 0 || player.dy != 0) && legalMove(observation, secondary)) {
       memory.heading = secondary;
       return core::moveAction(secondary);
@@ -198,9 +192,8 @@ Action Application::chooseAction(std::size_t ai_index) noexcept {
       } else {
         step_y = 1;
       }
-      const int distance =
-          absolute(static_cast<std::int16_t>(player.dx - step_x)) +
-          absolute(static_cast<std::int16_t>(player.dy - step_y));
+      const int distance = absolute(static_cast<std::int16_t>(player.dx - step_x)) +
+                           absolute(static_cast<std::int16_t>(player.dy - step_y));
       if (!found || distance > best_distance) {
         found = true;
         best = candidate;
@@ -237,10 +230,9 @@ Action Application::chooseAction(std::size_t ai_index) noexcept {
     }
   }
 
-  if (observation.self.persona == Persona::Aggressive &&
-      observation.sound.heard) {
-    const Direction toward_sound = directionToward(
-        observation.sound.direction_x, observation.sound.direction_y);
+  if (observation.self.persona == Persona::Aggressive && observation.sound.heard) {
+    const Direction toward_sound =
+        directionToward(observation.sound.direction_x, observation.sound.direction_y);
     if (legalMove(observation, toward_sound)) {
       memory.heading = toward_sound;
       return core::moveAction(toward_sound);
@@ -249,8 +241,7 @@ Action Application::chooseAction(std::size_t ai_index) noexcept {
 
   const bool left_hand = observation.self.persona == Persona::Aggressive;
   const std::array<int, 4> turn_order =
-      left_hand ? std::array<int, 4>{-1, 0, 1, 2}
-                : std::array<int, 4>{1, 0, -1, 2};
+      left_hand ? std::array<int, 4>{-1, 0, 1, 2} : std::array<int, 4>{1, 0, -1, 2};
   for (int turn : turn_order) {
     const Direction candidate = rotated(memory.heading, turn);
     if (legalMove(observation, candidate)) {

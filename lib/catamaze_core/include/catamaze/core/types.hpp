@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Declares stable, platform-independent CataMaze domain values and limits.
 
@@ -33,9 +33,7 @@ constexpr bool operator==(Position lhs, Position rhs) noexcept {
   return lhs.x == rhs.x && lhs.y == rhs.y;
 }
 
-constexpr bool operator!=(Position lhs, Position rhs) noexcept {
-  return !(lhs == rhs);
-}
+constexpr bool operator!=(Position lhs, Position rhs) noexcept { return !(lhs == rhs); }
 
 enum class Direction : std::uint8_t { Up = 0, Right = 1, Down = 2, Left = 3 };
 
@@ -130,9 +128,7 @@ struct Event {
   std::uint8_t value{0};
 };
 
-constexpr std::size_t entityIndex(EntityId id) noexcept {
-  return static_cast<std::size_t>(id);
-}
+constexpr std::size_t entityIndex(EntityId id) noexcept { return static_cast<std::size_t>(id); }
 
 Position moved(Position origin, Direction direction) noexcept;
 bool isMoveAction(Action action) noexcept;

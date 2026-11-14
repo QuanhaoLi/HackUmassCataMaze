@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Implements deterministic simultaneous movement, combat, observations, and terminal rules.
 
@@ -14,21 +14,17 @@
 namespace catamaze::core {
 namespace {
 
-constexpr std::array<EntityId, kEntityCount> kEntityIds{
-    EntityId::Player, EntityId::Aggressive, EntityId::Cautious,
-    EntityId::Explorer};
+constexpr std::array<EntityId, kEntityCount> kEntityIds{EntityId::Player, EntityId::Aggressive,
+                                                        EntityId::Cautious, EntityId::Explorer};
 
-constexpr std::array<Persona, kEntityCount> kPersonas{
-    Persona::Player, Persona::Aggressive, Persona::Cautious,
-    Persona::Explorer};
+constexpr std::array<Persona, kEntityCount> kPersonas{Persona::Player, Persona::Aggressive,
+                                                      Persona::Cautious, Persona::Explorer};
 
 std::int16_t absolute(std::int16_t value) noexcept {
   return value < 0 ? static_cast<std::int16_t>(-value) : value;
 }
 
-std::int8_t sign(std::int16_t value) noexcept {
-  return value < 0 ? -1 : (value > 0 ? 1 : 0);
-}
+std::int8_t sign(std::int16_t value) noexcept { return value < 0 ? -1 : (value > 0 ? 1 : 0); }
 
 struct Hit {
   EntityId shooter{EntityId::Player};
@@ -58,14 +54,12 @@ class Fnv1a64 {
 
 }  // namespace
 
-const ObservedCell& Observation::atOffset(std::int8_t dx,
-                                          std::int8_t dy) const noexcept {
+const ObservedCell& Observation::atOffset(std::int8_t dx, std::int8_t dy) const noexcept {
   static const ObservedCell kHidden{};
   if (dx < -2 || dx > 2 || dy < -2 || dy > 2) {
     return kHidden;
   }
-  const auto index = static_cast<std::size_t>(dy + 2) * 5U +
-                     static_cast<std::size_t>(dx + 2);
+  const auto index = static_cast<std::size_t>(dy + 2) * 5U + static_cast<std::size_t>(dx + 2);
   return cells[index];
 }
 
@@ -111,8 +105,7 @@ void GameEngine::addEvent(const Event& event) noexcept {
   }
 }
 
-std::int8_t GameEngine::entityAt(Position position,
-                                 EntityId ignored) const noexcept {
+std::int8_t GameEngine::entityAt(Position position, EntityId ignored) const noexcept {
   for (std::size_t index = 0; index < state_.entities.size(); ++index) {
     const auto& entity = state_.entities[index];
     if (entity.alive && entity.id != ignored && entity.position == position) {
@@ -122,8 +115,7 @@ std::int8_t GameEngine::entityAt(Position position,
   return -1;
 }
 
-void GameEngine::step(
-    const std::array<Action, kAiCount>& ai_actions) noexcept {
+void GameEngine::step(const std::array<Action, kAiCount>& ai_actions) noexcept {
   if (state_.status != GameStatus::Running) {
     return;
   }
@@ -135,8 +127,7 @@ void GameEngine::step(
   for (std::size_t ai = 0; ai < kAiCount; ++ai) {
     actions[ai + 1U] = ai_actions[ai];
     const auto& entity = state_.entities[ai + 1U];
-    if (entity.alive && isShootAction(actions[ai + 1U]) &&
-        entity.ammo == 0U) {
+    if (entity.alive && isShootAction(actions[ai + 1U]) && entity.ammo == 0U) {
       actions[ai + 1U] = Action::Wait;
       invalid_fallback[ai + 1U] = true;
     }
@@ -207,8 +198,8 @@ void GameEngine::step(
       addEvent(Event{EventType::Moved, entity.id, entity.id, entity.position,
                      actionDirection(actions[index]), 0});
     } else if (entity.alive && isMoveAction(actions[index])) {
-      addEvent(Event{EventType::MoveBlocked, entity.id, entity.id,
-                     entity.position, actionDirection(actions[index]),
+      addEvent(Event{EventType::MoveBlocked, entity.id, entity.id, entity.position,
+                     actionDirection(actions[index]),
                      static_cast<std::uint8_t>(entity.last_result)});
     }
   }
@@ -226,16 +217,13 @@ void GameEngine::step(
     const std::int8_t target_index = entityAt(next, bullet.shooter);
     if (target_index >= 0) {
       if (hit_count < hits.size()) {
-        hits[hit_count++] = Hit{bullet.shooter,
-                                state_.entities[static_cast<std::size_t>(
-                                    target_index)].id,
-                                next};
+        hits[hit_count++] =
+            Hit{bullet.shooter, state_.entities[static_cast<std::size_t>(target_index)].id, next};
       }
       return;
     }
     if (next_bullet_count < next_bullets.size()) {
-      next_bullets[next_bullet_count++] =
-          Bullet{next, bullet.direction, bullet.shooter};
+      next_bullets[next_bullet_count++] = Bullet{next, bullet.direction, bullet.shooter};
     }
   };
 
@@ -255,8 +243,7 @@ void GameEngine::step(
     --entity.ammo;
     entity.last_result = ActionResult::Shot;
     const Direction direction = actionDirection(actions[index]);
-    addEvent(Event{EventType::Shot, entity.id, entity.id, entity.position,
-                   direction, 1});
+    addEvent(Event{EventType::Shot, entity.id, entity.id, entity.position, direction, 1});
     resolve_bullet(Bullet{entity.position, direction, entity.id});
   }
 
@@ -272,8 +259,7 @@ void GameEngine::step(
       first_shooter[target_index] = hit.shooter;
     }
     ++hit_totals[target_index];
-    addEvent(Event{EventType::BulletHit, hit.shooter, hit.target,
-                   hit.position, Direction::Up, 1});
+    addEvent(Event{EventType::BulletHit, hit.shooter, hit.target, hit.position, Direction::Up, 1});
   }
 
   for (std::size_t index = 0; index < kEntityCount; ++index) {
@@ -281,15 +267,14 @@ void GameEngine::step(
     if (!entity.alive || hit_totals[index] == 0U) {
       continue;
     }
-    const std::uint8_t damage =
-        std::min(entity.hp, hit_totals[index]);
+    const std::uint8_t damage = std::min(entity.hp, hit_totals[index]);
     entity.hp = static_cast<std::uint8_t>(entity.hp - damage);
-    addEvent(Event{EventType::DamageApplied, first_shooter[index], entity.id,
-                   entity.position, Direction::Up, damage});
+    addEvent(Event{EventType::DamageApplied, first_shooter[index], entity.id, entity.position,
+                   Direction::Up, damage});
     if (entity.hp == 0U) {
       entity.alive = false;
-      addEvent(Event{EventType::EntityDied, first_shooter[index], entity.id,
-                     entity.position, Direction::Up, 0});
+      addEvent(Event{EventType::EntityDied, first_shooter[index], entity.id, entity.position,
+                     Direction::Up, 0});
     }
   }
 
@@ -302,8 +287,8 @@ void GameEngine::step(
       entity.recharge_progress = 0U;
       if (entity.ammo < kMaxAmmo) {
         ++entity.ammo;
-        addEvent(Event{EventType::AmmoRestored, entity.id, entity.id,
-                       entity.position, Direction::Up, 1});
+        addEvent(Event{EventType::AmmoRestored, entity.id, entity.id, entity.position,
+                       Direction::Up, 1});
       }
     }
   }
@@ -318,9 +303,8 @@ void GameEngine::step(
     state_.status = GameStatus::Timeout;
   }
   if (state_.status != GameStatus::Running) {
-    addEvent(Event{EventType::GameEnded, EntityId::Player, EntityId::Player,
-                   player.position, Direction::Up,
-                   static_cast<std::uint8_t>(state_.status)});
+    addEvent(Event{EventType::GameEnded, EntityId::Player, EntityId::Player, player.position,
+                   Direction::Up, static_cast<std::uint8_t>(state_.status)});
   }
 }
 
@@ -351,9 +335,8 @@ bool GameEngine::hasLineOfSight(Position from, Position to) const noexcept {
     }
 
     const bool diagonal = x != previous_x && y != previous_y;
-    if (diagonal &&
-        (state_.map.at(Position{x, previous_y}) == Terrain::Wall ||
-         state_.map.at(Position{previous_x, y}) == Terrain::Wall)) {
+    if (diagonal && (state_.map.at(Position{x, previous_y}) == Terrain::Wall ||
+                     state_.map.at(Position{previous_x, y}) == Terrain::Wall)) {
       return false;
     }
     const Position current{x, y};
@@ -372,12 +355,10 @@ Observation GameEngine::observe(EntityId observer) const noexcept {
   for (std::int8_t dy = -2; dy <= 2; ++dy) {
     for (std::int8_t dx = -2; dx <= 2; ++dx) {
       const std::size_t observed_index =
-          static_cast<std::size_t>(dy + 2) * 5U +
-          static_cast<std::size_t>(dx + 2);
+          static_cast<std::size_t>(dy + 2) * 5U + static_cast<std::size_t>(dx + 2);
       auto& cell = observation.cells[observed_index];
-      const Position position{
-          static_cast<std::int16_t>(self.position.x + dx),
-          static_cast<std::int16_t>(self.position.y + dy)};
+      const Position position{static_cast<std::int16_t>(self.position.x + dx),
+                              static_cast<std::int16_t>(self.position.y + dy)};
       if (!state_.map.inBounds(position)) {
         cell.visible = true;
         cell.terrain = Terrain::Wall;
@@ -408,12 +389,9 @@ Observation GameEngine::observe(EntityId observer) const noexcept {
     if (event.type != EventType::Shot) {
       continue;
     }
-    const std::int16_t dx =
-        static_cast<std::int16_t>(event.position.x - self.position.x);
-    const std::int16_t dy =
-        static_cast<std::int16_t>(event.position.y - self.position.y);
-    const auto distance = static_cast<std::uint8_t>(
-        std::max(absolute(dx), absolute(dy)));
+    const std::int16_t dx = static_cast<std::int16_t>(event.position.x - self.position.x);
+    const std::int16_t dy = static_cast<std::int16_t>(event.position.y - self.position.y);
+    const auto distance = static_cast<std::uint8_t>(std::max(absolute(dx), absolute(dy)));
     if (distance <= 3U && distance < nearest) {
       nearest = distance;
       observation.sound.heard = true;

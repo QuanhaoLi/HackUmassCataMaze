@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Implements the fixed 50x50 terrain map and versioned dfs-grid-v1 generator.
 
@@ -16,12 +16,10 @@ namespace catamaze::core {
 namespace {
 
 constexpr std::int16_t kLogicalSide = 24;
-constexpr std::size_t kLogicalCellCount =
-    static_cast<std::size_t>(kLogicalSide) * kLogicalSide;
+constexpr std::size_t kLogicalCellCount = static_cast<std::size_t>(kLogicalSide) * kLogicalSide;
 
 std::size_t mapIndex(Position position) noexcept {
-  return static_cast<std::size_t>(position.y) * kMapSize +
-         static_cast<std::size_t>(position.x);
+  return static_cast<std::size_t>(position.y) * kMapSize + static_cast<std::size_t>(position.x);
 }
 
 std::size_t logicalIndex(Position position) noexcept {
@@ -31,22 +29,17 @@ std::size_t logicalIndex(Position position) noexcept {
 }
 
 bool isLogicalCell(Position position) noexcept {
-  return position.x >= 1 && position.x <= 47 && position.y >= 1 &&
-         position.y <= 47 && (position.x % 2) == 1 &&
-         (position.y % 2) == 1;
+  return position.x >= 1 && position.x <= 47 && position.y >= 1 && position.y <= 47 &&
+         (position.x % 2) == 1 && (position.y % 2) == 1;
 }
 
 bool isPerimeterLogicalCell(Position position) noexcept {
-  return position.x == 1 || position.x == 47 || position.y == 1 ||
-         position.y == 47;
+  return position.x == 1 || position.x == 47 || position.y == 1 || position.y == 47;
 }
 
-void shuffleDirections(std::array<Direction, 4>& directions,
-                       Pcg32& random) noexcept {
-  for (std::size_t remaining = directions.size(); remaining > 1U;
-       --remaining) {
-    const std::size_t selected = random.bounded(
-        static_cast<std::uint32_t>(remaining));
+void shuffleDirections(std::array<Direction, 4>& directions, Pcg32& random) noexcept {
+  for (std::size_t remaining = directions.size(); remaining > 1U; --remaining) {
+    const std::size_t selected = random.bounded(static_cast<std::uint32_t>(remaining));
     std::swap(directions[remaining - 1U], directions[selected]);
   }
 }
@@ -56,8 +49,7 @@ void shuffleDirections(std::array<Direction, 4>& directions,
 Map::Map() noexcept { fill(Terrain::Wall); }
 
 bool Map::inBounds(Position position) const noexcept {
-  return position.x >= 0 && position.x < kMapSize && position.y >= 0 &&
-         position.y < kMapSize;
+  return position.x >= 0 && position.x < kMapSize && position.y >= 0 && position.y < kMapSize;
 }
 
 std::size_t Map::index(Position position) noexcept { return mapIndex(position); }
@@ -96,16 +88,14 @@ DistanceField shortestDistances(const Map& map, Position start) noexcept {
   queue[tail++] = start;
   distances[mapIndex(start)] = 0;
 
-  constexpr std::array<Direction, 4> kDirections{
-      Direction::Up, Direction::Right, Direction::Down, Direction::Left};
+  constexpr std::array<Direction, 4> kDirections{Direction::Up, Direction::Right, Direction::Down,
+                                                 Direction::Left};
   while (head < tail) {
     const Position current = queue[head++];
-    const std::int16_t next_distance =
-        static_cast<std::int16_t>(distances[mapIndex(current)] + 1);
+    const std::int16_t next_distance = static_cast<std::int16_t>(distances[mapIndex(current)] + 1);
     for (Direction direction : kDirections) {
       const Position next = moved(current, direction);
-      if (!map.isWalkable(next) ||
-          distances[mapIndex(next)] != kUnreachableDistance) {
+      if (!map.isWalkable(next) || distances[mapIndex(next)] != kUnreachableDistance) {
         continue;
       }
       distances[mapIndex(next)] = next_distance;
@@ -132,8 +122,8 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
 
   while (stack_size > 0U) {
     const Position current = stack[stack_size - 1U];
-    std::array<Direction, 4> directions{
-        Direction::Up, Direction::Right, Direction::Down, Direction::Left};
+    std::array<Direction, 4> directions{Direction::Up, Direction::Right, Direction::Down,
+                                        Direction::Left};
     shuffleDirections(directions, random);
 
     bool advanced = false;
@@ -199,8 +189,7 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
       }
     }
   }
-  std::sort(candidates.begin(), candidates.begin() +
-                static_cast<std::ptrdiff_t>(candidate_count),
+  std::sort(candidates.begin(), candidates.begin() + static_cast<std::ptrdiff_t>(candidate_count),
             [&distances](Position lhs, Position rhs) {
               const auto left_distance = distances[mapIndex(lhs)];
               const auto right_distance = distances[mapIndex(rhs)];

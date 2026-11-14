@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:37 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:37 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Declares loopback-only Native server configuration and lifecycle.
 
@@ -30,6 +30,7 @@ class NativeServer {
   NativeServer& operator=(const NativeServer&) = delete;
 
   int run();
+  void requestStop();
 
  private:
   class Impl;

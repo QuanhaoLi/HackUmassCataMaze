@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Implements stable action, direction, and status helpers without platform dependencies.
 
@@ -27,13 +27,13 @@ Position moved(Position origin, Direction direction) noexcept {
 }
 
 bool isMoveAction(Action action) noexcept {
-  return action == Action::MoveUp || action == Action::MoveDown ||
-         action == Action::MoveLeft || action == Action::MoveRight;
+  return action == Action::MoveUp || action == Action::MoveDown || action == Action::MoveLeft ||
+         action == Action::MoveRight;
 }
 
 bool isShootAction(Action action) noexcept {
-  return action == Action::ShootUp || action == Action::ShootDown ||
-         action == Action::ShootLeft || action == Action::ShootRight;
+  return action == Action::ShootUp || action == Action::ShootDown || action == Action::ShootLeft ||
+         action == Action::ShootRight;
 }
 
 Direction actionDirection(Action action) noexcept {

@@ -1,0 +1,39 @@
+# Created at: 2026-11-14 02:51 EST
+# Created by: Codex
+# Last Modified at: 2026-11-14 02:51 EST
+# Last Modified by: Codex
+# Runs only locally proven Native build, test, and smoke commands without hardware access.
+
+name: Native C++ quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+      - name: Install project toolchain
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements-dev.txt
+      - name: Validate scripts and build configuration
+        run: |
+          node --check web/app.js
+          node --check scripts/capture_chrome.mjs
+          .venv/bin/pio project config --json-output >/dev/null
+      - name: Build and test Native product
+        run: |
+          .venv/bin/pio run -e native
+          .venv/bin/pio test -e native
+          ./scripts/native_smoke.sh --mode headless
+          ./scripts/native_smoke.sh --mode browser

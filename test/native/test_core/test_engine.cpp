@@ -1,21 +1,20 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Verifies deterministic movement, combat, visibility, terminal conditions, and replay hashing.
 
+#include <gtest/gtest.h>
+
 #include <array>
 #include <cstddef>
-
-#include <gtest/gtest.h>
 
 #include "catamaze/core/engine.hpp"
 
 namespace catamaze::core {
 namespace {
 
-constexpr std::array<Action, kAiCount> kAiWaits{
-    Action::Wait, Action::Wait, Action::Wait};
+constexpr std::array<Action, kAiCount> kAiWaits{Action::Wait, Action::Wait, Action::Wait};
 
 GameSetup openSetup() {
   GameSetup setup{};
@@ -28,8 +27,7 @@ GameSetup openSetup() {
   }
   setup.map.set(Position{1, 1}, Terrain::Entrance);
   setup.map.set(Position{0, 1}, Terrain::Exit);
-  setup.spawns = {Position{2, 2}, Position{6, 2}, Position{2, 6},
-                  Position{6, 6}};
+  setup.spawns = {Position{2, 2}, Position{6, 2}, Position{2, 6}, Position{6, 6}};
   return setup;
 }
 
@@ -53,21 +51,17 @@ TEST(GameEngine, StartOccupiedCellsAndSharedTargetsBlockMovement) {
   ASSERT_TRUE(occupied_engine.enqueuePlayerAction(Action::MoveRight));
   occupied_engine.step(kAiWaits);
   EXPECT_EQ(occupied_engine.state().entities[0].position, (Position{2, 2}));
-  EXPECT_EQ(occupied_engine.state().entities[0].last_result,
-            ActionResult::BlockedEntity);
+  EXPECT_EQ(occupied_engine.state().entities[0].last_result, ActionResult::BlockedEntity);
 
   GameSetup conflict = openSetup();
   conflict.spawns[1] = Position{4, 2};
   GameEngine conflict_engine(conflict);
   ASSERT_TRUE(conflict_engine.enqueuePlayerAction(Action::MoveRight));
-  conflict_engine.step(
-      {Action::MoveLeft, Action::Wait, Action::Wait});
+  conflict_engine.step({Action::MoveLeft, Action::Wait, Action::Wait});
   EXPECT_EQ(conflict_engine.state().entities[0].position, (Position{2, 2}));
   EXPECT_EQ(conflict_engine.state().entities[1].position, (Position{4, 2}));
-  EXPECT_EQ(conflict_engine.state().entities[0].last_result,
-            ActionResult::BlockedConflict);
-  EXPECT_EQ(conflict_engine.state().entities[1].last_result,
-            ActionResult::BlockedConflict);
+  EXPECT_EQ(conflict_engine.state().entities[0].last_result, ActionResult::BlockedConflict);
+  EXPECT_EQ(conflict_engine.state().entities[1].last_result, ActionResult::BlockedConflict);
 }
 
 TEST(GameEngine, AdjacentShotDamagesImmediatelyAndAmmoRecoversOnPhase) {
@@ -174,18 +168,16 @@ TEST(GameEngine, ObservationHidesCellsBehindWallsAndReportsNearbyShots) {
 TEST(GameEngine, SameSeedAndCommandsProduceTheSameHash) {
   GameEngine first(0xdeadbeefU);
   GameEngine second(0xdeadbeefU);
-  constexpr std::array<Action, 8> actions{
-      Action::MoveUp,   Action::MoveRight, Action::ShootDown,
-      Action::Wait,     Action::MoveLeft,  Action::ShootUp,
-      Action::MoveDown, Action::Wait};
+  constexpr std::array<Action, 8> actions{Action::MoveUp,   Action::MoveRight, Action::ShootDown,
+                                          Action::Wait,     Action::MoveLeft,  Action::ShootUp,
+                                          Action::MoveDown, Action::Wait};
 
   for (std::size_t tick = 0; tick < 128U; ++tick) {
     ASSERT_TRUE(first.enqueuePlayerAction(actions[tick % actions.size()]));
     ASSERT_TRUE(second.enqueuePlayerAction(actions[tick % actions.size()]));
-    const std::array<Action, kAiCount> ai{
-        actions[(tick + 1U) % actions.size()],
-        actions[(tick + 3U) % actions.size()],
-        actions[(tick + 5U) % actions.size()]};
+    const std::array<Action, kAiCount> ai{actions[(tick + 1U) % actions.size()],
+                                          actions[(tick + 3U) % actions.size()],
+                                          actions[(tick + 5U) % actions.size()]};
     first.step(ai);
     second.step(ai);
     ASSERT_EQ(first.stateHash(), second.stateHash()) << tick;

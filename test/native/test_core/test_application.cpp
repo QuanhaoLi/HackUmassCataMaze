@@ -1,13 +1,13 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:32 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Verifies deterministic heuristic policies and one-owner application coordination.
 
+#include <gtest/gtest.h>
+
 #include <array>
 #include <cstddef>
-
-#include <gtest/gtest.h>
 
 #include "catamaze/app/application.hpp"
 
@@ -17,9 +17,9 @@ namespace {
 TEST(Application, SameSeedAndPlayerCommandsRemainDeterministic) {
   Application first(0x1234abcdU);
   Application second(0x1234abcdU);
-  constexpr std::array<core::Action, 6> commands{
-      core::Action::MoveUp,   core::Action::MoveRight, core::Action::Wait,
-      core::Action::ShootDown, core::Action::MoveLeft, core::Action::ShootUp};
+  constexpr std::array<core::Action, 6> commands{core::Action::MoveUp,   core::Action::MoveRight,
+                                                 core::Action::Wait,     core::Action::ShootDown,
+                                                 core::Action::MoveLeft, core::Action::ShootUp};
 
   for (std::size_t tick = 0; tick < 256U; ++tick) {
     if (first.state().status != core::GameStatus::Running) {
@@ -48,10 +48,8 @@ TEST(Application, HeuristicPoliciesActWithoutUnavailableFallbacks) {
       if (!entity.alive) {
         continue;
       }
-      EXPECT_NE(entity.last_result, core::ActionResult::InvalidFallback)
-          << tick << ':' << ai;
-      saw_non_wait_action =
-          saw_non_wait_action || entity.last_action != core::Action::Wait;
+      EXPECT_NE(entity.last_result, core::ActionResult::InvalidFallback) << tick << ':' << ai;
+      saw_non_wait_action = saw_non_wait_action || entity.last_action != core::Action::Wait;
     }
   }
   EXPECT_TRUE(saw_non_wait_action);

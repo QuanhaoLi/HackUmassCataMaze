@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:42 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:11 EST
+Last Modified at: 2026-11-14 02:58 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,8 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Introduces the repository and indexes its top-level structure.
 |-.gitignore — Excludes local operating-system metadata from version control.
+|-.clang-format — Defines the repository-wide C++17 formatting contract.
+|-.github/ — Contains documented Native continuous-integration workflows.
 |-platformio.ini — Pins Native build, test, and dependency configuration.
 |-plan.md — Defines ordered implementation milestones and their executable acceptance gates.
 |-requirements-dev.txt — Pins the project-local PlatformIO Core version.

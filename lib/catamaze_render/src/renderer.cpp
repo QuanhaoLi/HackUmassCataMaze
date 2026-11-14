@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:34 EST
+// Last Modified at: 2026-11-14 02:58 EST
 // Last Modified by: Codex
 // Implements exact 128x64 Map and HUD pixel layouts without driver-specific code.
 
@@ -17,8 +17,7 @@ constexpr std::int16_t kGridX = 70;
 constexpr std::int16_t kGridY = 4;
 constexpr std::int16_t kCellSize = 11;
 
-void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell,
-                 std::size_t index) noexcept {
+void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell, std::size_t index) noexcept {
   const std::int16_t column = static_cast<std::int16_t>(index % 5U);
   const std::int16_t row = static_cast<std::int16_t>(index / 5U);
   const std::int16_t x = static_cast<std::int16_t>(kGridX + column * kCellSize);
@@ -26,8 +25,7 @@ void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell,
 
   if (!cell.visible) {
     for (std::int16_t offset = 2; offset < kCellSize - 1; offset += 3) {
-      frame.setPixel(static_cast<std::int16_t>(x + offset),
-                     static_cast<std::int16_t>(y + offset));
+      frame.setPixel(static_cast<std::int16_t>(x + offset), static_cast<std::int16_t>(y + offset));
       frame.setPixel(static_cast<std::int16_t>(x + kCellSize - 1 - offset),
                      static_cast<std::int16_t>(y + offset));
     }
@@ -39,31 +37,23 @@ void drawMapCell(Framebuffer& frame, const core::ObservedCell& cell,
       }
     }
   } else {
-    frame.setPixel(static_cast<std::int16_t>(x + 5),
-                   static_cast<std::int16_t>(y + 5));
+    frame.setPixel(static_cast<std::int16_t>(x + 5), static_cast<std::int16_t>(y + 5));
     if (cell.terrain == core::Terrain::Entrance) {
-      frame.drawChar(static_cast<std::int16_t>(x + 3),
-                     static_cast<std::int16_t>(y + 2), 'S');
+      frame.drawChar(static_cast<std::int16_t>(x + 3), static_cast<std::int16_t>(y + 2), 'S');
     } else if (cell.terrain == core::Terrain::Exit) {
-      frame.drawChar(static_cast<std::int16_t>(x + 3),
-                     static_cast<std::int16_t>(y + 2), 'E');
+      frame.drawChar(static_cast<std::int16_t>(x + 3), static_cast<std::int16_t>(y + 2), 'E');
     }
   }
 
   if (index == 12U) {
-    frame.drawRect(static_cast<std::int16_t>(x + 2),
-                   static_cast<std::int16_t>(y + 2), 7, 7);
-    frame.fillRect(static_cast<std::int16_t>(x + 5),
-                   static_cast<std::int16_t>(y + 1), 1, 9);
-    frame.fillRect(static_cast<std::int16_t>(x + 1),
-                   static_cast<std::int16_t>(y + 5), 9, 1);
+    frame.drawRect(static_cast<std::int16_t>(x + 2), static_cast<std::int16_t>(y + 2), 7, 7);
+    frame.fillRect(static_cast<std::int16_t>(x + 5), static_cast<std::int16_t>(y + 1), 1, 9);
+    frame.fillRect(static_cast<std::int16_t>(x + 1), static_cast<std::int16_t>(y + 5), 9, 1);
   } else if (cell.entity >= 0) {
-    frame.fillRect(static_cast<std::int16_t>(x + 3),
-                   static_cast<std::int16_t>(y + 3), 5, 5);
+    frame.fillRect(static_cast<std::int16_t>(x + 3), static_cast<std::int16_t>(y + 3), 5, 5);
   }
   if (cell.bullet) {
-    frame.fillRect(static_cast<std::int16_t>(x + 4),
-                   static_cast<std::int16_t>(y + 4), 3, 3);
+    frame.fillRect(static_cast<std::int16_t>(x + 4), static_cast<std::int16_t>(y + 4), 3, 3);
   }
   frame.drawRect(x, y, kCellSize, kCellSize);
 }
@@ -90,23 +80,19 @@ Framebuffer Renderer::hudScreen(const core::WorldState& state) noexcept {
   std::array<char, 24> line{};
 
   frame.drawText(1, 0, "CATAMAZE");
-  std::snprintf(line.data(), line.size(), "TICK   %05u",
-                static_cast<unsigned>(state.tick));
+  std::snprintf(line.data(), line.size(), "TICK   %05u", static_cast<unsigned>(state.tick));
   frame.drawText(1, 10, line.data());
-  std::snprintf(line.data(), line.size(), "HP     %u/%u",
-                static_cast<unsigned>(player.hp),
+  std::snprintf(line.data(), line.size(), "HP     %u/%u", static_cast<unsigned>(player.hp),
                 static_cast<unsigned>(core::kMaxHp));
   frame.drawText(1, 20, line.data());
-  std::snprintf(line.data(), line.size(), "AMMO   %u/%u",
-                static_cast<unsigned>(player.ammo),
+  std::snprintf(line.data(), line.size(), "AMMO   %u/%u", static_cast<unsigned>(player.ammo),
                 static_cast<unsigned>(core::kMaxAmmo));
   frame.drawText(1, 30, line.data());
   std::snprintf(line.data(), line.size(), "QUEUE  %02u/%02u",
                 static_cast<unsigned>(state.player_queue.size()),
                 static_cast<unsigned>(state.player_queue.capacity()));
   frame.drawText(1, 40, line.data());
-  std::snprintf(line.data(), line.size(), "POS    %02d,%02d", player.position.x,
-                player.position.y);
+  std::snprintf(line.data(), line.size(), "POS    %02d,%02d", player.position.x, player.position.y);
   frame.drawText(1, 50, line.data());
   return frame;
 }
