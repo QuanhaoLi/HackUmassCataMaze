@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:42 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:41 EST
+Last Modified at: 2026-11-14 06:54 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,6 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Introduces the repository and indexes its top-level structure.
+|-CONTEXT.md — Defines the canonical product language for Home, Setup, Game Session, pause, queue, and WAIT semantics.
 |-.gitignore — Excludes local operating-system metadata from version control.
 |-.clang-format — Defines the repository-wide C++17 formatting contract.
 |-.github/ — Contains documented Native continuous-integration workflows.

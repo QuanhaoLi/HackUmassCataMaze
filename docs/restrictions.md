@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:39 EST
+Last Modified at: 2026-11-14 07:22 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -48,11 +48,14 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 - FIRE already held plus a direction press enqueues a shot in that direction.
 - Pressing FIRE after a direction event MUST NOT change the queued action.
 - FIRE alone has no game action.
-- WAIT enqueues one wait action.
-- CLEAR immediately removes all actions that have not started execution.
+- There is no physical WAIT control and no user-facing manual WAIT command. Empty queue and AI fallback still produce Wait Action.
+- CLEAR short press removes pending actions; CLEAR long press opens Pause Menu and MUST preserve the queue.
+- Releasing CLEAR after its 800 ms long-press commit MUST NOT emit short press.
 - A full queue rejects new queued actions without replacing old actions.
 - Button debounce is 20 ms by default.
 - A held button MUST NOT auto-repeat; another event requires a debounced release followed by a new debounced press.
+- GPIO10 is an unassigned spare and MUST NOT be initialized as a button.
+- The pre-Home ESP32 adapter still present in the repository is legacy evidence, not an accepted six-button implementation; it MUST NOT be presented or uploaded as the Home/Setup revision before its deferred migration is approved and tested.
 
 ## 5. Timing and concurrency
 

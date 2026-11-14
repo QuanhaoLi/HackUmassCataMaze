@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 06:40 EST
+// Last Modified at: 2026-11-14 07:06 EST
 // Last Modified by: Codex
 // Verifies deterministic movement, combat, visibility, terminal conditions, and replay hashing.
 
@@ -186,6 +186,25 @@ TEST(GameEngine, TimesOutExactlyAtTwoThousandTicks) {
   engine.step(kAiWaits);
   EXPECT_EQ(engine.state().tick, kMaxTicks);
   EXPECT_EQ(engine.state().status, GameStatus::Timeout);
+}
+
+TEST(GameEngine, ReviewedMapPresetsOwnTheirActiveBoundsAndTickBudget) {
+  for (const std::uint8_t map_size : kMapPresets) {
+    GameEngine engine(GameConfig{map_size, 0x5157U});
+    EXPECT_EQ(engine.state().map.activeSize(), map_size);
+    EXPECT_EQ(engine.state().max_ticks, tickBudgetForMapSize(map_size));
+    EXPECT_EQ(engine.observePlayer().cells.size(), 45U);
+    EXPECT_EQ(engine.observe(EntityId::Aggressive).cells.size(), 25U);
+  }
+
+  GameEngine tiny(GameConfig{12U, 0x5157U});
+  for (std::uint16_t tick = 0U; tick < 479U; ++tick) {
+    tiny.step(kAiWaits);
+    ASSERT_EQ(tiny.state().status, GameStatus::Running) << tick;
+  }
+  tiny.step(kAiWaits);
+  EXPECT_EQ(tiny.state().tick, 480U);
+  EXPECT_EQ(tiny.state().status, GameStatus::Timeout);
 }
 
 TEST(GameEngine, ObservationHidesCellsBehindWallsAndReportsNearbyShots) {

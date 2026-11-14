@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 06:45 EST
+Last Modified at: 2026-11-14 07:22 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -32,7 +32,7 @@ Read-only preflight evidence from the active replacement board:
 
 The PlatformIO base board `esp32-s3-devkitc-1` defaults to an 8 MB/no-PSRAM variant, so the project configuration must explicitly override it to 16 MB Flash and `qio_opi` memory type. Runtime diagnostic firmware must still assert the observed capacities before the product firmware is accepted.
 
-The active board passed a fresh diagnostic with exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, correct Flash/PSRAM, all seven buttons released, and GPIO4 unconfigured.
+The active board passed a fresh diagnostic with exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, correct Flash/PSRAM, the six active button inputs plus then-reserved GPIO10 released, and GPIO4 unconfigured.
 
 An early product build exposed loop-task stack pressure during maze generation. The accepted build stores BFS/candidate cell references as 16-bit indices, defers `Application` construction into `setup()`, and provisions a 48 KiB loop-task stack. Physical boot evidence reports `loop_stack_high_water_words=26188`, both displays present, and `ready=true` without rebooting.
 
@@ -81,9 +81,9 @@ The final wiring above was tested on the physical ESP32-S3 and both physical OLE
 
 Validation used a standalone Arduino diagnostic sketch named `Dual_GME12864_Test`. It is a hardware test artifact, not the production game renderer.
 
-## 4. Button Inputs and Remaining Hardware
+## 4. Six-button input
 
-Seven momentary push buttons provide the physical game controls. Each button uses exactly two electrical connections: one button terminal goes directly to its assigned GPIO and the other goes directly to `GND`.
+Six momentary push buttons provide the physical controls. Each button uses exactly two electrical connections: one button terminal goes directly to its assigned GPIO and the other goes directly to `GND`.
 
 | Button | Game action | GPIO | Current hardware status |
 |---|---|---:|---|
@@ -92,15 +92,14 @@ Seven momentary push buttons provide the physical game controls. Each button use
 | ← | Move left | GPIO7 | Connected; idle HIGH verified; final press/release test pending |
 | → | Move right | GPIO15 | Planned; not connected or tested |
 | FIRE | Hold before pressing a direction to enqueue a directional shot; FIRE alone has no action | GPIO16 | Planned; not connected or tested |
-| WAIT | Enqueue wait | GPIO10 | Planned; not connected or tested |
-| CLEAR | Clear pending input queue | GPIO11 | Planned; not connected or tested |
+| CLEAR | Short: back/clear queue; long 0.8 s: Home/pause menu | GPIO11 | Planned; not connected or tested |
 
 GPIO17 and GPIO18 must not be used for buttons because they are the HUD display's SCL and SDA lines. Pressing a GND-connected button on either pin would short an active I²C signal to ground.
 
 Configure every button input with its internal pull-up:
 
 ```cpp
-constexpr int BUTTON_PINS[] = {5, 6, 7, 15, 16, 10, 11};
+constexpr int BUTTON_PINS[] = {5, 6, 7, 15, 16, 11};
 
 void initButtons() {
   for (int pin : BUTTON_PINS) {
@@ -117,7 +116,11 @@ The electrical and logical contract is:
 - On a four-pin tactile switch, connect GPIO and GND to different electrical contact groups. Verify continuity rather than relying only on the switch's physical orientation across the breadboard center channel.
 - Debounce each button for 20 ms. Emit one press event only after the state remains LOW for the full debounce interval; do not enqueue another action until a debounced release occurs.
 - Sample FIRE only when a debounced direction press event is emitted. FIRE must already be held to convert that direction into a shot; pressing FIRE afterward does not modify the queued movement.
-- FIRE alone emits no game action. WAIT emits one wait action. CLEAR bypasses the FIFO and immediately clears actions that have not begun execution.
+- FIRE alone emits no game action. There is no physical WAIT button; empty queue produces Wait Action automatically.
+- CLEAR short press clears pending actions only on release. CLEAR long press commits at 800 ms and suppresses the later short release event.
+- GPIO10 is `UNASSIGNED_SPARE` and must not be initialized as a button.
+
+The currently deployed/pre-Home ESP32 source still contains the former seven-button mapping. It is intentionally not modified or uploaded during Native acceptance and must be migrated to the six-button `SystemController` only after explicit approval.
 
 Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically installed. GPIO5 and GPIO6 each passed a complete HIGH → LOW → HIGH test with exactly one debounced press count and no duplicate events during the observation period. GPIO7 is not yet fully validated.
 

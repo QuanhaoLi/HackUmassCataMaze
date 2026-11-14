@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:48 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:48 EST
+// Last Modified at: 2026-11-14 07:23 EST
 // Last Modified by: Codex
 // Captures one exact CSS viewport through Chrome DevTools and rejects horizontal overflow.
 
@@ -75,27 +75,69 @@ for (let attempt = 0; attempt < 100; attempt += 1) {
 }
 await new Promise((resolve) => setTimeout(resolve, 700));
 
-await rpc("Runtime.evaluate", {
-  expression: `(() => {
-    window.dispatchEvent(new KeyboardEvent("keydown", {code: "Space", key: " "}));
-    window.dispatchEvent(new KeyboardEvent("keydown", {code: "ArrowRight", key: "ArrowRight"}));
-    window.dispatchEvent(new KeyboardEvent("keyup", {code: "Space", key: " "}));
-    window.dispatchEvent(new KeyboardEvent("keydown", {code: "KeyW", key: "w"}));
-    window.dispatchEvent(new KeyboardEvent("keydown", {code: "KeyC", key: "c"}));
-    document.querySelector("#pause").click();
-    document.querySelector("#step").click();
-    return true;
-  })()`,
-  returnByValue: true,
-});
-await new Promise((resolve) => setTimeout(resolve, 250));
 const interactionResult = await rpc("Runtime.evaluate", {
-  expression: "fetch('/api/v1/snapshot').then((response) => response.json())",
+  expression: `(async () => {
+    const key = (type, code, value) => window.dispatchEvent(
+      new KeyboardEvent(type, {code, key: value}));
+    const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+    key("keydown", "Space", " ");
+    key("keyup", "Space", " ");
+    await sleep(100);
+    key("keydown", "ArrowRight", "ArrowRight");
+    await sleep(80);
+    key("keydown", "KeyC", "c");
+    await sleep(850);
+    key("keyup", "KeyC", "c");
+    await sleep(100);
+    return fetch('/api/v1/snapshot').then((response) => response.json());
+  })()`,
   awaitPromise: true,
   returnByValue: true,
 });
-if (interactionResult.result.value.tick !== 1) {
-  throw new Error(`browser control sequence did not step exactly once: ${JSON.stringify(interactionResult.result.value)}`);
+const paused = interactionResult.result.value;
+if (paused.mode !== "PAUSED" || paused.tick !== 0 || paused.player.queue !== 1) {
+  throw new Error(`CLEAR long did not pause and preserve queue: ${JSON.stringify(paused)}`);
+}
+
+const resumedResult = await rpc("Runtime.evaluate", {
+  expression: `(async () => {
+    const key = (type, code, value) => window.dispatchEvent(
+      new KeyboardEvent(type, {code, key: value}));
+    const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+    key("keydown", "KeyC", "c");
+    key("keyup", "KeyC", "c");
+    await sleep(100);
+    document.querySelector("#step").click();
+    await sleep(100);
+    return fetch('/api/v1/snapshot').then((response) => response.json());
+  })()`,
+  awaitPromise: true,
+  returnByValue: true,
+});
+const resumed = resumedResult.result.value;
+if (resumed.mode !== "PLAYING" || resumed.tick !== 1 || resumed.player.queue !== 0) {
+  throw new Error(`CLEAR short did not resume preserved queue: ${JSON.stringify(resumed)}`);
+}
+
+const shootingResult = await rpc("Runtime.evaluate", {
+  expression: `(async () => {
+    const key = (type, code, value) => window.dispatchEvent(
+      new KeyboardEvent(type, {code, key: value}));
+    const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+    key("keydown", "Space", " ");
+    key("keydown", "ArrowRight", "ArrowRight");
+    key("keyup", "Space", " ");
+    await sleep(100);
+    document.querySelector("#step").click();
+    await sleep(100);
+    return fetch('/api/v1/snapshot').then((response) => response.json());
+  })()`,
+  awaitPromise: true,
+  returnByValue: true,
+});
+const shooting = shootingResult.result.value;
+if (shooting.tick !== 2 || !shooting.last_events.some((event) => event.type === "PLAYER_SHOT")) {
+  throw new Error(`FIRE sampling did not enqueue one shot: ${JSON.stringify(shooting)}`);
 }
 
 await rpc("Runtime.evaluate", {
@@ -112,8 +154,26 @@ const resetResult = await rpc("Runtime.evaluate", {
   awaitPromise: true,
   returnByValue: true,
 });
-if (resetResult.result.value.tick !== 0 || resetResult.result.value.player.queue !== 0) {
+if (resetResult.result.value.mode !== "HOME" || resetResult.result.value.tick !== 0 ||
+    resetResult.result.value.player.queue !== 0) {
   throw new Error(`browser reset did not restore initial state: ${JSON.stringify(resetResult.result.value)}`);
+}
+
+const inputIsolationResult = await rpc("Runtime.evaluate", {
+  expression: `(async () => {
+    const seed = document.querySelector("#seed");
+    seed.focus();
+    seed.dispatchEvent(new KeyboardEvent("keydown", {code: "Space", key: " ", bubbles: true}));
+    seed.dispatchEvent(new KeyboardEvent("keyup", {code: "Space", key: " ", bubbles: true}));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    seed.blur();
+    return fetch('/api/v1/snapshot').then((response) => response.json());
+  })()`,
+  awaitPromise: true,
+  returnByValue: true,
+});
+if (inputIsolationResult.result.value.mode !== "HOME") {
+  throw new Error(`typing in seed input leaked into game controls: ${JSON.stringify(inputIsolationResult.result.value)}`);
 }
 
 const layoutResult = await rpc("Runtime.evaluate", {

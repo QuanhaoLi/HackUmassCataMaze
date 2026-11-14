@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 04:44 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:50 EST
+Last Modified at: 2026-11-14 07:22 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,7 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Documents production firmware ownership and hardware boundaries.
-|-button_adapter.cpp — Implements 20 ms debounce, no-repeat presses, FIRE sampling, WAIT, and immediate CLEAR.
+|-button_adapter.cpp — Retains the previously deployed seven-button adapter; it is not the accepted six-button Home/Setup revision.
 |-button_adapter.hpp — Declares the bounded physical-input adapter.
 |-display_adapter.cpp — Initializes and writes independent SSD1306-compatible framebuffers over two I²C controllers.
 |-display_adapter.hpp — Declares the dual-display adapter and diagnostics.
@@ -20,4 +20,5 @@ Last Modified by: Codex
 |-serial_audio_adapter.hpp — Declares the USB Serial audio adapter and drop counter.
 
 ## To-Dos
-- Upload remains blocked until diagnostic firmware sees exactly one `0x3C` display on each verified bus.
+- After explicit user approval, migrate the adapter to `SystemController`, six buttons, 800 ms CLEAR short/long suppression, and GPIO10 spare status.
+- Do not build or upload the Home/Setup ESP32 revision before that approval; the current Native revision is the acceptance reference.

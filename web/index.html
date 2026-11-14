@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:37 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:37 EST
+Last Modified at: 2026-11-14 07:16 EST
 Last Modified by: Codex
 Defines the accessible Native simulator shell around the two authoritative OLED canvases.
 -->
@@ -31,13 +31,13 @@ Defines the accessible Native simulator shell around the two authoritative OLED 
         <div class="device-mark">CATAMAZE // DEV-01</div>
         <div class="screens">
           <article class="screen-module">
-            <div class="screen-heading"><span>MAP OLED</span><span>128×64</span></div>
+            <div class="screen-heading"><span>LEFT OLED / FOCUS</span><span>128×64</span></div>
             <div class="screen-bezel">
               <canvas id="map-screen" width="128" height="64" aria-label="Player local map OLED"></canvas>
             </div>
           </article>
           <article class="screen-module">
-            <div class="screen-heading"><span>HUD OLED</span><span>128×64</span></div>
+            <div class="screen-heading"><span>RIGHT OLED / CONTEXT</span><span>128×64</span></div>
             <div class="screen-bezel">
               <canvas id="hud-screen" width="128" height="64" aria-label="Player HUD OLED"></canvas>
             </div>
@@ -60,11 +60,12 @@ Defines the accessible Native simulator shell around the two authoritative OLED 
           </section>
 
           <section class="action-panel" aria-label="Action controls">
-            <button class="round-key fire" id="fire" aria-label="Hold fire, then choose a direction">
-              <span>FIRE</span><small>HOLD</small>
+            <button class="round-key fire" id="fire" aria-label="Confirm, or hold before a game direction to shoot">
+              <span>FIRE</span><small>OK / HOLD</small>
             </button>
-            <button class="round-key" id="wait"><span>WAIT</span><small>QUEUE</small></button>
-            <button class="round-key danger" id="clear"><span>CLEAR</span><small>NOW</small></button>
+            <button class="round-key danger" id="clear" aria-label="Clear or back; hold 0.8 seconds to pause or go Home">
+              <span>CLEAR</span><small>BACK / HOLD</small>
+            </button>
           </section>
         </div>
       </section>
@@ -72,7 +73,7 @@ Defines the accessible Native simulator shell around the two authoritative OLED 
       <aside class="utility-panel">
         <div class="utility-copy">
           <p class="eyebrow">SIMULATION CLOCK</p>
-          <p>Arrow keys move. Hold <kbd>Space</kbd> before a direction to fire. <kbd>W</kbd> waits; <kbd>C</kbd> clears.</p>
+          <p>Arrows navigate or move. <kbd>Space</kbd> confirms; hold it before a game direction to fire. Tap <kbd>C</kbd> to clear/back, or hold it for 0.8 seconds to pause/Home.</p>
         </div>
         <div class="clock-actions">
           <button id="pause">Pause</button>
@@ -82,7 +83,7 @@ Defines the accessible Native simulator shell around the two authoritative OLED 
         <form id="reset-form">
           <label for="seed">Explicit seed</label>
           <input id="seed" name="seed" value="0x000000000134fd5a" spellcheck="false">
-          <button type="submit">Reset game</button>
+          <button type="submit">Reboot to Home</button>
         </form>
       </aside>
     </main>

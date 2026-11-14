@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 07:09 EST
 // Last Modified by: Codex
 // Declares a fixed SSD1306 page-order framebuffer and bounds-safe drawing primitives.
 

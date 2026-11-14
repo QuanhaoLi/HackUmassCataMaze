@@ -1,7 +1,7 @@
 /*
 Created at: 2026-11-14 02:37 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:37 EST
+Last Modified at: 2026-11-14 07:23 EST
 Last Modified by: Codex
 Resolves physical button semantics, calls the versioned API, and paints authoritative framebuffers.
 */
@@ -14,6 +14,9 @@ const state = {
   lastSnapshot: null,
   lastEventKey: "",
   audioContext: null,
+  clearPressed: false,
+  clearLongCommitted: false,
+  clearTimer: null,
 };
 
 const elements = {
@@ -25,7 +28,6 @@ const elements = {
   tick: document.querySelector("#tick"),
   hash: document.querySelector("#hash"),
   fire: document.querySelector("#fire"),
-  wait: document.querySelector("#wait"),
   clear: document.querySelector("#clear"),
   pause: document.querySelector("#pause"),
   realtime: document.querySelector("#realtime"),
@@ -119,12 +121,14 @@ function paint(canvas, hex) {
 }
 
 function render(snapshot) {
-  if (snapshot.schema !== "catamaze.snapshot.v1") {
+  if (snapshot.schema !== "catamaze.snapshot.v2") {
     throw new Error("unsupported snapshot schema");
   }
-  paint(elements.map, snapshot.map_frame_hex);
-  paint(elements.hud, snapshot.hud_frame_hex);
-  elements.status.textContent = snapshot.status;
+  paint(elements.map, snapshot.left_frame_hex);
+  paint(elements.hud, snapshot.right_frame_hex);
+  const gameSuffix = snapshot.mode === "PLAYING" || snapshot.mode === "RESULT"
+    ? ` / ${snapshot.status}` : "";
+  elements.status.textContent = `${snapshot.mode}${gameSuffix}`;
   elements.tick.textContent = String(snapshot.tick).padStart(5, "0");
   elements.hash.textContent = snapshot.state_hash;
   state.lastSnapshot = snapshot;
@@ -146,12 +150,12 @@ async function poll() {
   }
 }
 
-async function sendAction(action) {
+async function sendInput(input) {
   ensureAudio();
   try {
-    await api("/api/v1/action", {
+    await api("/api/v1/input", {
       method: "POST",
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ input }),
     });
     window.setTimeout(poll, 20);
   } catch (error) {
@@ -160,8 +164,9 @@ async function sendAction(action) {
   }
 }
 
-function directionAction(direction) {
-  return `${state.fireHeld ? "SHOOT" : "MOVE"}_${direction}`;
+function directionInput(direction) {
+  const playing = state.lastSnapshot?.mode === "PLAYING";
+  return playing && state.fireHeld ? `SHOOT_${direction}` : direction;
 }
 
 function setFire(held) {
@@ -170,8 +175,38 @@ function setFire(held) {
   elements.fire.classList.toggle("active", held);
 }
 
+function releaseFire(commit) {
+  const wasHeld = state.fireHeld;
+  setFire(false);
+  if (commit && wasHeld) sendInput("FIRE");
+}
+
+function beginClear() {
+  if (state.clearPressed) return;
+  ensureAudio();
+  state.clearPressed = true;
+  state.clearLongCommitted = false;
+  elements.clear.classList.add("active");
+  state.clearTimer = window.setTimeout(() => {
+    if (!state.clearPressed || state.clearLongCommitted) return;
+    state.clearLongCommitted = true;
+    sendInput("CLEAR_LONG");
+  }, 800);
+}
+
+function releaseClear(commitShort) {
+  if (!state.clearPressed) return;
+  window.clearTimeout(state.clearTimer);
+  const wasLong = state.clearLongCommitted;
+  state.clearPressed = false;
+  state.clearLongCommitted = false;
+  state.clearTimer = null;
+  elements.clear.classList.remove("active");
+  if (commitShort && !wasLong) sendInput("CLEAR_SHORT");
+}
+
 document.querySelectorAll("[data-direction]").forEach((button) => {
-  button.addEventListener("click", () => sendAction(directionAction(button.dataset.direction)));
+  button.addEventListener("click", () => sendInput(directionInput(button.dataset.direction)));
 });
 
 elements.fire.addEventListener("pointerdown", (event) => {
@@ -179,11 +214,18 @@ elements.fire.addEventListener("pointerdown", (event) => {
   elements.fire.setPointerCapture(event.pointerId);
   setFire(true);
 });
-elements.fire.addEventListener("pointerup", () => setFire(false));
-elements.fire.addEventListener("pointercancel", () => setFire(false));
-elements.fire.addEventListener("lostpointercapture", () => setFire(false));
-elements.wait.addEventListener("click", () => sendAction("WAIT"));
-elements.clear.addEventListener("click", () => sendAction("CLEAR"));
+elements.fire.addEventListener("pointerup", () => releaseFire(true));
+elements.fire.addEventListener("pointercancel", () => releaseFire(false));
+elements.fire.addEventListener("lostpointercapture", () => releaseFire(false));
+
+elements.clear.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  elements.clear.setPointerCapture(event.pointerId);
+  beginClear();
+});
+elements.clear.addEventListener("pointerup", () => releaseClear(true));
+elements.clear.addEventListener("pointercancel", () => releaseClear(false));
+elements.clear.addEventListener("lostpointercapture", () => releaseClear(false));
 
 elements.pause.addEventListener("click", () => api("/api/v1/clock", {
   method: "POST", body: JSON.stringify({ mode: "PAUSED" }),
@@ -217,21 +259,20 @@ const keyDirections = new Map([
 ]);
 
 window.addEventListener("keydown", (event) => {
+  if (event.target instanceof HTMLInputElement) return;
   ensureAudio();
   if (event.code === "Space") {
     event.preventDefault();
-    setFire(true);
+    if (!event.repeat) setFire(true);
     return;
   }
-  if (event.repeat || event.target instanceof HTMLInputElement) return;
+  if (event.repeat) return;
   const direction = keyDirections.get(event.key);
   if (direction) {
     event.preventDefault();
-    sendAction(directionAction(direction));
-  } else if (event.key.toLowerCase() === "w") {
-    sendAction("WAIT");
+    sendInput(directionInput(direction));
   } else if (event.key.toLowerCase() === "c") {
-    sendAction("CLEAR");
+    beginClear();
   } else if (event.key.toLowerCase() === "p") {
     elements.pause.click();
   } else if (event.key.toLowerCase() === "t") {
@@ -240,9 +281,13 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
-  if (event.code === "Space") setFire(false);
+  if (event.code === "Space") releaseFire(true);
+  if (event.key.toLowerCase() === "c") releaseClear(true);
 });
-window.addEventListener("blur", () => setFire(false));
+window.addEventListener("blur", () => {
+  releaseFire(false);
+  releaseClear(false);
+});
 
 poll();
 window.setInterval(poll, 150);

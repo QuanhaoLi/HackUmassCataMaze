@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:33 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:33 EST
+Last Modified at: 2026-11-14 06:57 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -13,6 +13,7 @@ Last Modified by: Codex
 |-audio.md — Defines optional USB Serial audio events, the Mac speaker companion, and disconnect behavior.
 |-gamerules.md — Defines the complete normative game rules, state transitions, observations, actions, combat, terminal conditions, and edge cases.
 |-hardware.md — Records the current controller, display, input, audio, power, and wiring constraints.
+|-home.md — Defines the dual-screen retro launcher, six-button navigation, map presets, pause flow, and Native acceptance gates.
 |-restrictions.md — Defines non-negotiable architecture, determinism, safety, hardware, scope, and testing restrictions.
 |-reward.md — Defines the planned reinforcement-learning objective, reward contract, neural network, 16GB-GPU training pipeline, evaluation, and release gates.
 |-adr/ — Records durable architecture decisions that clarify or change frozen contracts.

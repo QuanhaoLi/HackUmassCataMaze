@@ -1,11 +1,12 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 03:34 EST
+// Last Modified at: 2026-11-14 07:02 EST
 // Last Modified by: Codex
 // Declares stable, platform-independent CataMaze domain values and limits.
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
@@ -23,6 +24,23 @@ inline constexpr std::size_t kMaxEvents = 192;
 inline constexpr std::uint16_t kMaxTicks = 2000;
 inline constexpr std::uint8_t kMaxHp = 5;
 inline constexpr std::uint8_t kMaxAmmo = 3;
+inline constexpr std::array<std::uint8_t, 4> kMapPresets{12U, 20U, 30U, 50U};
+
+constexpr bool isValidMapSize(std::uint8_t size) noexcept {
+  for (std::uint8_t preset : kMapPresets) {
+    if (size == preset) return true;
+  }
+  return false;
+}
+
+constexpr std::uint16_t tickBudgetForMapSize(std::uint8_t size) noexcept {
+  return isValidMapSize(size) ? static_cast<std::uint16_t>(size * 40U) : kMaxTicks;
+}
+
+struct GameConfig {
+  std::uint8_t map_size{50U};
+  std::uint64_t seed{0U};
+};
 
 struct Position {
   std::int16_t x{0};

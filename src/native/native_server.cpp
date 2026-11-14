@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:37 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 04:37 EST
+// Last Modified at: 2026-11-14 07:21 EST
 // Last Modified by: Codex
 // Implements a bounded-command Native adapter with one simulation owner and immutable snapshots.
 
@@ -27,10 +27,10 @@
 #include <string_view>
 #include <thread>
 
-#include "catamaze/app/application.hpp"
 #include "catamaze/app/audio_event.hpp"
+#include "catamaze/app/system_controller.hpp"
 #include "catamaze/core/version.hpp"
-#include "catamaze/render/renderer.hpp"
+#include "catamaze/render/system_renderer.hpp"
 
 namespace catamaze::native {
 namespace {
@@ -38,8 +38,7 @@ namespace {
 using Json = nlohmann::json;
 
 enum class CommandType : std::uint8_t {
-  Action,
-  Clear,
+  Input,
   Reset,
   Pause,
   Realtime,
@@ -47,8 +46,8 @@ enum class CommandType : std::uint8_t {
 };
 
 struct Command {
-  CommandType type{CommandType::Action};
-  core::Action action{core::Action::Wait};
+  CommandType type{CommandType::Input};
+  app::SystemInput input{app::SystemInput::Fire};
   std::uint64_t seed{0};
 };
 
@@ -96,28 +95,29 @@ bool parseSeed(const Json& body, std::uint64_t& seed) {
   return true;
 }
 
-bool parseAction(std::string_view value, core::Action& action, bool& clear) {
-  clear = false;
-  if (value == "MOVE_UP")
-    action = core::Action::MoveUp;
-  else if (value == "MOVE_DOWN")
-    action = core::Action::MoveDown;
-  else if (value == "MOVE_LEFT")
-    action = core::Action::MoveLeft;
-  else if (value == "MOVE_RIGHT")
-    action = core::Action::MoveRight;
+bool parseSystemInput(std::string_view value, app::SystemInput& input) {
+  if (value == "UP")
+    input = app::SystemInput::Up;
+  else if (value == "DOWN")
+    input = app::SystemInput::Down;
+  else if (value == "LEFT")
+    input = app::SystemInput::Left;
+  else if (value == "RIGHT")
+    input = app::SystemInput::Right;
   else if (value == "SHOOT_UP")
-    action = core::Action::ShootUp;
+    input = app::SystemInput::ShootUp;
   else if (value == "SHOOT_DOWN")
-    action = core::Action::ShootDown;
+    input = app::SystemInput::ShootDown;
   else if (value == "SHOOT_LEFT")
-    action = core::Action::ShootLeft;
+    input = app::SystemInput::ShootLeft;
   else if (value == "SHOOT_RIGHT")
-    action = core::Action::ShootRight;
-  else if (value == "WAIT")
-    action = core::Action::Wait;
-  else if (value == "CLEAR")
-    clear = true;
+    input = app::SystemInput::ShootRight;
+  else if (value == "FIRE")
+    input = app::SystemInput::Fire;
+  else if (value == "CLEAR_SHORT")
+    input = app::SystemInput::ClearShort;
+  else if (value == "CLEAR_LONG")
+    input = app::SystemInput::ClearLong;
   else
     return false;
   return true;
@@ -172,7 +172,7 @@ class NativeServer::Impl {
  public:
   explicit Impl(NativeServerOptions options)
       : options_(std::move(options)),
-        application_(options_.seed),
+        system_(options_.seed),
         realtime_(!options_.start_paused),
         index_html_(readAsset(options_.web_root, "index.html")),
         app_css_(readAsset(options_.web_root, "app.css")),
@@ -266,16 +266,12 @@ class NativeServer::Impl {
       Command command{};
       while (popCommand(command)) {
         switch (command.type) {
-          case CommandType::Action:
-            application_.enqueuePlayerAction(command.action);
-            changed = true;
-            break;
-          case CommandType::Clear:
-            application_.clearPlayerQueue();
+          case CommandType::Input:
+            system_.handle(command.input);
             changed = true;
             break;
           case CommandType::Reset:
-            application_.reset(command.seed);
+            system_ = app::SystemController(command.seed);
             next_tick = std::chrono::steady_clock::now() + options_.tick_interval;
             changed = true;
             break;
@@ -290,7 +286,7 @@ class NativeServer::Impl {
             break;
           case CommandType::Step:
             if (!realtime_) {
-              application_.tick();
+              system_.tick();
               changed = true;
             }
             break;
@@ -299,7 +295,7 @@ class NativeServer::Impl {
 
       const auto now = std::chrono::steady_clock::now();
       if (realtime_ && now >= next_tick) {
-        application_.tick();
+        system_.tick();
         next_tick += options_.tick_interval;
         if (next_tick <= now) {
           next_tick = now + options_.tick_interval;
@@ -313,24 +309,32 @@ class NativeServer::Impl {
   }
 
   void publishSnapshot() {
-    const auto map_frame = render::Renderer::mapScreen(application_.playerObservation());
-    const auto hud_frame = render::Renderer::hudScreen(application_.state());
-    const auto& state = application_.state();
+    const auto frames = render::SystemRenderer::screens(
+        system_.snapshot(), system_.playerObservation(), system_.application().state());
+    const auto& state = system_.application().state();
+    const auto& system_state = system_.snapshot();
     const auto& player = state.entities[core::entityIndex(core::EntityId::Player)];
-    Json snapshot{{"schema", "catamaze.snapshot.v1"},
+    Json snapshot{{"schema", "catamaze.snapshot.v2"},
                   {"rules", std::string(core::kRulesVersion)},
+                  {"mode", std::string(app::systemModeName(system_state.mode))},
                   {"seed", hex64(state.seed)},
-                  {"state_hash", hex64(application_.stateHash())},
+                  {"state_hash", hex64(system_.application().stateHash())},
                   {"status", std::string(core::toString(state.status))},
                   {"tick", state.tick},
+                  {"system",
+                   {{"focus", system_state.focus},
+                    {"confirmed_map_size", system_state.confirmed_map_size},
+                    {"pending_map_size", system_state.pending_map_size},
+                    {"tick_budget", system_state.tick_budget},
+                    {"has_active_session", system_state.has_active_session}}},
                   {"player",
                    {{"hp", player.hp},
                     {"ammo", player.ammo},
                     {"queue", state.player_queue.size()},
                     {"x", player.position.x},
                     {"y", player.position.y}}},
-                  {"map_frame_hex", frameHex(map_frame)},
-                  {"hud_frame_hex", frameHex(hud_frame)},
+                  {"left_frame_hex", frameHex(frames.left)},
+                  {"right_frame_hex", frameHex(frames.right)},
                   {"last_events", playerObservableEvents(state)}};
     std::lock_guard<std::mutex> lock(snapshot_mutex_);
     snapshot_json_ = snapshot.dump();
@@ -365,39 +369,42 @@ class NativeServer::Impl {
       response.set_content(snapshot_json_, "application/json; charset=utf-8");
     });
 
-    server_.Post(
-        "/api/v1/action", [this](const httplib::Request& request, httplib::Response& response) {
-          Json body;
-          if (!parseJsonBody(request, response, body)) return;
-          if (!body.contains("action") || !body["action"].is_string()) {
-            jsonError(response, 400, "INVALID_ACTION", "action must be a supported string");
-            return;
-          }
-          core::Action action = core::Action::Wait;
-          bool clear = false;
-          if (!parseAction(body["action"].get<std::string>(), action, clear)) {
-            jsonError(response, 400, "INVALID_ACTION", "unknown action value");
-            return;
-          }
-          const Command command{clear ? CommandType::Clear : CommandType::Action, action, 0U};
-          if (!enqueue(command)) {
-            jsonError(response, 409, "COMMAND_QUEUE_FULL", "Native command queue is full");
-            return;
-          }
-          response.status = 202;
-          response.set_content("{\"accepted\":true}", "application/json; charset=utf-8");
-        });
+    server_.Post("/api/v1/input",
+                 [this](const httplib::Request& request, httplib::Response& response) {
+                   Json body;
+                   if (!parseJsonBody(request, response, body)) return;
+                   if (body.size() != 1U || !body.contains("input") || !body["input"].is_string()) {
+                     jsonError(response, 400, "INVALID_INPUT", "input must be a supported string");
+                     return;
+                   }
+                   app::SystemInput input = app::SystemInput::Fire;
+                   if (!parseSystemInput(body["input"].get<std::string>(), input)) {
+                     jsonError(response, 400, "INVALID_INPUT", "unknown input value");
+                     return;
+                   }
+                   const Command command{CommandType::Input, input, 0U};
+                   if (!enqueue(command)) {
+                     jsonError(response, 409, "COMMAND_QUEUE_FULL", "Native command queue is full");
+                     return;
+                   }
+                   response.status = 202;
+                   response.set_content("{\"accepted\":true}", "application/json; charset=utf-8");
+                 });
 
     server_.Post("/api/v1/reset", [this](const httplib::Request& request,
                                          httplib::Response& response) {
       Json body;
       if (!parseJsonBody(request, response, body)) return;
+      if (body.size() != 1U) {
+        jsonError(response, 400, "INVALID_RESET", "reset accepts exactly one seed field");
+        return;
+      }
       std::uint64_t seed = 0U;
       if (!parseSeed(body, seed)) {
         jsonError(response, 400, "INVALID_SEED", "seed must be a decimal or 0x-prefixed string");
         return;
       }
-      if (!enqueue(Command{CommandType::Reset, core::Action::Wait, seed})) {
+      if (!enqueue(Command{CommandType::Reset, app::SystemInput::Fire, seed})) {
         jsonError(response, 409, "COMMAND_QUEUE_FULL", "Native command queue is full");
         return;
       }
@@ -409,6 +416,11 @@ class NativeServer::Impl {
         "/api/v1/clock", [this](const httplib::Request& request, httplib::Response& response) {
           Json body;
           if (!parseJsonBody(request, response, body)) return;
+          if (body.size() != 1U) {
+            jsonError(response, 400, "INVALID_CLOCK_COMMAND",
+                      "clock accepts exactly one mode or command field");
+            return;
+          }
           CommandType type = CommandType::Pause;
           if (body.contains("mode") && body["mode"] == "PAUSED") {
             type = CommandType::Pause;
@@ -420,7 +432,7 @@ class NativeServer::Impl {
             jsonError(response, 400, "INVALID_CLOCK_COMMAND", "use PAUSED, REALTIME, or STEP");
             return;
           }
-          if (!enqueue(Command{type, core::Action::Wait, 0U})) {
+          if (!enqueue(Command{type, app::SystemInput::Fire, 0U})) {
             jsonError(response, 409, "COMMAND_QUEUE_FULL", "Native command queue is full");
             return;
           }
@@ -430,7 +442,7 @@ class NativeServer::Impl {
   }
 
   NativeServerOptions options_;
-  app::Application application_;
+  app::SystemController system_;
   std::atomic<bool> running_{false};
   bool realtime_{true};
   std::array<Command, kCommandCapacity> commands_{};

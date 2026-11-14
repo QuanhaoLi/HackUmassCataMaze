@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 06:40 EST
+// Last Modified at: 2026-11-14 07:02 EST
 // Last Modified by: Codex
 // Implements deterministic legal-observation AI policies and application tick ownership.
 
@@ -86,9 +86,18 @@ Direction directionToward(std::int8_t dx, std::int8_t dy) noexcept {
 
 Application::Application(std::uint64_t seed) noexcept : engine_(seed) { initializeAiMemory(seed); }
 
+Application::Application(core::GameConfig config) noexcept : engine_(config) {
+  initializeAiMemory(config.seed);
+}
+
 void Application::reset(std::uint64_t seed) noexcept {
   engine_.reset(seed);
   initializeAiMemory(seed);
+}
+
+void Application::reset(core::GameConfig config) noexcept {
+  engine_.reset(config);
+  initializeAiMemory(config.seed);
 }
 
 bool Application::enqueuePlayerAction(core::Action action) noexcept {

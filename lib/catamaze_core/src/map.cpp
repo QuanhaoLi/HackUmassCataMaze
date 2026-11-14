@@ -1,8 +1,8 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 06:34 EST
+// Last Modified at: 2026-11-14 07:18 EST
 // Last Modified by: Codex
-// Implements the fixed 50x50 terrain map and versioned dfs-grid-v1 generator.
+// Implements fixed 50x50 storage and the preset-aware versioned dfs-grid-v2 generator.
 
 #include "catamaze/core/map.hpp"
 
@@ -15,8 +15,9 @@
 namespace catamaze::core {
 namespace {
 
-constexpr std::int16_t kLogicalSide = 24;
-constexpr std::size_t kLogicalCellCount = static_cast<std::size_t>(kLogicalSide) * kLogicalSide;
+constexpr std::int16_t kMaxLogicalSide = 24;
+constexpr std::size_t kLogicalCellCount =
+    static_cast<std::size_t>(kMaxLogicalSide) * kMaxLogicalSide;
 
 std::size_t mapIndex(Position position) noexcept {
   return static_cast<std::size_t>(position.y) * kMapSize + static_cast<std::size_t>(position.x);
@@ -27,19 +28,20 @@ Position positionFromMapIndex(std::uint16_t index) noexcept {
                   static_cast<std::int16_t>(index / kMapSize)};
 }
 
-std::size_t logicalIndex(Position position) noexcept {
+std::size_t logicalIndex(Position position, std::int16_t logical_side) noexcept {
   const auto logical_x = static_cast<std::size_t>((position.x - 1) / 2);
   const auto logical_y = static_cast<std::size_t>((position.y - 1) / 2);
-  return logical_y * kLogicalSide + logical_x;
+  return logical_y * static_cast<std::size_t>(logical_side) + logical_x;
 }
 
-bool isLogicalCell(Position position) noexcept {
-  return position.x >= 1 && position.x <= 47 && position.y >= 1 && position.y <= 47 &&
-         (position.x % 2) == 1 && (position.y % 2) == 1;
+bool isLogicalCell(Position position, std::int16_t last_logical) noexcept {
+  return position.x >= 1 && position.x <= last_logical && position.y >= 1 &&
+         position.y <= last_logical && (position.x % 2) == 1 && (position.y % 2) == 1;
 }
 
-bool isPerimeterLogicalCell(Position position) noexcept {
-  return position.x == 1 || position.x == 47 || position.y == 1 || position.y == 47;
+bool isPerimeterLogicalCell(Position position, std::int16_t last_logical) noexcept {
+  return position.x == 1 || position.x == last_logical || position.y == 1 ||
+         position.y == last_logical;
 }
 
 void shuffleDirections(std::array<Direction, 4>& directions, Pcg32& random) noexcept {
@@ -54,7 +56,8 @@ void shuffleDirections(std::array<Direction, 4>& directions, Pcg32& random) noex
 Map::Map() noexcept { fill(Terrain::Wall); }
 
 bool Map::inBounds(Position position) const noexcept {
-  return position.x >= 0 && position.x < kMapSize && position.y >= 0 && position.y < kMapSize;
+  return position.x >= 0 && position.x < active_size_ && position.y >= 0 &&
+         position.y < active_size_;
 }
 
 std::size_t Map::index(Position position) noexcept { return mapIndex(position); }
@@ -68,6 +71,12 @@ bool Map::isWalkable(Position position) const noexcept {
     return false;
   }
   return at(position) != Terrain::Wall;
+}
+
+bool Map::setActiveSize(std::uint8_t active_size) noexcept {
+  if (!isValidMapSize(active_size)) return false;
+  active_size_ = active_size;
+  return true;
 }
 
 void Map::fill(Terrain terrain) noexcept { cells_.fill(terrain); }
@@ -110,18 +119,22 @@ DistanceField shortestDistances(const Map& map, Position start) noexcept {
   return distances;
 }
 
-GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
+GeneratedWorld MazeGenerator::generate(std::uint64_t seed, std::uint8_t map_size) noexcept {
+  if (!isValidMapSize(map_size)) map_size = static_cast<std::uint8_t>(kMapSize);
   GeneratedWorld world{};
   world.seed = seed;
+  world.map.setActiveSize(map_size);
   world.map.fill(Terrain::Wall);
   world.entrance = Position{1, 1};
+  const std::int16_t logical_side = static_cast<std::int16_t>((map_size - 2U) / 2U);
+  const std::int16_t last_logical = static_cast<std::int16_t>(map_size - 3U);
 
   Pcg32 random(seed);
   std::array<bool, kLogicalCellCount> visited{};
   std::array<std::uint16_t, kLogicalCellCount> stack{};
   std::size_t stack_size = 0U;
 
-  visited[logicalIndex(world.entrance)] = true;
+  visited[logicalIndex(world.entrance, logical_side)] = true;
   world.map.set(world.entrance, Terrain::Floor);
   stack[stack_size++] = static_cast<std::uint16_t>(mapIndex(world.entrance));
 
@@ -135,10 +148,10 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
     for (Direction direction : directions) {
       const Position one_step = moved(current, direction);
       const Position next = moved(one_step, direction);
-      if (!isLogicalCell(next) || visited[logicalIndex(next)]) {
+      if (!isLogicalCell(next, last_logical) || visited[logicalIndex(next, logical_side)]) {
         continue;
       }
-      visited[logicalIndex(next)] = true;
+      visited[logicalIndex(next, logical_side)] = true;
       world.map.set(one_step, Terrain::Floor);
       world.map.set(next, Terrain::Floor);
       stack[stack_size++] = static_cast<std::uint16_t>(mapIndex(next));
@@ -155,10 +168,10 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
 
   Position exit_neighbor = world.entrance;
   std::int16_t greatest_distance = kUnreachableDistance;
-  for (std::int16_t y = 1; y <= 47; y += 2) {
-    for (std::int16_t x = 1; x <= 47; x += 2) {
+  for (std::int16_t y = 1; y <= last_logical; y += 2) {
+    for (std::int16_t x = 1; x <= last_logical; x += 2) {
       const Position candidate{x, y};
-      if (candidate == world.entrance || !isPerimeterLogicalCell(candidate)) {
+      if (candidate == world.entrance || !isPerimeterLogicalCell(candidate, last_logical)) {
         continue;
       }
       const std::int16_t distance = distances[mapIndex(candidate)];
@@ -169,12 +182,14 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
     }
   }
 
-  if (exit_neighbor.x == 47) {
-    world.exit = Position{49, exit_neighbor.y};
-    world.map.set(Position{48, exit_neighbor.y}, Terrain::Floor);
-  } else if (exit_neighbor.y == 47) {
-    world.exit = Position{exit_neighbor.x, 49};
-    world.map.set(Position{exit_neighbor.x, 48}, Terrain::Floor);
+  const std::int16_t boundary = static_cast<std::int16_t>(map_size - 1U);
+  const std::int16_t connector = static_cast<std::int16_t>(map_size - 2U);
+  if (exit_neighbor.x == last_logical) {
+    world.exit = Position{boundary, exit_neighbor.y};
+    world.map.set(Position{connector, exit_neighbor.y}, Terrain::Floor);
+  } else if (exit_neighbor.y == last_logical) {
+    world.exit = Position{exit_neighbor.x, boundary};
+    world.map.set(Position{exit_neighbor.x, connector}, Terrain::Floor);
   } else if (exit_neighbor.x == 1) {
     world.exit = Position{0, exit_neighbor.y};
   } else {
@@ -185,8 +200,8 @@ GeneratedWorld MazeGenerator::generate(std::uint64_t seed) noexcept {
   world.spawns[entityIndex(EntityId::Player)] = world.entrance;
   std::array<std::uint16_t, kMapCellCount> candidates{};
   std::size_t candidate_count = 0U;
-  for (std::int16_t y = 0; y < kMapSize; ++y) {
-    for (std::int16_t x = 0; x < kMapSize; ++x) {
+  for (std::int16_t y = 0; y < map_size; ++y) {
+    for (std::int16_t x = 0; x < map_size; ++x) {
       const Position candidate{x, y};
       if (candidate != world.entrance && candidate != world.exit &&
           world.map.isWalkable(candidate)) {

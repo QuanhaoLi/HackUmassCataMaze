@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:37 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 06:39 EST
+Last Modified at: 2026-11-14 06:57 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
@@ -15,7 +15,7 @@ CataMaze is a **standalone, single-player maze escape game** running on an ESP32
 
 | Parameter | Rule |
 |---|---|
-| Map | 50 × 50 cells |
+| Map | Player-selected square preset: 12×12, 20×20, 30×30, or 50×50 |
 | Player display vision | 9 × 5 cells, centered on the player |
 | AI policy vision | 5 × 5 cells, centered on that AI |
 | Gunshot hearing range | 7 × 7 cells (3 cells in every direction) |
@@ -24,20 +24,20 @@ CataMaze is a **standalone, single-player maze escape game** running on an ESP32
 | Ammo | Starts at 3; maximum 3; restores 1 every 2 ticks |
 | Damage | 1 HP per bullet hit |
 | Input queue | 32 pending actions maximum |
-| Duration | 2,000 ticks maximum |
+| Duration | `map_size × 40`: 480, 800, 1,200, or 2,000 ticks |
 | Sound output | Optional Mac speakers driven by best-effort USB Serial events |
 
 The map uses `#` (wall), `.` (path), `S` (entrance marker), and `E` (single exit). Map edges are walls except at the exit. The player and three AI spawn on different reachable cells, never on `E`; spawning at `S` is not required.
 
-The v1 implementation uses versioned generator `dfs-grid-v1`:
+The v1 implementation uses versioned generator `dfs-grid-v2`, parameterized by one of the four reviewed sizes:
 
-1. Fill the 50×50 map with walls. Logical maze cells are the 24×24 odd-coordinate cells where `x,y ∈ {1,3,...,47}`.
+1. Fill the active square with walls. Logical maze cells are the odd-coordinate cells from `1` through `map_size-3`; storage outside the active square is not part of the world.
 2. Starting at `(1,1)`, run an iterative depth-first backtracker. Candidate directions begin in `UP, RIGHT, DOWN, LEFT` order and are shuffled only by the repository-owned PCG32 generator initialized from an explicit 64-bit seed.
 3. Mark `(1,1)` as `S`. Among reachable logical cells adjacent to an outer boundary, select the one with greatest shortest-path distance from `S`; break equal-distance ties by lower `y`, then lower `x`.
 4. Open exactly one adjacent boundary cell as `E`. If several boundary sides touch the selected logical cell, choose `RIGHT, DOWN, LEFT, UP` in that order.
 5. Place the player on `S`. Sort remaining walkable non-`E` cells by descending shortest-path distance from the player, then lower `y`, then lower `x`; assign the first three distinct cells to aggressive, cautious, and explorer respectively.
 
-General rules do not require every future generator to spawn the player at `S`, but `dfs-grid-v1` does. Reusing the same generator version and seed must reproduce the same terrain, exit, and initial entity positions on every target.
+General rules do not require every future generator to spawn the player at `S`, but `dfs-grid-v2` does. Reusing the same generator version, preset, and seed must reproduce the same terrain, exit, tick budget, and initial entity positions on every target.
 
 ## 2. Two OLED Screens
 
@@ -82,19 +82,20 @@ There is **no `STATUS` field**. The HUD refreshes after ticks and immediately wh
 
 ## 3. Controls and Queue
 
-There are **nine queued actions**: move up/down/left/right, shoot up/down/left/right, and wait. No diagonal moves or shots. Seven physical buttons produce them:
+There are **nine domain actions**: move up/down/left/right, shoot up/down/left/right, and wait. No diagonal moves or shots. Six physical buttons produce player input: four directions, FIRE, and CLEAR.
 
 - A debounced direction press samples FIRE at that moment.
 - If FIRE is already held, the direction enqueues a shot; otherwise it enqueues movement.
 - FIRE pressed by itself has no action. Pressing FIRE after a direction event does not alter the queued action.
-- WAIT enqueues one wait action.
-- CLEAR immediately deletes all queued actions that have not begun execution.
+- There is no physical WAIT button and the player cannot manually enqueue WAIT. An empty queue automatically executes Wait Action.
+- CLEAR short press deletes all queued actions that have not begun execution.
+- CLEAR long press at 0.8 seconds pauses the world and opens Pause Menu without deleting any queued action. Releasing after long press must not also trigger short press.
 - Default debounce is 20 ms. Holding a button never repeats; a new event requires a debounced release followed by another press.
 
 - Inputs enter a **FIFO queue**; maximum length is 32.
 - Each tick consumes **one** queued player action; if empty, the player waits.
 - A full queue rejects new actions without overwriting previous ones.
-- CLEAR deletes pending actions only, not the action already executing.
+- CLEAR short press deletes pending actions only, not the action already executing.
 - Wall collisions, entity collisions, and ammo shortages are checked **when an action executes**, not when it is queued.
 
 ## 4. Tick Resolution and Movement

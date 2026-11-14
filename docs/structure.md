@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:39 EST
+Last Modified at: 2026-11-14 07:21 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -13,7 +13,7 @@ Last Modified by: Codex
 
 This document is the implementation contract for the first playable CataMaze v1 vertical slice. It is subordinate to `gamerules.md` for game behavior and to `restrictions.md` for non-negotiable boundaries.
 
-The Native build is the verified reference implementation. The current delivery target extends that reference to an ESP32-S3 N16R8-class device through a thin adapter, read-only hardware preflight, bounded diagnostic upload, and then product upload. The Game Core and the two 128×64 framebuffer renderers remain shared and unchanged by platform wiring.
+The Native build is the verified reference implementation. The current Home/Setup revision is implemented and accepted on Native first; the already validated ESP32 image remains unchanged until explicit approval for this revision. The Game Core and the two 128×64 framebuffer renderers remain shared and independent of platform wiring.
 
 The following are intentionally deferred until after a playable Native game exists:
 
@@ -64,7 +64,7 @@ A caller may pass `--port <1..65535>` for a stable test port. Binding any non-lo
 
 ### 3.2 `esp32s3`
 
-The future embedded target will contain:
+The embedded target contains:
 
 - the same Game Core and application coordinator;
 - ESP32Adapter implementations for GPIO, dual I²C OLEDs, monotonic time, USB Serial diagnostics, and non-blocking audio events;
@@ -73,7 +73,7 @@ The future embedded target will contain:
 
 The provisional hardware class is ESP32-S3 N16R8. Exact PlatformIO board ID, flash mode, PSRAM mode, partition table, and any button row still marked pending in `hardware.md` remain `PENDING_HARDWARE_VERIFICATION` until the physical preflight resolves them. The documented dual-OLED buses have physical validation records. GPIO4 is an unassigned spare and must remain untouched. A successful generic compilation is not hardware evidence.
 
-No `upload`, `flash`, `erase`, or equivalent target may be run during the Native phase.
+No `upload`, `flash`, `erase`, or equivalent target may be run while the Home/Setup revision is in Native acceptance.
 
 ## 4. Architecture
 
@@ -94,7 +94,7 @@ TestAdapter -------------+                                  +--> deterministic e
 
 The Game Core owns only deterministic domain state and rules:
 
-- 50×50 terrain;
+- fixed-capacity 50×50 terrain storage with one active 12×12, 20×20, 30×30, or 50×50 square;
 - player and three AI entities;
 - HP, ammo, recharge phase, position, and life state;
 - fixed-capacity 32-action player FIFO;
@@ -112,8 +112,9 @@ The Game Core must not include or reference Arduino headers, GPIO numbers, HTTP 
 The coordinator translates platform input into domain commands and coordinates:
 
 - debounced input events;
+- Home, Setup, System, About, Game Session, Pause Menu, confirmation, and Result transitions;
 - one-second real-time scheduling or accelerated virtual ticks;
-- action queue mutation, including immediate `CLEAR`;
+- mode-aware action queue mutation, including separate CLEAR short and 800 ms long intents;
 - one heuristic-policy decision for each living AI per tick;
 - rendering snapshots after ticks and queue changes;
 - sound-effect priority selection;
@@ -234,9 +235,9 @@ ESP32 directories may be documented in advance but will not receive executable u
 | `GET` | `/app.css` | Fixed stylesheet |
 | `GET` | `/app.js` | Fixed browser controller |
 | `GET` | `/health` | Process readiness and version |
-| `GET` | `/api/v1/snapshot` | Player-observable state and both framebuffers |
-| `POST` | `/api/v1/action` | Enqueue one of nine actions or execute `CLEAR` |
-| `POST` | `/api/v1/reset` | Reset using an explicit seed |
+| `GET` | `/api/v1/snapshot` | System mode, player-observable state, and both framebuffers |
+| `POST` | `/api/v1/input` | Submit one resolved six-button intent |
+| `POST` | `/api/v1/reset` | Reboot the Native system to Home using an explicit first seed |
 | `POST` | `/api/v1/clock` | Pause, step one tick, or select real-time mode |
 
 Mutation requests accept JSON bodies no larger than 4 KiB. Unknown fields, actions, and content types are rejected. The Native server never exposes arbitrary filesystem paths.
@@ -260,13 +261,13 @@ The Map renderer draws `PlayerObservation` as nine-by-five 12×12 square tiles w
 
 JavaScript cannot precisely represent every 64-bit integer, so seeds and state hashes are lowercase hexadecimal strings with a `0x` prefix.
 
-Action request:
+Input request:
 
 ```json
-{"action":"MOVE_UP"}
+{"input":"UP"}
 ```
 
-Allowed values are `MOVE_UP`, `MOVE_DOWN`, `MOVE_LEFT`, `MOVE_RIGHT`, `SHOOT_UP`, `SHOOT_DOWN`, `SHOOT_LEFT`, `SHOOT_RIGHT`, `WAIT`, and `CLEAR`. Browser key handling implements FIRE as a modifier before sending one of these already-resolved commands.
+User-facing input values are `UP`, `DOWN`, `LEFT`, `RIGHT`, `SHOOT_UP`, `SHOOT_DOWN`, `SHOOT_LEFT`, `SHOOT_RIGHT`, `FIRE`, `CLEAR_SHORT`, and `CLEAR_LONG`. The browser or future button adapter samples FIRE when a direction is pressed and emits the corresponding directional or shooting intent. The system/navigation controller resolves the intent according to mode. `WAIT` remains an internal domain action and is not accepted from browser or physical user input. The former `/api/v1/action` manual-action route is removed rather than retained as a second input model.
 
 Reset request:
 
@@ -286,15 +287,17 @@ The snapshot response has a versioned envelope:
 
 ```json
 {
-  "schema":"catamaze.snapshot.v1",
+  "schema":"catamaze.snapshot.v2",
   "rules":"catamaze.rules.v1",
+  "mode":"HOME",
   "seed":"0x000000000134fd5a",
   "state_hash":"0x0000000000000000",
   "status":"RUNNING",
   "tick":0,
+  "system":{"focus":0,"confirmed_map_size":30,"pending_map_size":30,"tick_budget":1200,"has_active_session":false},
   "player":{"hp":5,"ammo":3,"queue":0,"x":1,"y":1},
-  "map_frame_hex":"<2048 lowercase hex characters>",
-  "hud_frame_hex":"<2048 lowercase hex characters>",
+  "left_frame_hex":"<2048 lowercase hex characters>",
+  "right_frame_hex":"<2048 lowercase hex characters>",
   "last_events":[]
 }
 ```

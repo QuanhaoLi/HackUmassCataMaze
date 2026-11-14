@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 06:40 EST
+// Last Modified at: 2026-11-14 07:02 EST
 // Last Modified by: Codex
 // Implements deterministic simultaneous movement, combat, observations, and terminal rules.
 
@@ -74,11 +74,21 @@ const ObservedCell& PlayerObservation::atOffset(std::int8_t dx, std::int8_t dy) 
 
 GameEngine::GameEngine(std::uint64_t seed) noexcept { reset(seed); }
 
+GameEngine::GameEngine(GameConfig config) noexcept { reset(config); }
+
 GameEngine::GameEngine(const GameSetup& setup) noexcept { initialize(setup); }
 
 void GameEngine::reset(std::uint64_t seed) noexcept {
-  const GeneratedWorld generated = MazeGenerator::generate(seed);
-  initialize(GameSetup{generated.map, generated.spawns, seed});
+  reset(GameConfig{static_cast<std::uint8_t>(kMapSize), seed});
+}
+
+void GameEngine::reset(GameConfig config) noexcept {
+  if (!isValidMapSize(config.map_size)) {
+    config.map_size = static_cast<std::uint8_t>(kMapSize);
+  }
+  const GeneratedWorld generated = MazeGenerator::generate(config.seed, config.map_size);
+  initialize(GameSetup{generated.map, generated.spawns, config.seed,
+                       tickBudgetForMapSize(config.map_size)});
 }
 
 void GameEngine::restore(const WorldState& state) noexcept { state_ = state; }
@@ -87,6 +97,7 @@ void GameEngine::initialize(const GameSetup& setup) noexcept {
   state_ = WorldState{};
   state_.map = setup.map;
   state_.seed = setup.seed;
+  state_.max_ticks = setup.max_ticks;
   for (std::size_t index = 0; index < kEntityCount; ++index) {
     auto& entity = state_.entities[index];
     entity.id = kEntityIds[index];
@@ -315,7 +326,7 @@ void GameEngine::step(const std::array<Action, kAiCount>& ai_actions) noexcept {
     state_.status = GameStatus::Death;
   } else if (state_.map.at(player.position) == Terrain::Exit) {
     state_.status = GameStatus::Victory;
-  } else if (state_.tick >= kMaxTicks) {
+  } else if (state_.tick >= state_.max_ticks) {
     state_.status = GameStatus::Timeout;
   }
   if (state_.status != GameStatus::Running) {
@@ -466,6 +477,8 @@ std::uint64_t GameEngine::stateHash() const noexcept {
   Fnv1a64 hash{};
   hash.integer(state_.seed);
   hash.integer(state_.tick);
+  hash.integer(state_.max_ticks);
+  hash.byte(state_.map.activeSize());
   hash.byte(static_cast<std::uint8_t>(state_.status));
   for (Terrain terrain : state_.map.cells()) {
     hash.byte(static_cast<std::uint8_t>(terrain));

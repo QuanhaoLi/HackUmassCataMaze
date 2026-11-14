@@ -1,7 +1,7 @@
 /*
 Created at: 2026-11-14 02:37 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:45 EST
+Last Modified at: 2026-11-14 07:16 EST
 Last Modified by: Codex
 Styles the responsive handheld simulator and pixel-accurate monochrome OLED surfaces.
 */
@@ -230,7 +230,7 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 28px;
 }
 
 .round-key {
@@ -294,7 +294,7 @@ kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; backg
   .status-strip span:last-child { grid-column: 1 / -1; }
   .control-deck { gap: 18px; padding: 4px 0; }
   .dpad-panel { grid-template: repeat(3, 54px) / repeat(3, 54px); }
-  .action-panel { gap: 11px; }
+  .action-panel { gap: 24px; }
   .round-key { width: 70px; height: 70px; }
   .round-key.fire { width: 88px; height: 88px; }
   .utility-panel { align-items: stretch; }

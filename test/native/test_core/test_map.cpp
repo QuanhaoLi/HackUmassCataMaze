@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 07:06 EST
 // Last Modified by: Codex
 // Verifies portable randomness, deterministic maze generation, and connectivity invariants.
 
@@ -50,6 +50,56 @@ TEST(MazeGenerator, SameSeedProducesIdenticalWorld) {
   EXPECT_EQ(first.entrance, second.entrance);
   EXPECT_EQ(first.exit, second.exit);
   EXPECT_EQ(first.spawns, second.spawns);
+}
+
+TEST(MazeGenerator, EveryReviewedPresetIsDeterministicConnectedAndBounded) {
+  for (const std::uint8_t map_size : kMapPresets) {
+    const GeneratedWorld first = MazeGenerator::generate(0xc47aU, map_size);
+    const GeneratedWorld second = MazeGenerator::generate(0xc47aU, map_size);
+    const DistanceField distances = shortestDistances(first.map, first.entrance);
+
+    ASSERT_EQ(first.map.activeSize(), map_size);
+    EXPECT_EQ(first.map.cells(), second.map.cells());
+    EXPECT_EQ(first.exit, second.exit);
+    EXPECT_EQ(first.spawns, second.spawns);
+
+    std::size_t entrance_count = 0U;
+    std::size_t exit_count = 0U;
+    for (std::int16_t y = 0; y < map_size; ++y) {
+      for (std::int16_t x = 0; x < map_size; ++x) {
+        const Position position{x, y};
+        const Terrain terrain = first.map.at(position);
+        entrance_count += terrain == Terrain::Entrance ? 1U : 0U;
+        exit_count += terrain == Terrain::Exit ? 1U : 0U;
+        if (first.map.isWalkable(position)) {
+          const std::size_t index =
+              static_cast<std::size_t>(y) * kMapSize + static_cast<std::size_t>(x);
+          EXPECT_NE(distances[index], kUnreachableDistance)
+              << "preset " << static_cast<unsigned>(map_size) << " at " << x << ',' << y;
+        }
+        const bool boundary = x == 0 || y == 0 || x == map_size - 1 || y == map_size - 1;
+        if (boundary && position != first.exit) EXPECT_EQ(terrain, Terrain::Wall);
+      }
+    }
+    EXPECT_EQ(entrance_count, 1U);
+    EXPECT_EQ(exit_count, 1U);
+    EXPECT_FALSE(first.map.inBounds(Position{map_size, 0}));
+    EXPECT_FALSE(first.map.inBounds(Position{0, map_size}));
+
+    for (std::size_t index = 0; index < first.spawns.size(); ++index) {
+      EXPECT_TRUE(first.map.isWalkable(first.spawns[index]));
+      EXPECT_NE(first.spawns[index], first.exit);
+      for (std::size_t other = index + 1U; other < first.spawns.size(); ++other) {
+        EXPECT_NE(first.spawns[index], first.spawns[other]);
+      }
+    }
+  }
+}
+
+TEST(MazeGenerator, InvalidPresetFallsBackToOriginalSize) {
+  const GeneratedWorld world = MazeGenerator::generate(7U, 13U);
+  EXPECT_EQ(world.map.activeSize(), 50U);
+  EXPECT_EQ(tickBudgetForMapSize(13U), kMaxTicks);
 }
 
 TEST(MazeGenerator, DifferentSeedsChangeTheTerrain) {

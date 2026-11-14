@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:49 EST
+Last Modified at: 2026-11-14 07:24 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -72,7 +72,7 @@ Pass conditions:
 
 - Deterministic 50×50 maze generation from an explicit seed.
 - Player and three distinct deterministic heuristic AI personas.
-- Nine actions, 32-entry FIFO, immediate CLEAR behavior, and one action consumed per tick.
+- Nine domain actions, 32-entry FIFO, explicit queue-clear mutation, and one action consumed per tick.
 - Simultaneous movement conflicts, shooting, bullets, damage, ammo recharge, death, victory, and timeout.
 - Legal 5×5 observations and hidden-state boundaries.
 - A headless Native runner with virtual stepping and a deterministic scripted command interface.
@@ -105,9 +105,9 @@ Pass conditions:
 ### Deliverables
 
 - Native server binds an available loopback port and prints `CATAMAZE_URL`.
-- Browser accepts movement, FIRE-modified shots, WAIT, CLEAR, pause, step, and reset.
+- Browser accepts directional navigation/movement, FIRE confirm/shoot, CLEAR short/long, pause, step, and reset without a WAIT control.
 - Browser shows two virtual 128×64 OLED canvases sourced from authoritative framebuffers.
-- Map OLED reveals only the player's legal 5×5 view.
+- Map OLED reveals only the player's legal 9×5 view.
 - HUD OLED displays only TICK, HP, AMMO, QUEUE, and POS.
 - Three heuristic AI personas make the game complete without an online service.
 - Desktop and narrow-layout screenshots are generated and inspected.
@@ -122,9 +122,9 @@ Pass conditions:
 
 Pass conditions:
 
-- `/health`, snapshot, action, reset, and clock endpoints pass positive and negative tests.
+- `/health`, snapshot, six-button input, reset, and clock endpoints pass positive and negative tests.
 - The server chooses a free port when no port is specified.
-- A browser automation sequence performs at least movement, one shot, WAIT, CLEAR, pause, and step.
+- A browser automation sequence performs navigation, movement, one shot, CLEAR short, CLEAR long, pause, resume, and step; long release never clears the queue.
 - Both framebuffer payloads are exactly 1,024 bytes after hexadecimal decoding.
 - Headless Chrome produces desktop and narrow screenshots without console errors.
 
@@ -134,6 +134,14 @@ Pass conditions:
 - Both OLEDs are legible, aligned, and visibly distinct.
 - A human can open the printed URL and play a complete game without terminal commands.
 - The browser does not expose hidden map or AI information.
+
+### Home/Setup revision evidence — 2026-11-14
+
+- Portable `SystemController` boots to Home, uses the 30×30 recommended default, and owns Setup, read-only System/About, Game Session, Pause, abandon confirmation, and Result transitions.
+- Reviewed presets 12×12, 20×20, 30×30, and 50×50 generate deterministic connected worlds with tick budgets 480, 800, 1,200, and 2,000; the player remains 9×5 and every AI remains 5×5.
+- Twelve renderer tests cover deterministic Home, Setup, Game, Pause, confirmation, About/System, and Result framebuffers; the browser transports exact left/right 1,024-byte OLED buffers through snapshot schema v2.
+- Real Chrome automation proved CLEAR long pauses without clearing, long release emits no short action, CLEAR short resumes the preserved queue, FIRE sampling shoots once, manual WAIT is rejected, and focused form input cannot leak into game controls.
+- Fresh 1440×1050 and 390×1800 screenshots passed overflow, console-error, legibility, alignment, and six-button visual inspection.
 
 ## M3 — Native product hardening
 
@@ -170,11 +178,11 @@ Pass conditions:
 
 ### Completion evidence — 2026-11-14
 
-- Normal Native suite: 42/42 tests passed.
-- AddressSanitizer suite: 42/42 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
-- UndefinedBehaviorSanitizer suite: 42/42 tests passed with no recovery.
-- Randomized invariant run: 100,000 ticks across 61 games, repeated output hash `0xca19bec167ee6693`.
-- Portable core/application coverage: 87.68% lines and 76.52% branches, above the 85% / 75% gates.
+- Normal Native suite: 59/59 tests passed.
+- AddressSanitizer suite: 59/59 tests passed; LeakSanitizer is explicitly unavailable in Apple Clang's macOS runtime.
+- UndefinedBehaviorSanitizer suite: 59/59 tests passed with no recovery.
+- Randomized invariant run: 100,000 ticks across 61 games, repeated output hash `0xe0a00023687fb22a`.
+- Portable core/application coverage: 90.13% lines and 80.74% branches, above the 85% / 75% gates.
 - Browser smoke: random loopback port, versioned API, malformed requests, commands, reset, and graceful SIGTERM passed.
 - Visual QA: 1440×1050 desktop and true 390×1800 CSS-viewport screenshots passed overflow checks and manual inspection.
 - Horror-visibility revision: player Map has blank roads, solid walls, one-slash fog, no projectile pixels under any projectile state, and an outline-diamond player; HUD has five filled/outline hearts and three filled/outline ammo cartridges.
@@ -239,7 +247,7 @@ Pass conditions:
 
 - Device-reported flash and PSRAM match the approved configuration.
 - Both I²C buses independently find exactly one display at `0x3C`.
-- All seven buttons pass HIGH → LOW → HIGH and 20 ms debounce tests without repeat.
+- All six buttons pass HIGH → LOW → HIGH and 20 ms debounce tests without repeat; CLEAR long/short suppression passes.
 - FIRE modifier semantics match Native behavior.
 - GPIO4 remains unconfigured and the disconnected-Mac game remains fully playable.
 - Each canonical audio event reaches the Mac speaker without hidden-state fields or gameplay blocking.
@@ -249,7 +257,7 @@ Pass conditions:
 
 - Active replacement-board preflight confirmed ESP32-S3 rev 0.2, 16 MB Quad Flash, 8 MB PSRAM, CH343 USB-UART, and 3.3 V configuration.
 - Diagnostic firmware upload and verified Flash write succeeded; GPIO4 remained unconfigured.
-- All seven button inputs were HIGH/released during observation. Manual press/debounce sequences remain pending.
+- All six active button inputs were HIGH/released during observation. Manual press/debounce/long-press sequences remain pending.
 - With displays reconnected, a fresh diagnostic found one `0x3C` device on each controller, all four lines HIGH, zero bus errors, and returned `pass=true`.
 - The accepted image uses 16-bit maze workspace indices, deferred construction, and a 48 KiB loop task.
 - Physical product boot returned `ready=true`, both `0x3C` displays, GPIO4 unconfigured, and loop stack high-water `26188` without rebooting.

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 06:40 EST
+// Last Modified at: 2026-11-14 07:02 EST
 // Last Modified by: Codex
 // Declares the one-owner application coordinator and deterministic heuristic AI lifecycle.
 
@@ -17,8 +17,10 @@ namespace catamaze::app {
 class Application {
  public:
   explicit Application(std::uint64_t seed) noexcept;
+  explicit Application(core::GameConfig config) noexcept;
 
   void reset(std::uint64_t seed) noexcept;
+  void reset(core::GameConfig config) noexcept;
   bool enqueuePlayerAction(core::Action action) noexcept;
   void clearPlayerQueue() noexcept;
   void tick() noexcept;

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 06:40 EST
+// Last Modified at: 2026-11-14 07:02 EST
 // Last Modified by: Codex
 // Declares deterministic state, observations, and one-tick world transitions.
 
@@ -51,6 +51,7 @@ struct GameSetup {
   Map map{};
   std::array<Position, kEntityCount> spawns{};
   std::uint64_t seed{0};
+  std::uint16_t max_ticks{kMaxTicks};
 };
 
 struct WorldState {
@@ -64,14 +65,17 @@ struct WorldState {
   std::uint16_t tick{0};
   GameStatus status{GameStatus::Running};
   std::uint64_t seed{0};
+  std::uint16_t max_ticks{kMaxTicks};
 };
 
 class GameEngine {
  public:
   explicit GameEngine(std::uint64_t seed) noexcept;
+  explicit GameEngine(GameConfig config) noexcept;
   explicit GameEngine(const GameSetup& setup) noexcept;
 
   void reset(std::uint64_t seed) noexcept;
+  void reset(GameConfig config) noexcept;
   void restore(const WorldState& state) noexcept;
   bool enqueuePlayerAction(Action action) noexcept;
   void clearPlayerQueue() noexcept;

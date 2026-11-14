@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:13 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 06:40 EST
+// Last Modified at: 2026-11-14 07:22 EST
 // Last Modified by: Codex
 // Runs the complete headless Native game without making a web server a core dependency.
 
@@ -79,7 +79,7 @@ void printSnapshot(const Application& application) {
   std::cout << "\nCATAMAZE  " << catamaze::core::toString(state.status) << "  HASH 0x" << std::hex
             << std::setw(16) << std::setfill('0') << application.stateHash() << std::dec
             << std::setfill(' ') << '\n'
-            << "TICK   " << state.tick << '/' << catamaze::core::kMaxTicks << '\n'
+            << "TICK   " << state.tick << '/' << state.max_ticks << '\n'
             << "HP     " << static_cast<int>(player.hp) << '/'
             << static_cast<int>(catamaze::core::kMaxHp) << '\n'
             << "AMMO   " << static_cast<int>(player.ammo) << '/'
@@ -113,8 +113,6 @@ bool commandAction(const std::string& command, Action& action) {
     action = Action::ShootLeft;
   } else if (command == "fr" || command == "fire-right") {
     action = Action::ShootRight;
-  } else if (command == "w" || command == "wait") {
-    action = Action::Wait;
   } else {
     return false;
   }
@@ -122,7 +120,7 @@ bool commandAction(const std::string& command, Action& action) {
 }
 
 void printHelp() {
-  std::cout << "Commands: u/d/l/r move, fu/fd/fl/fr shoot, w wait, clear, tick,\n"
+  std::cout << "Commands: u/d/l/r move, fu/fd/fl/fr shoot, clear, tick,\n"
             << "          run <ticks>, reset <seed>, help, quit\n";
 }
 

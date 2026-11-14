@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 02:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:37 EST
+# Last Modified at: 2026-11-14 07:21 EST
 # Last Modified by: Codex
 # Builds and executes a bounded headless Native gameplay acceptance check.
 
@@ -51,19 +51,19 @@ done
 
 curl -fsS "${base_url}/health" | jq -e '.status == "ok"' >/dev/null
 curl -fsS "${base_url}/api/v1/snapshot" | jq -e \
-  '.schema == "catamaze.snapshot.v1" and (.map_frame_hex | length) == 2048 and (.hud_frame_hex | length) == 2048 and .tick == 0' \
+  '.schema == "catamaze.snapshot.v2" and .mode == "HOME" and .system.confirmed_map_size == 30 and (.left_frame_hex | length) == 2048 and (.right_frame_hex | length) == 2048 and .tick == 0' \
   >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
-  -d '{"action":"MOVE_RIGHT"}' "${base_url}/api/v1/action" | \
+  -d '{"input":"FIRE"}' "${base_url}/api/v1/input" | \
   jq -e '.accepted == true' >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
-  -d '{"action":"SHOOT_LEFT"}' "${base_url}/api/v1/action" | \
+  -d '{"input":"RIGHT"}' "${base_url}/api/v1/input" | \
   jq -e '.accepted == true' >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
-  -d '{"action":"WAIT"}' "${base_url}/api/v1/action" | \
+  -d '{"input":"SHOOT_LEFT"}' "${base_url}/api/v1/input" | \
   jq -e '.accepted == true' >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
-  -d '{"action":"CLEAR"}' "${base_url}/api/v1/action" | \
+  -d '{"input":"CLEAR_SHORT"}' "${base_url}/api/v1/input" | \
   jq -e '.accepted == true' >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
   -d '{"mode":"PAUSED"}' "${base_url}/api/v1/clock" | \
@@ -81,7 +81,7 @@ done
 [[ "${tick_value}" == "1" ]]
 
 curl -fsS -X POST -H 'Content-Type: application/json' \
-  -d '{"action":"SHOOT_RIGHT"}' "${base_url}/api/v1/action" | \
+  -d '{"input":"SHOOT_RIGHT"}' "${base_url}/api/v1/input" | \
   jq -e '.accepted == true' >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
   -d '{"command":"STEP"}' "${base_url}/api/v1/clock" | \
@@ -96,10 +96,31 @@ done
 [[ "${sound_tick}" == "2" ]]
 jq -e '.last_events | any(.type == "PLAYER_SHOT")' <<<"${sound_snapshot}" >/dev/null
 
+curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"seed":"0x0000000000000042"}' "${base_url}/api/v1/reset" | \
+  jq -e '.accepted == true' >/dev/null
+for input in DOWN FIRE LEFT LEFT DOWN FIRE; do
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+    -d "{\"input\":\"${input}\"}" "${base_url}/api/v1/input" | \
+    jq -e '.accepted == true' >/dev/null
+done
+configured_snapshot=""
+for _ in {1..40}; do
+  configured_snapshot="$(curl -fsS "${base_url}/api/v1/snapshot")"
+  [[ "$(jq -r '.mode' <<<"${configured_snapshot}")" == "PLAYING" ]] && break
+  sleep 0.05
+done
+jq -e '.mode == "PLAYING" and .system.confirmed_map_size == 12 and .system.tick_budget == 480' \
+  <<<"${configured_snapshot}" >/dev/null
+
 invalid_status="$(curl -sS -o "${artifact_dir}/invalid.json" -w '%{http_code}' \
-  -X POST -H 'Content-Type: application/json' -d '{"action":"FLY"}' \
-  "${base_url}/api/v1/action")"
+  -X POST -H 'Content-Type: application/json' -d '{"input":"WAIT"}' \
+  "${base_url}/api/v1/input")"
 [[ "${invalid_status}" == "400" ]]
+extra_status="$(curl -sS -o "${artifact_dir}/extra.json" -w '%{http_code}' \
+  -X POST -H 'Content-Type: application/json' -d '{"input":"UP","extra":true}' \
+  "${base_url}/api/v1/input")"
+[[ "${extra_status}" == "400" ]]
 curl -fsS "${base_url}/" | grep -q 'CataMaze'
 trap - EXIT
 kill -TERM "${server_pid}"
