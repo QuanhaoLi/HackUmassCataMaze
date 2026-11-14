@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:28 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:49 EST
+Last Modified at: 2026-11-14 08:01 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -15,6 +15,8 @@ Last Modified by: Codex
 |-0003-six-button-system-navigation.md — Removes the physical WAIT button while preserving Wait Action and separates CLEAR short/long intent.
 |-0004-zero-revisit-shaping.md — Removes revisit penalties that made dead-end backtracking worse than waiting.
 |-0005-distance-banded-training-spawns.md — Uses near-to-far training spawns while keeping full-map evaluation uniform.
+|-0006-calibrate-stage-a-promotion.md — Calibrates combat mastery before widening the search curriculum.
+|-0006-calibrate-stage-a-promotion.md — Calibrates the A→B gate so the search stage is not blocked by a search-dependent metric.
 
 ## To-Dos
 - Add and index an ADR before implementing any future change to a frozen environment, reward, model, deployment, or hardware contract.

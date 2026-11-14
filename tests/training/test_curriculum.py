@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:44 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:44 EST
+# Last Modified at: 2026-11-14 08:01 EST
 # Last Modified by: Codex
 # Verifies that curriculum promotion requires both steps and fixed evaluation gates.
 
@@ -37,13 +37,13 @@ def test_steps_alone_never_promote_and_all_stage_gates_are_required() -> None:
     controller = CurriculumController()
     assert not controller.try_promote(5_000_000, {})
     failing = {
-        "stationary": report(death=0.24, escape=0.0),
+        "stationary": report(death=0.19, escape=0.0),
         "random_valid": report(death=0.2, escape=0.05),
     }
     assert not controller.try_promote(5_000_000, failing)
 
     passing = {
-        "stationary": report(death=0.25, escape=0.0),
+        "stationary": report(death=0.20, escape=0.0),
         "random_valid": report(death=0.2, escape=0.10),
     }
     assert controller.try_promote(5_000_000, passing)
