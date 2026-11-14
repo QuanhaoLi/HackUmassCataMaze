@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 06:58 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:19 EST
+# Last Modified at: 2026-11-14 07:27 EST
 # Last Modified by: Codex
 # Runs resumable four-rank DDP training of one production recurrent policy.
 
@@ -9,12 +9,14 @@ from __future__ import annotations
 import argparse
 from dataclasses import replace
 from datetime import datetime, timezone
+from importlib.metadata import version
 import json
 import math
 import os
 from pathlib import Path
 import platform
 import random
+import subprocess
 from time import perf_counter
 from typing import Any
 
@@ -276,6 +278,9 @@ def run(arguments: argparse.Namespace) -> None:
     writer = SummaryWriter(run_dir / "tensorboard") if rank == 0 else None
     metrics_path = run_dir / "metrics.jsonl"
     if rank == 0 and not resume:
+        git_commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], check=True, capture_output=True, text=True
+        ).stdout.strip()
         (run_dir / "resolved_config.yaml").write_text(
             yaml.safe_dump(config, sort_keys=True), encoding="utf-8"
         )
@@ -284,10 +289,28 @@ def run(arguments: argparse.Namespace) -> None:
                 {
                     "started_at": datetime.now(timezone.utc).isoformat(),
                     "platform": platform.platform(),
+                    "git_commit": git_commit,
                     "world_size": world_size,
                     "global_num_envs": global_num_envs,
                     "global_minibatch_sequences": global_minibatch,
                     "training_config": config["versions"]["training_config"],
+                    "torch": torch.__version__,
+                    "cuda": torch.version.cuda,
+                    "numpy": np.__version__,
+                    "dependencies": {
+                        name: version(name)
+                        for name in ("pybind11", "PyYAML", "tensorboard", "torch")
+                    },
+                    "visible_devices": [
+                        {
+                            "logical_index": index,
+                            "name": torch.cuda.get_device_properties(index).name,
+                            "compute_capability": list(
+                                torch.cuda.get_device_capability(index)
+                            ),
+                        }
+                        for index in range(torch.cuda.device_count())
+                    ],
                 },
                 indent=2,
                 sort_keys=True,
