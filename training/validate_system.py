@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 05:27 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 05:27 EST
+# Last Modified at: 2026-11-14 06:34 EST
 # Last Modified by: Codex
 # Verifies the pinned Volta runtime and real CPU/GPU model numerical alignment.
 
@@ -10,6 +10,7 @@ import argparse
 import json
 import platform
 
+import numpy as np
 import torch
 
 from training.config import load_config
@@ -23,6 +24,8 @@ def validate_system(config_path: str, expected_visible_gpus: int) -> dict[str, o
         raise RuntimeError("Python version does not match V100 runtime contract")
     if torch.__version__.split("+")[0] != runtime["torch"]:
         raise RuntimeError("PyTorch version does not match V100 runtime contract")
+    if np.__version__ != runtime["numpy"]:
+        raise RuntimeError("NumPy version does not match V100 runtime contract")
     if torch.version.cuda != runtime["cuda"]:
         raise RuntimeError("PyTorch CUDA version does not match V100 runtime contract")
     if not torch.cuda.is_available():
@@ -77,6 +80,7 @@ def validate_system(config_path: str, expected_visible_gpus: int) -> dict[str, o
     return {
         "python": platform.python_version(),
         "torch": torch.__version__,
+        "numpy": np.__version__,
         "cuda": torch.version.cuda,
         "devices": devices,
         "parameter_count": sum(parameter.numel() for parameter in gpu_model.parameters()),

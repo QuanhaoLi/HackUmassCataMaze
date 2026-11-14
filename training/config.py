@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 04:26 EST
+# Last Modified at: 2026-11-14 06:34 EST
 # Last Modified by: Codex
 # Loads immutable YAML training configuration and validates frozen contracts.
 
@@ -73,8 +73,10 @@ def _validate_shapes(config: dict[str, Any]) -> None:
     expected_runtime = {
         "python": "3.12",
         "torch": "2.6.0",
+        "numpy": "1.26.4",
         "cuda": "12.4",
         "pip_index": "https://pypi.tuna.tsinghua.edu.cn/simple",
+        "environment_path": "/home/a/minimind-venv",
         "physical_gpu_indices": [1, 2, 3, 4],
         "expected_gpu_name": "Tesla V100-PCIE-16GB",
     }

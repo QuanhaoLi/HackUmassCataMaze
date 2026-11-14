@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 03:41 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 05:26 EST
+# Last Modified at: 2026-11-14 06:34 EST
 # Last Modified by: Codex
 
 [build-system]
@@ -18,7 +18,7 @@ description = "Deterministic recurrent-PPO training stack for CataMaze"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-  "numpy==2.5.4",
+  "numpy==1.26.4",
   "pybind11==3.1.0",
 ]
 

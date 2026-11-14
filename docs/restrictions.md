@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 05:26 EST
+Last Modified at: 2026-11-14 06:34 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -167,4 +167,5 @@ Interfaces MAY reserve extension points, but speculative implementations are pro
 - Python dependencies on the approved V100 host MUST be downloaded through the Tsinghua PyPI mirror.
 - The V100 training baseline MUST use PyTorch 2.6.0 with CUDA 12.4 user-space dependencies; CUDA 13 builds MUST NOT be installed for V100 training.
 - Training MUST use physical GPU indices 1–4. Physical GPU 0 is a GTX 750 and MUST NOT be selected by any training or evaluation launcher.
-- Package installation MUST remain inside the project virtual environment and MUST NOT mutate the system Python, NVIDIA driver, host CUDA toolkit, or another project's environment.
+- Per explicit operator direction, training MUST reuse `/home/a/minimind-venv`; automation MAY add only the missing pinned CataMaze build, test, logging, and editable-project packages to it.
+- Automation MUST NOT create another training virtual environment or mutate the system Python, NVIDIA driver, or host CUDA toolkit.
