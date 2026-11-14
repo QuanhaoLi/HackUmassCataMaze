@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 23:59 EST
 Created by: Codex
-Last Modified at: 2026-11-14 23:59 EST
+Last Modified at: 2026-11-15 00:56 EST
 Last Modified by: Codex
 -->
 
@@ -23,7 +23,7 @@ Compile and run the frozen CataMaze recurrent policy on the verified N16R8 ESP32
 ## Structure
 
 - `CMakeLists.txt` — Declares the standalone ESP-IDF project.
-- `main/CMakeLists.txt` — Registers the benchmark component and embeds the accepted model artifact.
+- `main/CMakeLists.txt` — Registers the benchmark component and reuses the single accepted product model artifact.
 - `main/idf_component.yml` — Pins the official ESP-DL component.
 - `main/main.cpp` — Owns model loading, tensor validation, recurrent calls, and serial evidence.
 
