@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 06:50 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 06:50 EST
+# Last Modified at: 2026-11-14 06:55 EST
 # Last Modified by: Codex
 # Qualifies synchronized PPO training of one model across multiple ranks.
 
@@ -33,6 +33,13 @@ def _atomic_torch_save(value: Any, destination: Path) -> None:
     temporary = destination.with_suffix(destination.suffix + ".tmp")
     torch.save(value, temporary)
     os.replace(temporary, destination)
+
+
+def _barrier(device: torch.device) -> None:
+    if device.type == "cuda":
+        dist.barrier(device_ids=[device.index])
+    else:
+        dist.barrier()
 
 
 def _reduce_sum(values: list[float], device: torch.device) -> list[float]:
@@ -115,7 +122,7 @@ def run(arguments: argparse.Namespace) -> None:
         (output_dir / "metadata.json").write_text(
             json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-    dist.barrier()
+    _barrier(device)
 
     base_model = RecurrentActorCritic().to(device)
     ddp_model = DistributedDataParallel(
@@ -215,7 +222,7 @@ def run(arguments: argparse.Namespace) -> None:
             with (output_dir / "metrics.jsonl").open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(record, sort_keys=True) + "\n")
             print(json.dumps(record, sort_keys=True), flush=True)
-        dist.barrier()
+        _barrier(device)
 
     parameter_checksum = torch.stack(
         [parameter.detach().double().sum() for parameter in base_model.parameters()]
@@ -226,7 +233,7 @@ def run(arguments: argparse.Namespace) -> None:
     dist.all_reduce(maximum, op=dist.ReduceOp.MAX)
     if not torch.equal(minimum, maximum):
         raise RuntimeError("DDP ranks ended with different model parameters")
-    dist.barrier()
+    _barrier(device)
     dist.destroy_process_group()
 
 

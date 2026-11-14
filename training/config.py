@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 04:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 06:49 EST
+# Last Modified at: 2026-11-14 06:55 EST
 # Last Modified by: Codex
 # Loads immutable YAML training configuration and validates frozen contracts.
 
@@ -85,10 +85,10 @@ def _validate_shapes(config: dict[str, Any]) -> None:
     expected_distributed = {
         "world_size": 4,
         "physical_gpu_indices": [1, 2, 3, 4],
-        "global_num_envs": 64,
-        "global_minibatch_sequences": 32,
-        "benchmark_global_num_envs": 256,
-        "benchmark_global_minibatch_sequences": 128,
+        "global_num_envs": 256,
+        "global_minibatch_sequences": 128,
+        "reference_global_num_envs": 64,
+        "reference_global_minibatch_sequences": 32,
     }
     if config.get("distributed") != expected_distributed:
         raise ValueError("distributed section does not match the frozen four-V100 contract")

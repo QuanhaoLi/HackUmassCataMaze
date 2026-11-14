@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:49 EST
+Last Modified at: 2026-11-14 06:55 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -558,6 +558,8 @@ evaluation:
 5. 对比 64 全局环境/32 全局序列 minibatch 与 256 全局环境/128 全局序列 minibatch，选择端到端 agent steps/s 更高且 PPO 指标稳定的拓扑。
 
 每个 rank 只绑定一张 V100。Advantage normalization、loss 分母、KL、clip fraction 和 explained variance 必须跨 rank 聚合；rank 0 负责统一 checkpoint、评估和课程晋级。四卡配置必须用实测吞吐证明优于单卡，否则继续扩大每 rank 环境/序列计算密度，而不是改回独立 seed。
+
+2026-11-14 实测选择全局 256 环境、全局 128 序列 minibatch：约 `8,175 agent steps/s`，相对单 V100 的约 `2,100 agent steps/s` 为 `3.89×`；每卡峰值显存约 1.15GB，最大 minibatch KL `0.01255`。全局 64/32 的参考拓扑仅约 `2,387 agent steps/s`，不作为正式配置。
 
 ## 12. 16GB GPU 训练操作方法
 
