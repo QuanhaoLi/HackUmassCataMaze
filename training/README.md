@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:49 EST
+Last Modified at: 2026-11-14 04:38 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,8 +11,18 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Introduces and indexes the training package.
 |-__init__.py — Exposes versioned training package metadata without importing optional GPU dependencies.
+|-collector.py — Collects masked recurrent rollouts from live batched environments and resets terminal state safely.
+|-benchmark_env.py — Measures batched CPU environment throughput without model-update noise.
+|-checkpoint.py — Atomically saves and restores model, optimizer, environment, recurrent, curriculum, and RNG state.
+|-config.py — Loads and validates immutable YAML run configurations.
 |-native_bindings.cpp — Binds batched in-memory C++ Game Engines and policy-contract tensors to Python.
+|-env.py — Owns batched episode lifecycle, partial resets, opponent actions, and reward state.
+|-model.py — Implements the CNN, scalar MLP, GRU actor-critic, initialization, and masked categorical policy.
+|-opponents.py — Implements the deterministic curriculum player-policy pool.
+|-rollout.py — Stores recurrent on-policy transitions and builds masked fixed-length sequence minibatches.
+|-ppo.py — Implements GAE, clipped recurrent PPO updates, KL stopping, and optimizer metrics.
 |-reward.py — Converts structured events and state deltas into independently logged per-agent reward components.
+|-smoke.py — Runs the bounded end-to-end correctness qualification before long GPU work.
 
 ## To-Dos
-- Add reward, model, rollout, PPO, curriculum, evaluation, checkpoint, benchmark, smoke, and training entry points in milestone order.
+- Add golden-fixture validation, evaluation, production training, export, and release-report entry points in milestone order.

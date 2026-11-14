@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:34 EST
+Last Modified at: 2026-11-14 04:38 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -10,6 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Introduces RL configuration files.
+|-ppo_16gb.yaml — Defines the authoritative 16GB recurrent-PPO baseline and contract versions.
 
 ## To-Dos
-- Add the validated `ppo_16gb.yaml` only after its parser and schema tests exist.
+- Add a release override only when it changes explicit, versioned values from the baseline.

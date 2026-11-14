@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 04:38 EST
 // Last Modified by: Codex
 // Declares deterministic state, observations, and one-tick world transitions.
 
@@ -64,6 +64,7 @@ class GameEngine {
   explicit GameEngine(const GameSetup& setup) noexcept;
 
   void reset(std::uint64_t seed) noexcept;
+  void restore(const WorldState& state) noexcept;
   bool enqueuePlayerAction(Action action) noexcept;
   void clearPlayerQueue() noexcept;
   void step(const std::array<Action, kAiCount>& ai_actions) noexcept;

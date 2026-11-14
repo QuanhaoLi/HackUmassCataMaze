@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 04:33 EST
+Last Modified at: 2026-11-14 04:38 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -26,10 +26,10 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 | M4 | ESP32 adapter and compile-only integration | `IN_PROGRESS` |
 | M5 | Physical hardware integration, only after explicit upload approval | `NOT_STARTED` |
 | M6 | Cross-platform determinism and release-candidate evidence | `NOT_STARTED` |
-| RL0 | Training contract, deployment boundary, and event attribution | `IN_PROGRESS` |
-| RL1 | In-memory environment, observation, mask, and reward foundation | `NOT_STARTED` |
-| RL2 | Recurrent actor-critic and PPO implementation | `NOT_STARTED` |
-| RL3 | CPU smoke, deterministic replay, and checkpoint recovery | `NOT_STARTED` |
+| RL0 | Training contract, deployment boundary, and event attribution | `PASSED` |
+| RL1 | In-memory environment, observation, mask, and reward foundation | `IN_PROGRESS` |
+| RL2 | Recurrent actor-critic and PPO implementation | `IN_PROGRESS` |
+| RL3 | CPU smoke, deterministic replay, and checkpoint recovery | `IN_PROGRESS` |
 | RL4 | Single-V100 benchmark and two-hour stability qualification | `NOT_STARTED` |
 | RL5 | Four-GPU isolated multi-seed training and final evaluation | `NOT_STARTED` |
 | RL6 | Versioned Native export, integration, fallback, and rollback | `NOT_STARTED` |
@@ -263,6 +263,13 @@ Pass conditions:
 - Focused C++ tests cover single hit, overkill, simultaneous multi-shooter damage, friendly fire, and lethal credit.
 - Existing state-hash, sanitizer, randomized, and gameplay behavior remain deterministic.
 - No training reward needs to infer shooter credit from event ordering or mutable post-step state.
+
+### Completion evidence — 2026-11-14
+
+- Native damage events now record one HP-capped `DAMAGE_APPLIED` plus per-shooter `DAMAGE_CREDIT` records; simultaneous lethal credit is deterministic.
+- Focused engine and reward tests cover single-source damage, multi-shooter overkill, lethal splits, self damage, friendly fire, and component totals.
+- Full Native tests passed 35/35 under both AddressSanitizer and UndefinedBehaviorSanitizer.
+- The repeated 100,000-tick randomized invariant run passed with hash `0xca19bec167ee6693` after the intentional event-schema version change.
 
 ## RL1 — Environment and reward foundation
 

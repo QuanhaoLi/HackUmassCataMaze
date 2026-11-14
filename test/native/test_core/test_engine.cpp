@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 03:33 EST
+// Last Modified at: 2026-11-14 04:38 EST
 // Last Modified by: Codex
 // Verifies deterministic movement, combat, visibility, terminal conditions, and replay hashing.
 
@@ -225,6 +225,21 @@ TEST(GameEngine, SameSeedAndCommandsProduceTheSameHash) {
     second.step(ai);
     ASSERT_EQ(first.stateHash(), second.stateHash()) << tick;
   }
+}
+
+TEST(GameEngine, RestoresAnExplicitWorldStateWithoutChangingItsHash) {
+  GameEngine source(0x12345678U);
+  ASSERT_TRUE(source.enqueuePlayerAction(Action::ShootRight));
+  source.step({Action::MoveUp, Action::ShootLeft, Action::Wait});
+  const WorldState saved = source.state();
+
+  GameEngine restored(1U);
+  restored.restore(saved);
+
+  EXPECT_EQ(restored.stateHash(), source.stateHash());
+  EXPECT_EQ(restored.state().tick, source.state().tick);
+  EXPECT_EQ(restored.state().bullet_count, source.state().bullet_count);
+  EXPECT_EQ(restored.state().event_count, source.state().event_count);
 }
 
 }  // namespace

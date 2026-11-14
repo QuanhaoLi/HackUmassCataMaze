@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 03:51 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 03:51 EST
+# Last Modified at: 2026-11-14 04:38 EST
 # Last Modified by: Codex
 # Computes versioned per-agent reward components from structured Native transitions.
 
@@ -48,6 +48,7 @@ class RewardResult:
     total: npt.NDArray[np.float32]
     components: dict[str, npt.NDArray[np.float32]]
     terminated: npt.NDArray[np.bool_]
+    truncated: npt.NDArray[np.bool_]
 
 
 class RewardCalculator:
@@ -84,6 +85,20 @@ class RewardCalculator:
                 x, y = positions[env, agent + 1]
                 self._visited[env, agent, int(y) * 50 + int(x)] = True
 
+    def state_dict(self) -> dict[str, npt.NDArray[np.generic]]:
+        return {
+            "visited": self._visited.copy(),
+            "exploration_positive": self._exploration_positive.copy(),
+        }
+
+    def load_state_dict(self, state: Mapping[str, npt.NDArray[np.generic]]) -> None:
+        visited = np.asarray(state["visited"], dtype=np.bool_)
+        exploration = np.asarray(state["exploration_positive"], dtype=np.float32)
+        if visited.shape != self._visited.shape or exploration.shape != self._exploration_positive.shape:
+            raise ValueError("reward state shape does not match environment batch")
+        self._visited[:] = visited
+        self._exploration_positive[:] = exploration
+
     def calculate(self, previous: Snapshot, current: Snapshot) -> RewardResult:
         previous_alive = np.asarray(previous["alive"], dtype=np.bool_)
         current_alive = np.asarray(current["alive"], dtype=np.bool_)
@@ -114,8 +129,15 @@ class RewardCalculator:
             raise FloatingPointError("reward produced NaN or Inf")
         if np.any(np.abs(total) > 100.0):
             raise RuntimeError("single-transition absolute reward exceeded 100")
-        terminated = active & ((~current_alive) | (status[:, None] != _native.STATUS_RUNNING))
-        return RewardResult(total=total, components=components, terminated=terminated)
+        terminal_status = (status == _native.STATUS_DEATH) | (status == _native.STATUS_VICTORY)
+        terminated = active & ((~current_alive) | terminal_status[:, None])
+        truncated = active & (status[:, None] == _native.STATUS_TIMEOUT)
+        return RewardResult(
+            total=total,
+            components=components,
+            terminated=terminated,
+            truncated=truncated,
+        )
 
     def _terminal_rewards(
         self,

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 03:34 EST
+// Last Modified at: 2026-11-14 04:38 EST
 // Last Modified by: Codex
 // Implements deterministic simultaneous movement, combat, observations, and terminal rules.
 
@@ -71,6 +71,8 @@ void GameEngine::reset(std::uint64_t seed) noexcept {
   const GeneratedWorld generated = MazeGenerator::generate(seed);
   initialize(GameSetup{generated.map, generated.spawns, seed});
 }
+
+void GameEngine::restore(const WorldState& state) noexcept { state_ = state; }
 
 void GameEngine::initialize(const GameSetup& setup) noexcept {
   state_ = WorldState{};

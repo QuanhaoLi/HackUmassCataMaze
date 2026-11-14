@@ -1,0 +1,73 @@
+# Created at: 2026-11-14 04:24 EST
+# Created by: Codex
+# Last Modified at: 2026-11-14 04:24 EST
+# Last Modified by: Codex
+
+versions:
+  environment: catamaze.environment.v1
+  observation: catamaze.observation.v1
+  reward: catamaze.reward.v1
+  model_arch: catamaze.model.rppo.v1
+  training_config: catamaze.training.ppo16gb.v1
+
+seed: 20261113
+device: cuda
+total_agent_steps: 100000000
+
+environment:
+  num_envs: 64
+  max_episode_ticks: 2000
+  players_per_env: 1
+  agents_per_env: 3
+  deterministic_rules: true
+  randomize_spawns: true
+
+rollout:
+  environment_steps: 128
+  sequence_length: 64
+  store_spatial_as_uint8: true
+  storage_device: cpu
+  pin_memory: true
+
+minibatch:
+  sequences: 32
+  update_epochs: 4
+
+model:
+  spatial_channels: 13
+  scalar_features: 46
+  conv_channels: 64
+  visual_embedding: 256
+  scalar_embedding: 128
+  gru_hidden: 256
+  action_count: 9
+
+ppo:
+  gamma: 0.995
+  gae_lambda: 0.95
+  clip_coef: 0.20
+  value_clip_coef: 0.20
+  learning_rate: 0.0003
+  final_learning_rate: 0.00003
+  adam_eps: 0.00001
+  weight_decay: 0.0001
+  entropy_coef: 0.020
+  final_entropy_coef: 0.005
+  value_loss_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: 0.02
+  hard_stop_kl: 0.03
+  normalize_advantage: true
+
+precision:
+  mode: fp32
+  allow_tf32: true
+
+checkpoint:
+  every_agent_steps: 1000000
+  keep_latest: 3
+  keep_best: 5
+
+evaluation:
+  every_agent_steps: 500000
+  episodes_per_persona_per_opponent: 300
