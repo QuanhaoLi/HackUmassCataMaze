@@ -1,0 +1,8 @@
+# Created at: 2026-11-14 03:41 EST
+# Created by: Codex
+# Last Modified at: 2026-11-14 03:41 EST
+# Last Modified by: Codex
+# Installs the pinned Volta-compatible CUDA 12.6 PyTorch build and CataMaze trainer.
+
+--extra-index-url https://download.pytorch.org/whl/cu126
+-e .[test,train]

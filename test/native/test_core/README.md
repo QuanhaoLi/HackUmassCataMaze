@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:19 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:55 EST
+Last Modified at: 2026-11-14 03:36 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -13,6 +13,7 @@ Last Modified by: Codex
 |-test_main.cpp — Provides the isolated GoogleTest entry point.
 |-test_application.cpp — Verifies deterministic legal-observation heuristic coordination.
 |-test_map.cpp — Verifies PCG32, `dfs-grid-v1`, connectivity, exit, and spawn determinism.
+|-test_policy_contract.cpp — Verifies every spatial/scalar feature index and legal-action mask rule.
 |-test_queue.cpp — Verifies FIFO capacity, rejection, CLEAR, and fallback WAIT.
 |-test_types.cpp — Exhaustively verifies stable direction, action, and status mappings.
 |-test_engine.cpp — Verifies movement, conflicts, bullets, damage, ammo, victory, death, timeout, and replay hashes.

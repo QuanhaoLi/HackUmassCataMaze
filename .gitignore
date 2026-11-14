@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 00:16 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 02:11 EST
+# Last Modified at: 2026-11-14 03:41 EST
 # Last Modified by: Codex
 
 # macOS Finder metadata must not be committed.
@@ -14,3 +14,9 @@ coverage/
 compile_commands.json
 *.profraw
 *.profdata
+*.so
+build/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+runs/

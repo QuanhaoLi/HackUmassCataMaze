@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 03:34 EST
 // Last Modified by: Codex
 // Implements deterministic simultaneous movement, combat, observations, and terminal rules.
 
@@ -251,14 +251,12 @@ void GameEngine::step(const std::array<Action, kAiCount>& ai_actions) noexcept {
   state_.bullet_count = next_bullet_count;
 
   std::array<std::uint8_t, kEntityCount> hit_totals{};
-  std::array<EntityId, kEntityCount> first_shooter{};
+  std::array<std::array<std::uint8_t, kEntityCount>, kEntityCount> hit_credits{};
   for (std::size_t index = 0; index < hit_count; ++index) {
     const Hit& hit = hits[index];
     const std::size_t target_index = entityIndex(hit.target);
-    if (hit_totals[target_index] == 0U) {
-      first_shooter[target_index] = hit.shooter;
-    }
     ++hit_totals[target_index];
+    ++hit_credits[target_index][entityIndex(hit.shooter)];
     addEvent(Event{EventType::BulletHit, hit.shooter, hit.target, hit.position, Direction::Up, 1});
   }
 
@@ -269,12 +267,19 @@ void GameEngine::step(const std::array<Action, kAiCount>& ai_actions) noexcept {
     }
     const std::uint8_t damage = std::min(entity.hp, hit_totals[index]);
     entity.hp = static_cast<std::uint8_t>(entity.hp - damage);
-    addEvent(Event{EventType::DamageApplied, first_shooter[index], entity.id, entity.position,
-                   Direction::Up, damage});
+    addEvent(Event{EventType::DamageApplied, entity.id, entity.id, entity.position, Direction::Up,
+                   damage});
+    for (std::size_t shooter = 0; shooter < kEntityCount; ++shooter) {
+      if (hit_credits[index][shooter] == 0U) {
+        continue;
+      }
+      addEvent(Event{EventType::DamageCredit, kEntityIds[shooter], entity.id, entity.position,
+                     Direction::Up, hit_credits[index][shooter]});
+    }
     if (entity.hp == 0U) {
       entity.alive = false;
-      addEvent(Event{EventType::EntityDied, first_shooter[index], entity.id, entity.position,
-                     Direction::Up, 0});
+      addEvent(Event{EventType::EntityDied, entity.id, entity.id, entity.position, Direction::Up,
+                     0});
     }
   }
 

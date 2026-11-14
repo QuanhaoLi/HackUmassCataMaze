@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:10 EST
+Last Modified at: 2026-11-14 03:29 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -13,7 +13,8 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 
 ## 1. Current execution boundary
 
-- The current phase MUST run and be tested on the local Mac only.
+- Native gameplay and training correctness gates MUST run locally before remote GPU training begins.
+- After those gates pass, RL benchmark, stability, training, and evaluation jobs MAY run on the approved remote training server.
 - No command may upload, flash, erase, reset, or otherwise mutate the connected ESP32.
 - ESP32 code MAY be planned and later compiled without upload, but only after the playable Native milestones pass.
 - Unknown hardware values MUST be labeled `PENDING_HARDWARE_VERIFICATION`; they MUST NOT be inferred from a similar board.
@@ -141,3 +142,11 @@ Interfaces MAY reserve extension points, but speculative implementations are pro
 - Automation MUST NOT stop or disable SSH, Tailscale, or host networking on that server.
 - `sudo` does not authorize a power transition or removal of the server's power-safety guard.
 - If a future training, driver, or package task requires a reboot, work MUST stop and the user must perform it outside Codex.
+
+## 14. RL deployment boundary
+
+- The first RL implementation targets Native training, evaluation, export, and optional Native gameplay inference.
+- It MUST NOT introduce a network or cloud inference dependency into standalone gameplay.
+- TorchScript and ONNX artifacts MUST NOT be represented as ESP32-compatible artifacts.
+- ESP32 MUST retain the deterministic heuristic policy until a later documented decision defines and physically validates an embedded model runtime, quantization format, memory budget, and latency budget.
+- Multi-GPU training MUST first reproduce a correct single-GPU baseline. The default four-V100 topology is one isolated training seed per GPU, not synchronous DDP.

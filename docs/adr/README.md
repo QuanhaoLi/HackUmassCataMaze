@@ -1,0 +1,16 @@
+## header
+Created at: 2026-11-14 03:28 EST
+Created by: Codex
+Last Modified at: 2026-11-14 03:29 EST
+Last Modified by: Codex
+
+## brief intro
+- Goal for this folder: record durable architecture decisions that change or clarify CataMaze's frozen product, training, and deployment contracts.
+- 架构思路：每个 ADR 只处理一个重要决策，记录背景、选择、后果和后续门槛；规范文件仍是最终执行合同，ADR 解释为何这样规定。
+
+## folder structure
+|-README.md — Introduces and indexes architecture decision records.
+|-0001-rl-training-and-deployment-boundary.md — Selects Native-first RL training/inference, preserves the standalone ESP32 fallback, and defines four-GPU run isolation.
+
+## To-Dos
+- Add and index an ADR before implementing any future change to a frozen environment, reward, model, deployment, or hardware contract.

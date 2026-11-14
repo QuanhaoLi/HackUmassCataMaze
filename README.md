@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:42 EST
 Created by: Codex
-Last Modified at: 2026-11-14 02:58 EST
+Last Modified at: 2026-11-14 03:41 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -14,14 +14,19 @@ Last Modified by: Codex
 |-.clang-format — Defines the repository-wide C++17 formatting contract.
 |-.github/ — Contains documented Native continuous-integration workflows.
 |-platformio.ini — Pins Native build, test, and dependency configuration.
+|-pyproject.toml — Pins the Python package, Native extension build, tests, and RL dependencies.
+|-setup.py — Builds the in-process pybind11 Game Core extension.
 |-plan.md — Defines ordered implementation milestones and their executable acceptance gates.
 |-requirements-dev.txt — Pins the project-local PlatformIO Core version.
+|-requirements-train-v100.txt — Selects the Volta-compatible CUDA 12.6 PyTorch wheel for the approved V100 host.
 |-agents/ — Contains mandatory operating instructions for coding agents; see `agents/README.md`.
 |-docs/ — Contains the normative game, engineering, hardware, restriction, and reinforcement-learning specifications; see `docs/README.md`.
 |-lib/ — Contains portable C++ domain, application, and rendering libraries; see `lib/README.md`.
 |-scripts/ — Contains reproducible acceptance helpers; see `scripts/README.md`.
 |-src/ — Contains thin executable entry points; see `src/README.md`.
 |-test/ — Contains target-specific automated tests; see `test/README.md`.
+|-tests/ — Contains Python RL contract tests and reviewed fixtures; see `tests/README.md`.
+|-training/ — Contains the Native training bridge and recurrent-PPO implementation; see `training/README.md`.
 |-web/ — Contains the dependency-free Native browser UI; see `web/README.md`.
 
 ## To-Dos

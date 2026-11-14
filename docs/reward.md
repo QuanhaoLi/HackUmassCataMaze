@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:41 EST
 Created by: Codex
-Last Modified at: 2026-11-13 23:42 EST
+Last Modified at: 2026-11-14 03:38 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 计划采用的强化学习奖励、共享循环策略网络、16GB GPU 训练流程与产品发布门槛。
@@ -65,7 +65,7 @@ reset(seed) → observations
 step(actions) → observations, rewards, terminations, truncations, infos
 ```
 
-训练热路径不得调用 HTTP、数据库、Web UI、Terminal UI 或文本日志。数据库和 API 只用于在线游戏、回放元数据和发布记录。
+训练热路径不得调用 HTTP、数据库、Web UI、Terminal UI 或逐 tick 文本日志。Native 产品适配器、离线评估报告和发布记录不得反向进入训练环境依赖图。
 
 ### 3.2 部署环境
 
@@ -122,7 +122,7 @@ step(actions) → observations, rewards, terminations, truncations, infos
 
 | 部分 | 维度 | 编码 |
 |---|---:|---|
-| 自身状态 | 6 | `hp/5`、`ammo/3`、恢复进度、`x/49`、`y/49`、`tick/2000` |
+| 自身状态 | 6 | `hp/5`、`ammo/3`、`recharge_progress/2`、`x/49`、`y/49`、`tick/2000` |
 | 上一动作 | 9 | one-hot |
 | 上一动作结果 | 10 | one-hot |
 | 声音 | 18 | 8 个方向 + SELF 的存在位和归一化最近距离 |
@@ -145,6 +145,8 @@ INVALID_FALLBACK
 ```
 
 声音距离不存在时置 0，同时对应存在位置 0；不能只用距离 0 表示“没声音”，因为 `SELF` 声音的距离也为 0。
+
+46 维标量索引固定为：自身状态 `[0,6)`、上一动作 `[6,15)`、上一动作结果 `[15,25)`、声音存在位 `[25,34)`、声音距离 `[34,43)`、人格 `[43,46)`。声音桶顺序固定为 `N, NE, E, SE, S, SW, W, NW, SELF`，距离除以听觉半径 `3`。当前规则只报告最近一次合法声音，因此每个 observation 至多激活一个声音桶；18 维布局为未来不改变模型 shape 的多桶扩展保留稳定合同。
 
 ### 4.3 合法动作掩码
 
@@ -303,7 +305,10 @@ rᵢ,t = r_terminal
 
 ### 8.1 伤害与击杀
 
-- 奖励只从结构化 `DAMAGE_APPLIED` 和 `ENTITY_DIED` 事件计算。
+- 伤害和击杀奖励只从结构化 `DAMAGE_APPLIED`、`DAMAGE_CREDIT` 和 `ENTITY_DIED` 事件计算，不能从 HP 差值或事件顺序反推射手。
+- 每个受伤目标每 tick 产生一个 `DAMAGE_APPLIED`，其 `value` 是 HP cap 后的实际总伤害；事件 `actor` 和 `target` 都是受伤目标。
+- 同 tick 每个命中该目标的唯一射手产生一个 `DAMAGE_CREDIT`，`actor` 是射手，`target` 是受伤目标，`value` 是该射手的命中弹数。
+- 伤害 reward 按 `DAMAGE_APPLIED.value × shooter_hits / all_hits` 分配，因此所有射手 credit 之和严格等于实际伤害。若发生致死，个人击杀奖励在拥有 `DAMAGE_CREDIT` 的唯一射手之间等分，不按弹数重复计算。
 - 伤害按实际扣除 HP 计算；对剩余 1 HP 的目标同时命中 3 发，只能累计 1 HP 的有效伤害奖励。
 - 对玩家最后一击同时获得“伤害奖励”和“亲自击杀额外奖励”。
 - 多个 AI 同 tick 命中并击杀玩家时，最后一击奖励按造成有效致死伤害的射手均分；共同终局奖励照常发放。
@@ -530,6 +535,18 @@ evaluation:
 5. 最后才把 `gru_hidden: 256 → 192`。
 
 不得通过关闭 action mask、缩短 observation 或删掉 critic 来解决 OOM。sequence length 不应低于 32，否则迷宫记忆能力会明显受损。
+
+### 11.6 四张 V100 的执行拓扑
+
+四张 V100 不改变单次训练的 PPO batch 语义。工程顺序固定为：
+
+1. CPU 正确性与 100k agent-step smoke；
+2. 单张 V100 的 FP32 数值、吞吐、显存和断点恢复基线；
+3. 单张 V100 连续两小时稳定性；
+4. 四张 V100 各运行一个隔离的训练 seed；
+5. 任一 GPU 空闲后运行第五个发布所需 seed。
+
+每个进程只绑定一张 GPU，并使用独立 run 目录、端口空间、checkpoint lineage 和 RNG 状态。首版不使用同步 DDP；只有端到端 profiling 证明 DDP 能提高 agent transitions/s，且不会改变 rollout、KL、课程或复现语义时，才允许通过新 ADR 引入。
 
 ## 12. 16GB GPU 训练操作方法
 
@@ -771,7 +788,7 @@ checkpoint 必须包含：
 - 在线异常率、延迟或玩家反馈越过阈值时可以无数据迁移地回滚；
 - 回滚不得改变已保存游戏的规则版本。
 
-## 17. 导出与在线推理
+## 17. 导出与 Native 推理
 
 发布产物至少包含：
 
@@ -785,7 +802,7 @@ environment_version.txt
 evaluation_report.json
 ```
 
-在线服务必须：
+Native 模型策略必须：
 
 - 按游戏和实体保存 256 维 GRU hidden state；
 - 游戏恢复时从保存的 hidden state 恢复，或明确重建并记录行为不连续；
@@ -794,7 +811,9 @@ evaluation_report.json
 - 设置严格推理超时；
 - 模型异常时回退到 `WAIT` 或经过验证的启发式策略；
 - 记录模型版本、采样温度、动作概率摘要和最终动作；
-- 不在生产请求中进行梯度更新。
+- 不在游戏推理中进行梯度更新。
+
+本阶段的 TorchScript/ONNX 导出只面向 Native。独立 ESP32 产品不得依赖网络推理，并继续使用经过验证的启发式策略。任何 ESP32 神经网络部署都必须由后续 ADR 单独定义模型格式、量化、运行时、内存、延迟和物理设备验收；本文件不宣称当前 PyTorch 架构可直接部署到 ESP32。
 
 模型可以导出为 TorchScript 或 ONNX，但导出版本必须通过与原 PyTorch 模型的 logits/value 数值对齐测试。最大容许误差：FP32 `1e-5`，BF16 导出 `1e-2`。
 

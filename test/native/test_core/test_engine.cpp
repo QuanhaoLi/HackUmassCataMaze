@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 03:33 EST
 // Last Modified by: Codex
 // Verifies deterministic movement, combat, visibility, terminal conditions, and replay hashing.
 
@@ -79,6 +79,49 @@ TEST(GameEngine, AdjacentShotDamagesImmediatelyAndAmmoRecoversOnPhase) {
   engine.step(kAiWaits);
   EXPECT_EQ(engine.state().entities[0].ammo, 3U);
   EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
+}
+
+TEST(GameEngine, SimultaneousLethalHitsPreserveActualDamageAndEveryShooterCredit) {
+  GameSetup setup = openSetup();
+  setup.spawns[1] = Position{1, 2};
+  setup.spawns[2] = Position{3, 2};
+  GameEngine engine(setup);
+  const std::array<Action, kAiCount> crossfire{Action::ShootRight, Action::ShootLeft,
+                                               Action::Wait};
+
+  engine.step(crossfire);
+  engine.step(kAiWaits);
+  engine.step(crossfire);
+  engine.step(kAiWaits);
+  ASSERT_EQ(engine.state().entities[0].hp, 1U);
+
+  engine.step(crossfire);
+
+  EXPECT_EQ(engine.state().entities[0].hp, 0U);
+  EXPECT_EQ(engine.state().status, GameStatus::Death);
+  std::uint8_t applied_damage = 0U;
+  std::array<std::uint8_t, kEntityCount> credited_hits{};
+  std::size_t damage_events = 0U;
+  std::size_t credit_events = 0U;
+  std::size_t death_events = 0U;
+  for (std::size_t index = 0; index < engine.state().event_count; ++index) {
+    const Event& event = engine.state().events[index];
+    if (event.type == EventType::DamageApplied && event.target == EntityId::Player) {
+      ++damage_events;
+      applied_damage = event.value;
+    } else if (event.type == EventType::DamageCredit && event.target == EntityId::Player) {
+      ++credit_events;
+      credited_hits[entityIndex(event.actor)] = event.value;
+    } else if (event.type == EventType::EntityDied && event.target == EntityId::Player) {
+      ++death_events;
+    }
+  }
+  EXPECT_EQ(damage_events, 1U);
+  EXPECT_EQ(applied_damage, 1U);
+  EXPECT_EQ(credit_events, 2U);
+  EXPECT_EQ(credited_hits[entityIndex(EntityId::Aggressive)], 1U);
+  EXPECT_EQ(credited_hits[entityIndex(EntityId::Cautious)], 1U);
+  EXPECT_EQ(death_events, 1U);
 }
 
 TEST(GameEngine, BulletMovesOneCellPerTickUntilItHits) {

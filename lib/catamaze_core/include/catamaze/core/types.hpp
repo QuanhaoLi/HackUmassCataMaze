@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 02:58 EST
+// Last Modified at: 2026-11-14 03:34 EST
 // Last Modified by: Codex
 // Declares stable, platform-independent CataMaze domain values and limits.
 
@@ -99,6 +99,7 @@ enum class EventType : std::uint8_t {
   EntityDied = 5,
   AmmoRestored = 6,
   GameEnded = 7,
+  DamageCredit = 8,
 };
 
 struct EntityState {

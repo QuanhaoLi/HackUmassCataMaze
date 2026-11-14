@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 03:16 EST
+Last Modified at: 2026-11-14 03:30 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -26,6 +26,13 @@ Status values are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `PASSED`.
 | M4 | ESP32 adapter and compile-only integration | `NOT_STARTED` |
 | M5 | Physical hardware integration, only after explicit upload approval | `NOT_STARTED` |
 | M6 | Cross-platform determinism and release-candidate evidence | `NOT_STARTED` |
+| RL0 | Training contract, deployment boundary, and event attribution | `IN_PROGRESS` |
+| RL1 | In-memory environment, observation, mask, and reward foundation | `NOT_STARTED` |
+| RL2 | Recurrent actor-critic and PPO implementation | `NOT_STARTED` |
+| RL3 | CPU smoke, deterministic replay, and checkpoint recovery | `NOT_STARTED` |
+| RL4 | Single-V100 benchmark and two-hour stability qualification | `NOT_STARTED` |
+| RL5 | Four-GPU isolated multi-seed training and final evaluation | `NOT_STARTED` |
+| RL6 | Versioned Native export, integration, fallback, and rollback | `NOT_STARTED` |
 
 ## M0 — Documentation and Native bootstrap
 
@@ -240,9 +247,110 @@ Pass conditions:
 - Physical device completes the agreed endurance duration without watchdog reset, heap growth, stuck input, or display corruption.
 - A complete game remains playable after all hardening work.
 
+## RL0 — Training contract and event correctness
+
+### Deliverables
+
+- An ADR reconciles Native RL inference with standalone ESP32 gameplay and defines four-V100 usage.
+- `docs/reward.md`, `docs/restrictions.md`, and this plan agree on the deployment and remote-execution boundary.
+- Structured damage and death events preserve every contributing shooter and effective damage after HP capping.
+- Simultaneous lethal hits have an explicit deterministic credit-allocation rule that supports equal kill-credit sharing.
+
+### Acceptance
+
+- Focused C++ tests cover single hit, overkill, simultaneous multi-shooter damage, friendly fire, and lethal credit.
+- Existing state-hash, sanitizer, randomized, and gameplay behavior remain deterministic.
+- No training reward needs to infer shooter credit from event ordering or mutable post-step state.
+
+## RL1 — Environment and reward foundation
+
+### Deliverables
+
+- A pinned Native Python extension exposes batched pure-memory reset, observation, step, and structured info without HTTP or subprocesses.
+- Observation encoding has exactly `[13, 5, 5]` spatial and `[46]` scalar shapes with one versioned schema.
+- One action-mask implementation enforces wall, boundary, ammo, death, and always-legal `WAIT` rules.
+- Reward calculation emits every named component plus an exact total and maintains independent per-agent visited state.
+- Player opponent policies and randomized training spawns use explicit seeds.
+
+### Acceptance
+
+- Golden trajectories cover every reward row and terminal outcome.
+- Property tests show masked actions are never sampled and private world state never enters model input.
+- Environment replay is identical for fixed seed and ordered actions.
+- A 64-environment CPU benchmark reports agent transitions per second and identifies the sampling bottleneck.
+
+## RL2 — Recurrent actor-critic and PPO
+
+### Deliverables
+
+- The specified CNN, scalar MLP, 256-unit GRU, actor head, and critic head are implemented in pinned PyTorch.
+- Recurrent rollout storage preserves initial hidden states, termination/truncation masks, old log-probabilities, values, and raw reward components.
+- GAE and clipped PPO implement advantage normalization, value clipping, entropy scheduling, KL early stop, gradient clipping, and learning-rate decay.
+
+### Acceptance
+
+- Network, masking, hidden-reset, recurrent sequence, GAE, PPO-ratio, and CPU/GPU parity tests pass.
+- A PPO update changes parameters without NaN/Inf and leaves padded/dead-agent timesteps out of every loss.
+- Printed parameter count and tensor shapes match checkpoint metadata.
+
+## RL3 — Smoke and recovery qualification
+
+### Deliverables
+
+- The player-policy curriculum, fixed evaluation suite, metrics, checkpointing, and exact resume path are complete.
+- A 100,000-agent-step FP32 smoke run executes with the release configuration scaled only in duration.
+
+### Acceptance
+
+- Reward components sum exactly, illegal-action rate is zero, and every done agent clears its GRU state.
+- A checkpoint resume produces the same next update as an uninterrupted reference run.
+- Fixed-seed stochastic and deterministic evaluations replay exactly on the same software and hardware configuration.
+- The run records resolved configuration, git revision, four contract versions, dependency versions, RNG states, and memory use.
+
+## RL4 — Single-V100 stability qualification
+
+### Deliverables
+
+- The approved training host passes environment, CUDA, throughput, storage, and checkpoint diagnostics without changing host power or network state.
+- One V100 establishes the FP32 reference and completes a continuous two-hour run.
+
+### Acceptance
+
+- Peak allocated memory remains below 14GB with no OOM, leak trend, NaN/Inf, throughput collapse, or invalid action.
+- Evaluation, logging, checkpoint save/load, and failure-checkpoint paths all execute during the run.
+- End-to-end agent transitions per second, GPU utilization, and CPU sampling utilization are reported before any topology change.
+
+## RL5 — Four-GPU isolated multi-seed training
+
+### Deliverables
+
+- Four isolated single-GPU jobs train four independent seeds concurrently; the fifth required seed runs after a slot becomes available.
+- Each job owns a distinct run directory, RNG state, checkpoint lineage, and GPU assignment.
+- Final candidates are evaluated against random-valid, heuristic, feed-forward, no-persona, previous-production, and candidate baselines.
+
+### Acceptance
+
+- At least four of five seeds pass every effect, personality, correctness, and performance gate in `docs/reward.md`.
+- Player escape rate improves by at least 20% relative to the heuristic baseline while player death rate increases rather than only timeout rate.
+- Friendly fire, personality separation, confidence intervals, mean, standard deviation, and failure cases are reported.
+
+## RL6 — Native export and rollback
+
+### Deliverables
+
+- A versioned TorchScript or ONNX Native artifact passes numerical parity against PyTorch.
+- Native gameplay can select the model policy without changing Game Core rules and falls back to the heuristic policy on any model failure.
+- Previous production artifacts remain selectable for rollback.
+
+### Acceptance
+
+- Export parity, CPU p95 latency, batched three-agent latency, resident memory, timeout, invalid-output, and fallback tests pass.
+- Normal standalone ESP32 builds have no model runtime or network dependency.
+- No embedded-model compatibility is claimed without a later ADR and physical-device evidence.
+
 ## Change control
 
 - A failed milestone remains `IN_PROGRESS` or becomes `BLOCKED`; passing a subset of checks is not sufficient.
 - Acceptance criteria may be tightened without invalidating earlier evidence, but removing a criterion requires a documented decision.
 - The plan must be updated before changing milestone scope or order.
-- Work stops at the current user's requested boundary: this run targets M0 through Native M1/M2/M3 work and does not upload hardware.
+- The current user-authorized scope adds the RL0–RL6 track and remote four-V100 training after its correctness gates; it does not authorize hardware upload or any remote-server power transition.
