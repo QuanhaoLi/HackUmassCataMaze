@@ -1,0 +1,135 @@
+<!--
+Created at: 2026-11-13 23:37 EST
+Created by: CataDragon
+Last Modified at: 2026-11-14 00:16 EST
+Last Modified by: Codex
+
+本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
+-->
+
+# CataMaze v1 — Game Rules
+
+CataMaze is a **standalone, single-player maze escape game** running on an ESP32-S3 handheld. The player searches for an exit while avoiding or fighting three AI enemies. The game advances at **one tick per second** during normal play. Each tick resolves one player action and one action per living AI.
+
+## 1. Game Setup
+
+| Parameter | Rule |
+|---|---|
+| Map | 50 × 50 cells |
+| Player/AI vision | 5 × 5 cells, centered on each entity |
+| Gunshot hearing range | 7 × 7 cells (3 cells in every direction) |
+| Enemies | 3: aggressive, cautious, explorer |
+| HP | Starts at 5; maximum 5; no regeneration |
+| Ammo | Starts at 3; maximum 3; restores 1 every 2 ticks |
+| Damage | 1 HP per bullet hit |
+| Input queue | 32 pending actions maximum |
+| Duration | 2,000 ticks maximum |
+| Sound output | **Active buzzer**, controlled on/off by ESP32-S3 |
+
+The map uses `#` (wall), `.` (path), `S` (entrance marker), and `E` (single exit). Map edges are walls except at the exit. The player and three AI spawn on different reachable cells, never on `E`; spawning at `S` is not required.
+
+## 2. Two OLED Screens
+
+Both displays are **GME12864, 128 × 64, monochrome**. They show different information and must never reveal hidden game state.
+
+### Screen 1 — Map
+
+Shows **only the player's current 5 × 5 field of view**, not the full 50 × 50 maze:
+
+- `@` — player, always at the center of the view.
+- `#` — visible wall; `.` — visible path; `S` / `E` — entrance or exit when visible.
+- `P` — visible AI enemy; a projectile symbol — visible bullet.
+- `?` — obscured cell, including cells hidden behind walls; outside the map counts as a wall.
+
+Walls block line of sight, including diagonal views through a blocked corner. Enemies, bullets, and terrain outside the current view must remain hidden. The map redraws after each tick. An optional directional gunshot indicator may appear **only when the player legitimately hears that shot**; it must not identify an unseen shooter or reveal exact coordinates.
+
+### Screen 2 — HUD
+
+Displays these **five persistent fields only**:
+
+```text
+CATAMAZE
+TICK   00125
+HP     4/5
+AMMO   2/3
+QUEUE  07/32
+POS    12,28
+```
+
+- `TICK` — completed world updates (0–2,000).
+- `HP` — current / maximum player health.
+- `AMMO` — current / maximum available shots.
+- `QUEUE` — actions still waiting / capacity (0–32).
+- `POS` — player's `(x, y)` on the 50 × 50 map.
+
+There is **no `STATUS` field**. The HUD refreshes after ticks and immediately when the queue changes. On victory, death, or timeout, an end message may replace the normal display.
+
+## 3. Controls and Queue
+
+There are **nine actions**: move up/down/left/right, shoot up/down/left/right, and wait. No diagonal moves or shots. Physical button assignments will be specified in `hardware.md` after wiring.
+
+- Inputs enter a **FIFO queue**; maximum length is 32.
+- Each tick consumes **one** queued player action; if empty, the player waits.
+- A full queue rejects new actions without overwriting previous ones.
+- Clearing the queue deletes pending actions only, not the action already executing.
+- Wall collisions, entity collisions, and ammo shortages are checked **when an action executes**, not when it is queued.
+
+## 4. Tick Resolution and Movement
+
+All four entities select actions from the **same tick-start state**. Each tick proceeds in this order:
+
+1. Take the first queued player action (or wait); each living AI selects one action based on its own permitted observations. Invalid or unavailable AI actions become wait.
+2. Resolve movement simultaneously. Walls, map boundaries, and cells occupied at tick start block entry. Two entities targeting the same cell, or trying to swap positions, both fail.
+3. Advance existing bullets, spawn valid new shots, and calculate simultaneous damage.
+4. Remove dead entities; restore ammo; update visited cells and in-game gunshot events.
+5. Check end conditions, advance the tick, and refresh both screens.
+
+Blocked moves still consume their action. All AIs follow the same movement, HP, combat, and visibility rules as the player.
+
+## 5. Shooting, HP, and In-Game Sound
+
+- Shooting uses **1 ammo**. If ammo is `0`, no bullet or gunshot event is created.
+- New bullets spawn in the adjacent cell. Existing bullets advance **one cell per tick**, never through walls. A bullet disappears when it hits an entity, wall, or map edge.
+- Every hit deals **1 HP**. Multiple hits in one tick add together and are applied simultaneously. A bullet cannot hurt its original shooter; AI can hit other AI.
+- Bullets remain in flight after their shooter dies. HP never regenerates.
+- Ammo regenerates by **1 after every 2 eligible tick completions**, capped at 3. Shooting does not erase partial recharge progress.
+- An actual shot creates a **game-world sound event** heard by entities within 3 cells in either axis, even through walls. An observer receives approximate direction, not the hidden shooter's identity or exact location.
+
+## 6. Active Buzzer — Physical Audio
+
+The ESP32-S3 controls an **active buzzer** for short audible notifications. An active buzzer generates its own fixed-pitch sound when switched on; use **on/off pulses**, not variable-frequency notes or melodies.
+
+| Event | Buzzer feedback |
+|---|---|
+| Player fires successfully | One short beep |
+| Player takes damage | Two short beeps |
+| Nearby enemy fires **within the player's 7 × 7 hearing area** | Two quick beeps with a distinct rhythm |
+| Player reaches exit alive | Three celebratory beeps |
+| Player dies | One long beep |
+| Input rejected / no ammo | Silent by default |
+
+Buzzer output rules:
+
+- **Only player-observable events produce audio**; off-screen or out-of-range enemy shots must remain silent.
+- Buzzer sound is **physical output only**. It does not create additional in-game sound events or affect AI hearing.
+- The buzzer is normally **off**. No continuous ticking or idle sound.
+- Play effects **without blocking game ticks or button input** (non-blocking timing; no long `delay()` calls).
+- If events overlap, play the most important one: **death/victory > damage > heard enemy shot > own shot**. Do not queue unlimited sound effects.
+- Pin number, trigger polarity, voltage, and any driver transistor are hardware details to verify in `hardware.md` before connecting the buzzer.
+
+## 7. End Conditions
+
+At the end of each tick, check in this order:
+
+1. **Death:** player HP reaches 0.
+2. **Victory:** player remains alive and is on `E`.
+3. **Timeout:** 2,000 ticks have elapsed without escape.
+
+Death overrides victory if both happen in the same tick. Eliminating all AI does not win the game. After any end condition, the game stops advancing.
+
+## 8. Standalone Implementation
+
+- The **ESP32-S3** owns the map, state, queue, tick loop, buzzer output, and both OLED renderers. No online server is required for play.
+- Each AI sees only its own 5 × 5 view and permitted sound cues; no full-map access or opponents' private HP/ammo.
+- With the same map, rule version, AI policy, seed, and input sequence, game outcomes should be reproducible. If saving is implemented, preserve the tick, all entities, bullets, ammo recovery, and pending queue.
+- Network concurrency, API authentication, multi-session capacity, and database transactions from the earlier server-oriented draft are **out of scope** for this handheld version.
