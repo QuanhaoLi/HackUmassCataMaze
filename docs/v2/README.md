@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:09 EST
+Last Modified at: 2026-11-14 22:37 EST
 Last Modified by: Codex
 -->
 
@@ -15,6 +15,7 @@ Last Modified by: Codex
 
 - `persona-policy-plan.md` — 冻结 V1/V2 边界，并规定从合同快照到 V2 模型交付、再到部署负责人后续落地的完整工程顺序。
 - `persona-neutral-trunk.md` — Defines the V2.1 shared-trunk transformation that aligns style loss with deployed counterfactual inference.
+- `next-architecture.md` — Records the unresolved V2.2 architecture decision after every bounded V2.1 branch is rejected.
 - `reward-v3.md` — Defines the isolated post-ablation persona reward correction without changing V1 reward v2.
 - `status.md` — 记录 V2 当前不可变 lineage、已通过门、失败证据和正在执行的阶段。
 - `style-constraints.md` — Freezes the post-reward causal policy constraints and their bounded loss.

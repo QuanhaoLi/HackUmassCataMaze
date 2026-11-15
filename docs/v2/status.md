@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 22:29 EST
+Last Modified at: 2026-11-14 22:37 EST
 Last Modified by: Codex
 -->
 
@@ -71,7 +71,10 @@ Last Modified by: Codex
 - A final weighted-transition run starts from `6947c4bc4a5bade4c92ba5d389e5de1211409d6894fa95e7ee177fabfbc3fef1`; it changes only sparse component multipliers, leaving information, reward, total coefficient and release gates unchanged.
 - Weighted transition completed5,011,381 steps. It passed divergence, aggressive shooting, explorer first visits and combined effectiveness, but still failed aggressive hits, cautious survival, explorer revisits and shortest-path per-opponent regression.
 - The final direct-head control starts from the immutable V1-equivalent warm-start, not any recurrent V2 branch. It neutralizes trunk persona columns and trains only heads under the already frozen reward/style contract.
+- The direct-head control completed5,021,793 steps but failed the fast Stage-D JS gate (`0.0076–0.0128`) and was stopped before detailed evaluation.
 
 ## Current release status
 
-No V2 release candidate exists yet. Reward-v2 is explicitly rejected. The model may be called prepared only after the separate reward-v3 run passes full-stage evaluation, ablations, actor-only export, per-persona 10,000-sample quantization, checksummed handoff bundle, and the explicit stop-before-firmware boundary.
+No V2 release candidate exists yet. Reward-v2, reward-v3 full, reward-v3 heads-only, raw/normalized style, persona-neutral, JS-safety, recurrent-novelty, transition-credit, weighted-transition and direct-V1 heads branches are all retained as rejected evidence. None passed the complete frozen persona/effectiveness gates, so export/quantization/handoff were correctly not executed on a false candidate.
+
+Further progress requires a material architecture decision beyond the accepted V2.1 linear-head plan. `next-architecture.md` records the recommended V2.2 nonlinear persona adapter and the alternative of changing product acceptance semantics. No such change is assumed or implemented without product-owner direction.
