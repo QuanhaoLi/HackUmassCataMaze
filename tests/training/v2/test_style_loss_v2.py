@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:39 EST
+# Last Modified at: 2026-11-14 21:55 EST
 # Last Modified by: Codex
 # Verifies bounded local-observation V2 style constraints and gradients.
 
@@ -75,3 +75,22 @@ def test_explorer_recurrent_first_visit_reinforces_only_novel_moves() -> None:
     )
     assert components["explorer_recurrent_first_visit_count"] == 1
     assert components["explorer_recurrent_first_visit"] > 0
+    assert components["explorer_revisit_avoidance_count"] == 1
+    assert components["explorer_revisit_avoidance"] > 0
+
+
+def test_cautious_damage_transition_penalizes_the_taken_action() -> None:
+    logits = torch.zeros(1, 2, 3, 9, requires_grad=True)
+    action_mask = torch.ones(1, 2, 9, dtype=torch.bool)
+    spatial = torch.zeros(1, 2, 13, 5, 5)
+    scalar = torch.zeros(1, 2, 46)
+    scalar[..., 44] = 1.0
+    scalar[0, 0, 0] = 1.0
+    scalar[0, 1, 0] = 0.8
+    actions = torch.tensor([[3, 8]])
+    loss_mask = torch.ones(1, 2, dtype=torch.bool)
+    _loss, components = persona_style_loss(
+        logits, action_mask, spatial, scalar, loss_mask, actions
+    )
+    assert components["cautious_damage_avoidance_count"] == 1
+    assert components["cautious_damage_avoidance"] > 0

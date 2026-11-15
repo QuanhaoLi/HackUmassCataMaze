@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:39 EST
+Last Modified at: 2026-11-14 21:55 EST
 Last Modified by: Codex
 -->
 
@@ -65,6 +65,8 @@ Last Modified by: Codex
 - A final safety-margin trial changes only the training JS target from `0.02` to `0.05`; the production gate remains `0.02`.
 - The JS-safety-margin run completed5,009,927 steps and passed action/counterfactual divergence plus aggressive shooting, but failed explorer novelty, cautious survival, aggressive hit rate and hard-opponent effectiveness. It is rejected.
 - The next controlled run starts from that checkpoint and replaces local fog-frontier with recurrent first-visit action reinforcement; low-HP cautious samples without a visible/sound retreat cue target Wait. All other loss/reward values remain unchanged.
+- The recurrent-target run completed5,022,828 steps. It passed all action/counterfactual divergence gates and aggressive shooting, improved explorer first visits to17.5% above the mean, and passed combined V1 escape regression. It still failed explorer revisit, cautious survival, aggressive hit rate and shortest-path effectiveness.
+- A transition-credit run now starts from `7a972f9a97aecd7fa394004e09fbafeb65dce5e322c4c3deb9ab227dc4fe61fd`: discourage chosen explorer moves that revisit sequence positions, discourage chosen cautious actions followed by own HP loss, and weight legal aligned-shot CE3×. No reward or release gate changes.
 
 ## Current release status
 

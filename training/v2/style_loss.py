@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:39 EST
+# Last Modified at: 2026-11-14 21:55 EST
 # Last Modified by: Codex
 # Computes bounded V2 style constraints from legal local policy tensors only.
 
@@ -16,7 +16,9 @@ from torch.nn import functional as F
 STYLE_COMPONENT_NAMES = (
     "aggressive_aligned_shot",
     "cautious_low_hp_retreat",
+    "cautious_damage_avoidance",
     "explorer_recurrent_first_visit",
+    "explorer_revisit_avoidance",
     "aggressive_vs_cautious_shoot_margin",
     "aggressive_vs_explorer_shoot_margin",
     "explorer_vs_aggressive_move_margin",
@@ -28,7 +30,9 @@ STYLE_COMPONENT_NAMES = (
 STYLE_METRIC_NAMES = STYLE_COMPONENT_NAMES + (
     "aggressive_aligned_shot_count",
     "cautious_low_hp_retreat_count",
+    "cautious_damage_avoidance_count",
     "explorer_recurrent_first_visit_count",
+    "explorer_revisit_avoidance_count",
 )
 STYLE_TRAINING_JS_TARGET = 0.05
 
@@ -97,7 +101,7 @@ def persona_style_loss(
     if shot_valid.any():
         components["aggressive_aligned_shot"] = F.cross_entropy(
             logits_all[..., 0, :][shot_valid], shot_target[shot_valid]
-        ) / log(9.0)
+        ) * (3.0 / log(9.0))
     else:
         components["aggressive_aligned_shot"] = logits_all.sum() * 0.0
     components["aggressive_aligned_shot_count"] = shot_valid.sum().to(
@@ -136,7 +140,29 @@ def persona_style_loss(
         dtype=logits_all.dtype
     )
 
+    cautious_damage_valid = torch.zeros_like(loss_mask)
+    if loss_mask.shape[1] > 1:
+        cautious_damage_valid[:, :-1] = (
+            loss_mask[:, :-1]
+            & loss_mask[:, 1:]
+            & (scalar[:, :-1, 44] > 0.5)
+            & (scalar[:, 1:, 0] < scalar[:, :-1, 0])
+        )
+    if cautious_damage_valid.any():
+        cautious_taken_probability = probabilities[..., 1, :].gather(
+            -1, actions.unsqueeze(-1)
+        ).squeeze(-1)
+        components["cautious_damage_avoidance"] = (
+            -torch.log1p(-cautious_taken_probability[cautious_damage_valid].clamp_max(0.95))
+        ).mean() / log(9.0)
+    else:
+        components["cautious_damage_avoidance"] = logits_all.sum() * 0.0
+    components["cautious_damage_avoidance_count"] = cautious_damage_valid.sum().to(
+        dtype=logits_all.dtype
+    )
+
     novelty_valid = torch.zeros_like(loss_mask)
+    revisit_valid = torch.zeros_like(loss_mask)
     if loss_mask.shape[1] > 1:
         positions = torch.round(scalar[..., 3:5] * 49.0).to(dtype=torch.int64)
         for step in range(loss_mask.shape[1] - 1):
@@ -152,6 +178,13 @@ def persona_style_loss(
                 & (~seen)
                 & (actions[:, step] < 4)
             )
+            revisit_valid[:, step] = (
+                loss_mask[:, step]
+                & loss_mask[:, step + 1]
+                & source_is_explorer
+                & seen
+                & (actions[:, step] < 4)
+            )
     if novelty_valid.any():
         components["explorer_recurrent_first_visit"] = F.cross_entropy(
             masked_logits[..., 2, :][novelty_valid], actions[novelty_valid]
@@ -159,6 +192,18 @@ def persona_style_loss(
     else:
         components["explorer_recurrent_first_visit"] = logits_all.sum() * 0.0
     components["explorer_recurrent_first_visit_count"] = novelty_valid.sum().to(
+        dtype=logits_all.dtype
+    )
+    if revisit_valid.any():
+        explorer_taken_probability = probabilities[..., 2, :].gather(
+            -1, actions.unsqueeze(-1)
+        ).squeeze(-1)
+        components["explorer_revisit_avoidance"] = (
+            -torch.log1p(-explorer_taken_probability[revisit_valid].clamp_max(0.95))
+        ).mean() / log(9.0)
+    else:
+        components["explorer_revisit_avoidance"] = logits_all.sum() * 0.0
+    components["explorer_revisit_avoidance_count"] = revisit_valid.sum().to(
         dtype=logits_all.dtype
     )
 

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 20:40 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:39 EST
+Last Modified at: 2026-11-14 21:55 EST
 Last Modified by: Codex
 -->
 
@@ -33,6 +33,12 @@ Only when normalized HP is at most `0.60`, a visible cardinal player produces th
 
 Within an explorer recurrent training sequence, compare the normalized private position at `t+1` with that sequence's positions through `t`. If a legal movement action reached a position not previously present in the sequence, explorer cross-entropy reinforces the action at `t`. Blocked moves and revisits receive no auxiliary target. This is private trajectory memory already available to the recurrent policy; it does not read the full map or another entity's state.
 
+If an explorer movement leads to a position already present earlier in the sequence, apply bounded complement loss `-log(1 - p(chosen_move)) / log(9)`. This discourages the observed revisit action without inventing an unobserved alternative.
+
+### Cautious damage-avoidance target
+
+For cautious sequences, if normalized HP at `t+1` is below HP at `t`, apply the same bounded complement loss to the chosen action at `t`. The signal uses only the cautious AI's own next private HP and does not attribute unseen shooters or future outcomes.
+
 ### Category margins
 
 Across active observations:
@@ -51,9 +57,11 @@ For each head pair, Jensen–Shannon divergence over the same legal action set u
 ## Total loss
 
 ```text
-L_style = mean(valid aggressive CE / log(9),
+L_style = mean(3 * valid aggressive CE / log(9),
                valid cautious CE / log(9),
                valid explorer recurrent first-visit CE / log(4),
+               cautious damage-avoidance,
+               explorer revisit-avoidance,
                category hinges,
                pairwise JS hinges)
 
@@ -66,6 +74,8 @@ Empty tactical subsets contribute zero, never NaN. All components and valid samp
 The first persona-neutral5M trial used a training target equal to the release gate (`0.02`). Its training-batch hinges converged, but independent Stage-D counterfactual JS remained `0.0085–0.0159`. The safety-margin trial starts from checkpoint `e6a521a10b54f44a9f3e7ad55dbbeaebabe0db564725050884a4c6f3b022c0ad`, changes only the training JS target to `0.05`, and keeps the release threshold at `0.02`.
 
 The safety-margin trial passed JS and aggressive shooting but failed explorer novelty, cautious survival, hit rate and effectiveness. Local fog frontier is therefore rejected as a proxy for novel global position. The recurrent-target trial starts from safety-margin checkpoint `3faccbc0a29c00f51cabe14b18e47187a4d919b01de8a5a047d2cec51be58a4d`, replaces only frontier supervision and low-HP no-cue behavior, and retains every other coefficient and gate.
+
+The recurrent-target trial passed every divergence and aggressive-shooting gate and moved explorer first visits to17.5% above the mean, but explorer revisit, cautious survival and aggressive hits still failed. The transition-credit trial starts from `7a972f9a97aecd7fa394004e09fbafeb65dce5e322c4c3deb9ab227dc4fe61fd`, adds only the two private next-state complement losses, and gives aligned-shot CE a fixed3× component weight. Reward and overall style coefficient remain unchanged.
 
 ## Controlled run
 
