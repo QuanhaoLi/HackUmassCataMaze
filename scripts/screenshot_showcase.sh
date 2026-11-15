@@ -42,7 +42,7 @@ done
 [[ -n "${server_port}" ]]
 base_url="http://127.0.0.1:${server_port}"
 
-curl --fail --silent --show-error "${base_url}/" | grep -q 'data-release="2026.11.15.1"'
+curl --fail --silent --show-error "${base_url}/" | grep -q 'data-release="2026.11.15.2"'
 curl --fail --silent --show-error "${base_url}/app.css" | grep -q 'prefers-reduced-motion'
 curl --fail --silent --show-error "${base_url}/app.js" | grep -q '__CATAMAZE_SHOWCASE__'
 

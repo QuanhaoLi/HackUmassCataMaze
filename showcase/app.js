@@ -1,14 +1,14 @@
 /*
 Created at: 2026-11-15 06:41 EST
 Created by: Codex
-Last Modified at: 2026-11-15 06:41 EST
+Last Modified at: 2026-11-15 06:48 EST
 Last Modified by: Codex
 Runs the backend-free CataMaze showcase, deterministic demo maze, OLEDs, and six-button gestures.
 */
 
 "use strict";
 
-const RELEASE = "2026.11.15.1";
+const RELEASE = "2026.11.15.2";
 const TICK_MS = 600;
 const INACTIVITY_MS = 30000;
 const CLEAR_LONG_MS = 800;

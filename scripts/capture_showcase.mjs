@@ -170,6 +170,8 @@ if (interaction.resumed.mode !== "PLAYING" || interaction.prompted.mode !== "INA
 
 const layout = JSON.parse(await evaluate(`JSON.stringify({
   release: document.body.dataset.release,
+  headline: document.querySelector('h1').textContent.replace(/\\s+/g, ' ').trim(),
+  hasRemovedEyebrow: document.body.textContent.includes('HANDHELD + COMPANION'),
   clientWidth: document.documentElement.clientWidth,
   scrollWidth: document.documentElement.scrollWidth,
   bodyScrollWidth: document.body.scrollWidth,
@@ -183,7 +185,8 @@ const layout = JSON.parse(await evaluate(`JSON.stringify({
     .filter((value, index) => index % 4 !== 3 && value > 40).length
 })`));
 
-if (layout.release !== "2026.11.15.1" || layout.scrollWidth > layout.clientWidth ||
+if (layout.release !== "2026.11.15.2" || layout.headline !== "CataMaze online demo" ||
+    layout.hasRemovedEyebrow || layout.scrollWidth > layout.clientWidth ||
     layout.bodyScrollWidth > layout.clientWidth || !layout.mapWidth || !layout.hudWidth) {
   throw new Error(`showcase layout contract failed at ${width}px: ${JSON.stringify(layout)}`);
 }

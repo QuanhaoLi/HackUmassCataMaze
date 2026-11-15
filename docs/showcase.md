@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-15 06:30 EST
 Created by: Codex
-Last Modified at: 2026-11-15 06:47 EST
+Last Modified at: 2026-11-15 06:48 EST
 Last Modified by: Codex
 
 本文档定义无需后端的 CataMaze Cloudflare Pages 双屏演示器及其发布验收合同。
@@ -101,3 +101,5 @@ The `2026.11.15.1` release passed on 2026-11-15:
 - both widths had zero horizontal overflow; OLED widths were about 498.6 and 309.5 CSS pixels respectively, and the smallest mobile control measured about 51.2 CSS pixels;
 - reviewed Idle and Playing screenshots covered both desktop and mobile layouts; the Playing HUD visibly changed one filled ammo cartridge to an outline after a shot;
 - GitHub Native C++ quality run `43710358856` passed for the source commit.
+
+The `2026.11.15.2` copy revision removes the decorative `HANDHELD + COMPANION` eyebrow from the public header and changes the visible product subtitle from `dual-OLED sim` to `online demo`. The `BROWSER SIM` runtime badge remains so the page continues to state its non-authoritative runtime boundary clearly.
