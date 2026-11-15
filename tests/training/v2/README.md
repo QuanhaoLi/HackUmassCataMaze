@@ -17,6 +17,7 @@ Last Modified by: Codex
 |-test_export_esp_v2.py — Verifies actor-only shapes, critic pruning, supported operators, and ONNX parity.
 |-test_migrate_v2.py — Verifies V1 hash enforcement, lineage, and equivalent V2 warm-start output.
 |-test_model_v2.py — Verifies shapes, V1 migration equivalence, head selection, gradients, reset, and serialization.
+|-test_package_candidate_v2.py — Verifies failed gates cannot produce a handoff and passing bundles are checksummed.
 |-test_ppo_v2.py — Verifies persona-local normalization, equal-weight updates, and finite per-persona metrics.
 |-test_quantize_esp_v2.py — Verifies balanced disjoint recurrent samples with nonzero hidden state.
 |-test_rollout_v2.py — Verifies every V2 recurrent minibatch contains equal persona sequence counts.
