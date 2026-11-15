@@ -10,6 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Defines the isolated V2 configuration boundary.
+|-persona_v2.yaml — Freezes V1 lineage, V2 phases, four-V100 topology, persona gates, and artifact budgets.
 
 ## To-Dos
-- Add configs only after `V1_FREEZE_COMMIT` and checkpoint SHA-256 are recorded.
+- Create a reward-v3 configuration only through a separate ADR and run lineage.

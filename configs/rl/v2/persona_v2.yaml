@@ -1,0 +1,104 @@
+# Created at: 2026-11-14 19:04 EST
+# Created by: Codex
+# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified by: Codex
+
+versions:
+  environment: catamaze.environment.v1
+  observation: catamaze.observation.v1
+  action: catamaze.action.v1
+  reward: catamaze.reward.v2
+  model_arch: catamaze.model.persona-rppo.v2
+  training_config: catamaze.training.persona.v2.1
+  export_contract: catamaze.esp-step.persona.v2
+
+lineage:
+  v1_freeze_commit: 619ba18
+  v1_checkpoint_name: v1-production-100364306.pt
+  v1_checkpoint_sha256: afdf4534fe03db5da010286a57a6f285a961a64ed9400d8a0cf4e460d4e23ca8
+  v1_agent_steps: 100364306
+  v2_warmstart_sha256: 4458eb4bd85acc1328d212aa25654eb12451bb298c47221ee02a86361737160c
+
+seed: 20261114
+total_agent_steps: 50000000
+
+runtime:
+  python: "3.12"
+  torch: "2.6.0"
+  numpy: "1.26.4"
+  cuda: "12.4"
+  pip_index: https://pypi.tuna.tsinghua.edu.cn/simple
+  environment_path: /home/a/minimind-venv
+  physical_gpu_indices: [1, 2, 3, 4]
+  expected_gpu_name: Tesla V100-PCIE-16GB
+
+model:
+  spatial_channels: 13
+  scalar_features: 46
+  persona_offset: 43
+  persona_count: 3
+  conv_channels: 64
+  gru_hidden: 256
+  action_count: 9
+  maximum_parameters: 1030000
+
+distributed:
+  world_size: 4
+  physical_gpu_indices: [1, 2, 3, 4]
+  global_num_envs: 256
+  global_minibatch_sequences: 120
+  per_rank_num_envs: 64
+  per_rank_minibatch_sequences: 30
+
+rollout:
+  environment_steps: 128
+  sequence_length: 64
+  store_spatial_as_uint8: true
+  storage_device: cpu
+  pin_memory: true
+
+ppo:
+  gamma: 0.995
+  gae_lambda: 0.95
+  clip_coef: 0.20
+  value_clip_coef: 0.20
+  learning_rate: 0.0003
+  final_learning_rate: 0.00003
+  adam_eps: 0.00001
+  weight_decay: 0.0001
+  entropy_coef: 0.020
+  final_entropy_coef: 0.005
+  value_loss_coef: 0.5
+  max_grad_norm: 0.5
+  hard_stop_kl: 0.03
+  update_epochs: 2
+  advantage_normalization: per_persona
+  persona_loss_weighting: equal
+
+phases:
+  heads_only_end: 5000000
+  recurrent_end: 10000000
+  full_candidate: 25000000
+  optional_extension: 50000000
+
+evaluation:
+  every_agent_steps: 5000000
+  final_episodes_per_persona_per_opponent: 1000
+  minimum_action_js: 0.02
+  aggressive_relative_shots: 1.20
+  aggressive_relative_hits: 1.20
+  cautious_relative_death_max: 0.85
+  explorer_relative_first_visits: 1.20
+  maximum_v1_escape_regression: 0.05
+
+quantization:
+  initial_type: w8a16
+  calibration_per_persona: 512
+  evaluation_per_persona: 10000
+  minimum_action_agreement_per_persona: 0.99
+
+embedded_budgets:
+  maximum_espdl_bytes: 1800000
+  maximum_internal_bytes: 190000
+  maximum_psram_bytes: 2000000
+  maximum_three_agent_p95_us: 900000

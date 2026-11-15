@@ -11,6 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Defines V2 model test ownership.
 |-test_checkpoint_v2.py — Verifies a V2 checkpoint reproduces the exact next recurrent rollout.
+|-test_config_v2.py — Verifies the committed V2 lineage, topology, phase, quantization, and budget contract.
 |-test_evaluator_v2.py — Verifies persona behavior gates and counterfactual JS divergence.
 |-test_export_esp_v2.py — Verifies actor-only shapes, critic pruning, supported operators, and ONNX parity.
 |-test_migrate_v2.py — Verifies V1 hash enforcement, lineage, and equivalent V2 warm-start output.
