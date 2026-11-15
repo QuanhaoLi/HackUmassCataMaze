@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:26 EST
+# Last Modified at: 2026-11-14 19:41 EST
 # Last Modified by: Codex
 # Runs fixed-seed V2 checkpoint evaluation without touching the V1 evaluator CLI.
 
@@ -15,6 +15,7 @@ import torch
 from training.evaluator import evaluate_policy
 from training.env import CataMazeBatchEnv
 from training.opponents import OpponentStrategy
+from training.v2.detailed_evaluator import evaluate_policy_detailed
 from training.v2.evaluator import assess_persona_gates, counterfactual_persona_divergence
 from training.v2.export_esp import load_v2_model
 
@@ -29,6 +30,7 @@ def main() -> None:
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--seed", type=int, default=20261114)
     parser.add_argument("--v1-evaluation")
+    parser.add_argument("--episodes-output")
     parser.add_argument(
         "--opponents",
         nargs="+",
@@ -46,17 +48,25 @@ def main() -> None:
             Path(arguments.v1_evaluation).read_text(encoding="utf-8")
         )
     reports: dict[str, object] = {}
+    episode_records: list[dict[str, object]] = []
     for name in arguments.opponents:
         opponent = OpponentStrategy[name.upper()]
-        report = evaluate_policy(
-            model,
-            episodes=arguments.episodes,
-            opponent=opponent,
-            mode=arguments.mode,
-            seed=arguments.seed + int(opponent) * 10_000,
-            num_envs=min(arguments.num_envs, arguments.episodes),
-            device=device,
-        )
+        evaluation_arguments = {
+            "episodes": arguments.episodes,
+            "opponent": opponent,
+            "mode": arguments.mode,
+            "seed": arguments.seed + int(opponent) * 10_000,
+            "num_envs": min(arguments.num_envs, arguments.episodes),
+            "device": device,
+        }
+        if arguments.episodes_output:
+            report, raw_records = evaluate_policy_detailed(
+                model, **evaluation_arguments
+            )
+            for record in raw_records:
+                episode_records.append({"opponent": name, **record})
+        else:
+            report = evaluate_policy(model, **evaluation_arguments)
         reports[name] = {
             "evaluation": report,
             "persona_assessment": assess_persona_gates(
@@ -93,6 +103,13 @@ def main() -> None:
     output = Path(arguments.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if arguments.episodes_output:
+        episodes_output = Path(arguments.episodes_output)
+        episodes_output.parent.mkdir(parents=True, exist_ok=True)
+        episodes_output.write_text(
+            "".join(json.dumps(record, sort_keys=True) + "\n" for record in episode_records),
+            encoding="utf-8",
+        )
     print(json.dumps(result, indent=2, sort_keys=True))
 
 

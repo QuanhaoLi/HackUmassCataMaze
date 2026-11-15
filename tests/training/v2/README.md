@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:52 EST
+Last Modified at: 2026-11-14 19:41 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -12,6 +12,7 @@ Last Modified by: Codex
 |-README.md — Defines V2 model test ownership.
 |-test_checkpoint_v2.py — Verifies a V2 checkpoint reproduces the exact next recurrent rollout.
 |-test_config_v2.py — Verifies the committed V2 lineage, topology, phase, quantization, and budget contract.
+|-test_detailed_evaluator_v2.py — Verifies aggregate and raw episode evidence agree.
 |-test_evaluator_v2.py — Verifies persona behavior gates and counterfactual JS divergence.
 |-test_export_esp_v2.py — Verifies actor-only shapes, critic pruning, supported operators, and ONNX parity.
 |-test_migrate_v2.py — Verifies V1 hash enforcement, lineage, and equivalent V2 warm-start output.

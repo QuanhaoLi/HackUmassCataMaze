@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 19:26 EST
+Last Modified at: 2026-11-14 19:41 EST
 Last Modified by: Codex
 -->
 
@@ -340,7 +340,7 @@ V2 模型负责人只交付以下不可变目录，不修改产品固件：
   training_config.yaml
   training_metrics.jsonl
   evaluation_summary.json
-  evaluation_episodes.parquet
+  evaluation_episodes.jsonl
   ablations.json
   quantization_report.json
   operator_report.json

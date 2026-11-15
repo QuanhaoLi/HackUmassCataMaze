@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:52 EST
+Last Modified at: 2026-11-14 19:41 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -14,6 +14,7 @@ Last Modified by: Codex
 |-checkpoint.py — Saves and restores complete V2 training, environment, collector, and RNG state.
 |-config.py — Validates immutable V1 lineage and every V2 production-candidate contract.
 |-ddp_smoke.py — Qualifies one shared V2 model across four V100 ranks with global persona statistics.
+|-detailed_evaluator.py — Emits aggregate metrics plus immutable per-episode V2 evidence.
 |-evaluator.py — Computes paired persona-style gates and counterfactual action divergence.
 |-evaluate_checkpoint.py — Runs fixed-seed opponent reports and persona gates for a V2 checkpoint.
 |-export_esp.py — Exports the V2 actor-only three-head recurrent step and validates ONNX parity/operators.
