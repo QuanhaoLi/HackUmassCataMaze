@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:29 EST
+# Last Modified at: 2026-11-14 21:39 EST
 # Last Modified by: Codex
 # Validates the immutable V2 lineage, topology, phase, evaluation, and embedded budgets.
 
@@ -137,8 +137,11 @@ def load_config(path: str | Path) -> dict[str, Any]:
             "persona_neutral_source_checkpoint_sha256": (
                 "d155f283f73754c9dbb9d7142f8221bde4a6de27dc8b8c1385f63137bf85c597"
             ),
-            "source_checkpoint_sha256": (
+            "js_margin_source_checkpoint_sha256": (
                 "e6a521a10b54f44a9f3e7ad55dbbeaebabe0db564725050884a4c6f3b022c0ad"
+            ),
+            "source_checkpoint_sha256": (
+                "3faccbc0a29c00f51cabe14b18e47187a4d919b01de8a5a047d2cec51be58a4d"
             ),
             "training_js_target": 0.05,
             "release_js_gate": 0.02,

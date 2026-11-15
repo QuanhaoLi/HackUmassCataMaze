@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 20:40 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:29 EST
+Last Modified at: 2026-11-14 21:39 EST
 Last Modified by: Codex
 -->
 
@@ -27,11 +27,11 @@ Player visibility is read from legal player channel5. If the player lies on the 
 
 ### Cautious low-HP retreat target
 
-Only when normalized HP is at most `0.60`, a visible cardinal player produces the opposite movement target. When no cardinal player is visible, a legal heard-sound direction may produce the opposite movement target. The term is active only when that move is legal. It never invents a route from hidden map state.
+Only when normalized HP is at most `0.60`, a visible cardinal player produces the opposite movement target. When no cardinal player is visible, a legal heard-sound direction may produce the opposite movement target. When neither cue exists, the legal Wait Action is the target. It never invents a route from hidden map state.
 
-### Explorer local frontier target
+### Explorer recurrent first-visit target
 
-For every legal movement, count fog cells in the destination-centered local3×3 window of the existing5×5 observation. Explorer cross-entropy targets the legal move with the largest local fog frontier. This uses no visited-set or full-map privilege; ties follow the frozen action order.
+Within an explorer recurrent training sequence, compare the normalized private position at `t+1` with that sequence's positions through `t`. If a legal movement action reached a position not previously present in the sequence, explorer cross-entropy reinforces the action at `t`. Blocked moves and revisits receive no auxiliary target. This is private trajectory memory already available to the recurrent policy; it does not read the full map or another entity's state.
 
 ### Category margins
 
@@ -53,7 +53,7 @@ For each head pair, Jensen–Shannon divergence over the same legal action set u
 ```text
 L_style = mean(valid aggressive CE / log(9),
                valid cautious CE / log(9),
-               valid explorer frontier CE / log(4),
+               valid explorer recurrent first-visit CE / log(4),
                category hinges,
                pairwise JS hinges)
 
@@ -64,6 +64,8 @@ L_total = L_PPO + value_coef * L_value - entropy_coef * H
 Empty tactical subsets contribute zero, never NaN. All components and valid sample counts are logged. DDP averages the loss across ranks. The first raw-scale5M trial is retained as failed evidence because it reached only action JS `0.0185` and explorer first-visit uplift around12%; the normalized trial starts from that checkpoint with a fresh optimizer.
 
 The first persona-neutral5M trial used a training target equal to the release gate (`0.02`). Its training-batch hinges converged, but independent Stage-D counterfactual JS remained `0.0085–0.0159`. The safety-margin trial starts from checkpoint `e6a521a10b54f44a9f3e7ad55dbbeaebabe0db564725050884a4c6f3b022c0ad`, changes only the training JS target to `0.05`, and keeps the release threshold at `0.02`.
+
+The safety-margin trial passed JS and aggressive shooting but failed explorer novelty, cautious survival, hit rate and effectiveness. Local fog frontier is therefore rejected as a proxy for novel global position. The recurrent-target trial starts from safety-margin checkpoint `3faccbc0a29c00f51cabe14b18e47187a4d919b01de8a5a047d2cec51be58a4d`, replaces only frontier supervision and low-HP no-cue behavior, and retains every other coefficient and gate.
 
 ## Controlled run
 

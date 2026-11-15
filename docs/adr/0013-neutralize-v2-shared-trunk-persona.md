@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 21:09 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:29 EST
+Last Modified at: 2026-11-14 21:39 EST
 Last Modified by: Codex
 -->
 
@@ -18,3 +18,5 @@ V2.1 therefore makes the shared trunk persona-neutral and puts all explicit styl
 This makes `logits_all` on one local recurrent feature exactly correspond to all three deployment persona alternatives, so category/JS constraints and counterfactual evaluation measure the same object. Reward remains `catamaze.reward.persona.v3`, coefficient remains `0.02`, legal observation/action contracts remain unchanged, and the controlled run starts from recurrent checkpoint `d155f283f73754c9dbb9d7142f8221bde4a6de27dc8b8c1385f63137bf85c597` with a fresh optimizer. Previous persona-conditioned branches remain immutable failed evidence.
 
 The first neutral-trunk trial showed that a training JS target equal to the release gate does not generalize across seeds. A follow-up starts from checkpoint `e6a521a10b54f44a9f3e7ad55dbbeaebabe0db564725050884a4c6f3b022c0ad` and changes only the bounded training target from `0.02` to `0.05`; the release gate remains unchanged.
+
+The JS-margin follow-up passed divergence but disproved local fog frontier as a novelty proxy. A final controlled run starts from `3faccbc0a29c00f51cabe14b18e47187a4d919b01de8a5a047d2cec51be58a4d`, reinforces only explorer actions whose next private position is new within the recurrent sequence, and gives low-HP cautious samples a Wait target only when no legal visible/sound retreat cue exists.

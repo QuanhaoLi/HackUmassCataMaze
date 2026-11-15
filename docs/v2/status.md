@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:29 EST
+Last Modified at: 2026-11-14 21:39 EST
 Last Modified by: Codex
 -->
 
@@ -63,6 +63,8 @@ Last Modified by: Codex
 - ADR-0013 now authorizes V2.1: neutralize persona conditioning in the shared trunk and train only independent heads, making internal and deployed counterfactual comparisons identical.
 - The first V2.1 persona-neutral run completed5,027,564 steps, but independent Stage-D counterfactual JS remained below `0.016`; it was rejected before the expensive six-opponent evaluation.
 - A final safety-margin trial changes only the training JS target from `0.02` to `0.05`; the production gate remains `0.02`.
+- The JS-safety-margin run completed5,009,927 steps and passed action/counterfactual divergence plus aggressive shooting, but failed explorer novelty, cautious survival, aggressive hit rate and hard-opponent effectiveness. It is rejected.
+- The next controlled run starts from that checkpoint and replaces local fog-frontier with recurrent first-visit action reinforcement; low-HP cautious samples without a visible/sound retreat cue target Wait. All other loss/reward values remain unchanged.
 
 ## Current release status
 

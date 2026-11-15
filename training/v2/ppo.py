@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:52 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:40 EST
+# Last Modified at: 2026-11-14 21:39 EST
 # Last Modified by: Codex
 # Implements equal-weight per-persona recurrent PPO for the isolated V2 policy.
 
@@ -230,6 +230,7 @@ class PersonaPPOTrainer:
             spatial,
             scalar,
             loss_mask,
+            actions,
         )
         distribution = masked_categorical(output.logits, safe_mask)
         new_log_prob = distribution.log_prob(actions)

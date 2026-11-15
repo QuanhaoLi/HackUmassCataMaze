@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:29 EST
+# Last Modified at: 2026-11-14 21:39 EST
 # Last Modified by: Codex
 # Computes bounded V2 style constraints from legal local policy tensors only.
 
@@ -16,7 +16,7 @@ from torch.nn import functional as F
 STYLE_COMPONENT_NAMES = (
     "aggressive_aligned_shot",
     "cautious_low_hp_retreat",
-    "explorer_local_frontier",
+    "explorer_recurrent_first_visit",
     "aggressive_vs_cautious_shoot_margin",
     "aggressive_vs_explorer_shoot_margin",
     "explorer_vs_aggressive_move_margin",
@@ -28,7 +28,7 @@ STYLE_COMPONENT_NAMES = (
 STYLE_METRIC_NAMES = STYLE_COMPONENT_NAMES + (
     "aggressive_aligned_shot_count",
     "cautious_low_hp_retreat_count",
-    "explorer_local_frontier_count",
+    "explorer_recurrent_first_visit_count",
 )
 STYLE_TRAINING_JS_TARGET = 0.05
 
@@ -39,6 +39,7 @@ def persona_style_loss(
     spatial: torch.Tensor,
     scalar: torch.Tensor,
     loss_mask: torch.Tensor,
+    actions: torch.Tensor,
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     if logits_all.shape != (*loss_mask.shape, 3, 9):
         raise ValueError("logits_all must have shape [S,T,3,9]")
@@ -48,6 +49,8 @@ def persona_style_loss(
         raise ValueError("spatial must have shape [S,T,13,5,5]")
     if scalar.shape != (*loss_mask.shape, 46):
         raise ValueError("scalar must have shape [S,T,46]")
+    if actions.shape != loss_mask.shape:
+        raise ValueError("actions must have shape [S,T]")
     if not loss_mask.any():
         zero = logits_all.sum() * 0.0
         return zero, {name: zero for name in STYLE_METRIC_NAMES}
@@ -115,6 +118,8 @@ def persona_style_loss(
     )
     use_sound = (retreat_target < 0) & (sound_present > 0)
     retreat_target[use_sound] = sound_targets[sound_bucket[use_sound]]
+    low_hp_without_cue = (scalar[..., 0] <= 0.60) & (retreat_target < 0)
+    retreat_target[low_hp_without_cue] = 8
     retreat_valid = loss_mask & (scalar[..., 0] <= 0.60) & (retreat_target >= 0)
     if retreat_valid.any():
         retreat_legal = action_mask.gather(
@@ -131,26 +136,29 @@ def persona_style_loss(
         dtype=logits_all.dtype
     )
 
-    fog = spatial[..., 3, :, :]
-    frontier_scores = torch.stack(
-        (
-            fog[..., 0:3, 1:4].sum(dim=(-2, -1)),
-            fog[..., 2:5, 1:4].sum(dim=(-2, -1)),
-            fog[..., 1:4, 0:3].sum(dim=(-2, -1)),
-            fog[..., 1:4, 2:5].sum(dim=(-2, -1)),
-        ),
-        dim=-1,
-    )
-    move_legal = action_mask[..., :4]
-    frontier_target = frontier_scores.masked_fill(~move_legal, -torch.inf).argmax(dim=-1)
-    frontier_valid = loss_mask & move_legal.any(dim=-1)
-    if frontier_valid.any():
-        components["explorer_local_frontier"] = F.cross_entropy(
-            masked_logits[..., 2, :4][frontier_valid], frontier_target[frontier_valid]
-        ) / log(4.0)
+    novelty_valid = torch.zeros_like(loss_mask)
+    if loss_mask.shape[1] > 1:
+        positions = torch.round(scalar[..., 3:5] * 49.0).to(dtype=torch.int64)
+        for step in range(loss_mask.shape[1] - 1):
+            next_position = positions[:, step + 1]
+            seen = (positions[:, : step + 1] == next_position[:, None]).all(dim=-1).any(
+                dim=-1
+            )
+            source_is_explorer = scalar[:, step, 45] > 0.5
+            novelty_valid[:, step] = (
+                loss_mask[:, step]
+                & loss_mask[:, step + 1]
+                & source_is_explorer
+                & (~seen)
+                & (actions[:, step] < 4)
+            )
+    if novelty_valid.any():
+        components["explorer_recurrent_first_visit"] = F.cross_entropy(
+            masked_logits[..., 2, :][novelty_valid], actions[novelty_valid]
+        ) / log(9.0)
     else:
-        components["explorer_local_frontier"] = logits_all.sum() * 0.0
-    components["explorer_local_frontier_count"] = frontier_valid.sum().to(
+        components["explorer_recurrent_first_visit"] = logits_all.sum() * 0.0
+    components["explorer_recurrent_first_visit_count"] = novelty_valid.sum().to(
         dtype=logits_all.dtype
     )
 
