@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-15 02:30 EST
+Last Modified at: 2026-11-15 06:30 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -74,6 +74,12 @@ The embedded target contains:
 The provisional hardware class is ESP32-S3 N16R8. Exact PlatformIO board ID, flash mode, PSRAM mode, partition table, and any button row still marked pending in `hardware.md` remain `PENDING_HARDWARE_VERIFICATION` until the physical preflight resolves them. The documented dual-OLED buses have physical validation records. GPIO4 is an unassigned spare and must remain untouched. A successful generic compilation is not hardware evidence.
 
 No `upload`, `flash`, `erase`, or equivalent target may be run while the Home/Setup revision is in Native acceptance.
+
+### 3.3 `showcase`
+
+The public browser showcase is a separate, backend-free static target deployed to Cloudflare Pages. It contains an in-browser deterministic demonstration of the dual-screen product experience and does not call the Native HTTP API, a Pages Function, or any other runtime service.
+
+The showcase is deliberately not a third Game Core implementation and is not an equivalence target. It may demonstrate navigation, Companion Idle, a playable local maze, heuristic opponents, HUD updates, audio cues, and six-button gestures, but it must identify itself as a browser simulation. The Native target remains the browser-accessible authority for exact C++ rules, exact framebuffer bytes, state hashes, and Resident Policy behavior.
 
 ## 4. Architecture
 
@@ -204,6 +210,12 @@ web/
   index.html
   app.css
   app.js
+showcase/
+  README.md
+  _headers
+  app.css
+  app.js
+  index.html
 test/
   README.md
   native/
@@ -359,3 +371,13 @@ Quality work is staged so infrastructure cannot delay the first playable game:
 6. Hardware-in-the-loop, long stress runs, and cross-platform determinism gates come last.
 
 The authoritative milestone gates are in `../plan.md`.
+
+## 11. Static showcase deployment
+
+- Production project: `hackumass-catamaze` on Cloudflare Pages.
+- Production hostname: `https://hackumass-catamaze.pages.dev` after the first successful direct upload.
+- Deployment unit: the files inside `showcase/`; repository sources and local artifacts are not uploaded.
+- Runtime: standards-based HTML, CSS, Canvas 2D, and JavaScript with no bundler and no package runtime.
+- Network boundary: after the static assets load, all input, timing, state, drawing, and optional Web Audio remain in the browser.
+- Cache and security policy: HTML revalidates; versioned-independent CSS and JavaScript use short public caching; Cloudflare `_headers` supplies clickjacking, MIME-sniffing, referrer, permissions, and Content Security Policy controls.
+- Release gate: syntax validation, static asset/link checks, localhost smoke test, real-Chrome desktop capture, real-Chrome 390-pixel capture, interaction automation, no horizontal overflow, and successful HTTPS production probes.

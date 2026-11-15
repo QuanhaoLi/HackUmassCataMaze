@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-15 02:30 EST
+Last Modified at: 2026-11-15 06:30 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -180,3 +180,14 @@ Interfaces MAY reserve extension points, but speculative implementations are pro
 - Training MUST use physical GPU indices 1–4. Physical GPU 0 is a GTX 750 and MUST NOT be selected by any training or evaluation launcher.
 - Per explicit operator direction, training MUST reuse `/home/a/minimind-venv`; automation MAY add only the missing pinned CataMaze build, test, logging, and editable-project packages to it.
 - Automation MUST NOT create another training virtual environment or mutate the system Python, NVIDIA driver, or host CUDA toolkit.
+
+## 17. Public static showcase
+
+- The Cloudflare Pages showcase MUST remain deployable as static assets only. It MUST NOT use Pages Functions, Workers, databases, authentication, telemetry, analytics, cloud inference, or another backend.
+- The showcase MUST start in Companion Idle, consume the first Wake input, and preserve the reviewed six-button semantics including FIRE-before-direction shooting and CLEAR short/800 ms long separation.
+- The showcase MUST NOT claim that its JavaScript demonstration is the authoritative C++ Game Core, an exact state-hash twin, physical OLED evidence, or ESP-DL Resident Policy inference.
+- The Native simulator MUST remain the exact browser-visible target for authoritative framebuffer, rule, hash, and model behavior.
+- The showcase MUST NOT load third-party JavaScript, remote fonts, trackers, advertisements, or user-generated content.
+- No credential, Cloudflare account identifier, local path, serial device path, or uncommitted artifact may be included in deployed files.
+- Mobile controls MUST use Pointer Events, immediate pressed feedback, cancel-safe capture, at least 44 CSS-pixel interactive targets, safe-area padding, keyboard parity, accessible labels, and reduced-motion handling.
+- A release MUST pass local syntax, asset, interaction, desktop viewport, 390-pixel viewport, overflow, and production HTTPS smoke gates before its public URL is reported as accepted.

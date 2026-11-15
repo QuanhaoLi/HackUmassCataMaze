@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:28 EST
 Created by: Codex
-Last Modified at: 2026-11-15 02:30 EST
+Last Modified at: 2026-11-15 06:30 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -25,6 +25,7 @@ Last Modified by: Codex
 |-0011-isolate-persona-reward-v3.md — Introduces V2-only reward v3 after architecture ablations prove reward-v2 persona collapse.
 |-0012-bound-v2-style-constraints.md — Adds small, observable style constraints only after reward-v3 controlled trials remain below persona gates.
 |-0013-neutralize-v2-shared-trunk-persona.md — Makes V2 deployment persona selection live only in independent heads so training divergence matches counterfactual inference.
+|-0014-static-pages-showcase-boundary.md — Isolates the backend-free Pages showcase from the authoritative C++ product runtime.
 
 ## To-Dos
 - Add and index an ADR before implementing any future change to a frozen environment, reward, model, deployment, or hardware contract.

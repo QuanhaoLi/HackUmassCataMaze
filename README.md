@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-13 23:42 EST
 Created by: Codex
-Last Modified at: 2026-11-14 06:54 EST
+Last Modified at: 2026-11-15 06:30 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -24,6 +24,7 @@ Last Modified by: Codex
 |-docs/ — Contains the normative game, engineering, hardware, restriction, and reinforcement-learning specifications; see `docs/README.md`.
 |-lib/ — Contains portable C++ domain, application, and rendering libraries; see `lib/README.md`.
 |-scripts/ — Contains reproducible acceptance helpers; see `scripts/README.md`.
+|-showcase/ — Contains the backend-free Cloudflare Pages browser showcase; see `showcase/README.md`.
 |-src/ — Contains thin executable entry points; see `src/README.md`.
 |-test/ — Contains target-specific automated tests; see `test/README.md`.
 |-tests/ — Contains Python RL contract tests and reviewed fixtures; see `tests/README.md`.
