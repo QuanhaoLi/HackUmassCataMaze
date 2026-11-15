@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:37 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 06:57 EST
+Last Modified at: 2026-11-14 20:10 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
@@ -118,7 +118,7 @@ Blocked moves still consume their action. All AIs follow the same movement, HP, 
 - Bullets do not collide with other bullets. Opposing bullets may cross or share a cell; each continues until it hits an entity, wall, or map edge.
 - Every hit deals **1 HP**. Multiple hits in one tick add together and are applied simultaneously. A bullet cannot hurt its original shooter; AI can hit other AI.
 - Bullets remain in flight after their shooter dies. HP never regenerates.
-- Ammo regenerates by **1 after every 2 eligible tick completions**, capped at 3. Shooting does not erase partial recharge progress.
+- Ammo regenerates by **1 after every 2 eligible tick completions**, capped at 3. A tick is eligible only while ammo is below 3; full ammo resets recharge progress to 0 and cannot bank recovery credit. Shooting does not erase legitimately accumulated partial recharge progress.
 - An actual shot creates a **game-world sound event** heard by entities within 3 cells in either axis, even through walls. An observer receives approximate direction, not the hidden shooter's identity or exact location.
 - Projectile simulation is never rendered to the player. A successful own shot emits optional `PLAYER_SHOT` audio and changes the AMMO icon when the action executes. An enemy hit emits optional `PLAYER_DAMAGE` audio and changes one filled heart to an outline heart.
 

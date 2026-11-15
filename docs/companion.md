@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 11:27 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:45 EST
+Last Modified at: 2026-11-14 20:13 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze 双屏桌宠模式、唤醒语义、无操作确认与跨平台验收合同。
@@ -86,17 +86,17 @@ The v1 animation is a deterministic 24-second loop so Native and ESP32 produce t
 ## 6. ESP32 and model boundary
 
 - ESP32 must reuse the accepted portable companion shell and exact companion framebuffers.
-- The currently known GPIO fault blocks companion product upload until all six raw HIGH→LOW→HIGH paths pass diagnostic firmware without resets.
+- Companion product upload requires all six raw HIGH→LOW→HIGH paths to pass diagnostic firmware without resets; the replacement remote passed this gate on 2026-11-14.
 - ESP-DL policy inference runs only during Game Session ticks. Companion Idle and its eye animation never allocate model tensors or advance recurrent hidden state.
 - A failed or unavailable model keeps the deterministic heuristic fallback; it must not prevent Companion Idle, Wake, Home, or display operation.
 - Physical acceptance requires both eyes to be visually inspected across the full expression loop, all six Wake paths, the 30-second prompt, model/fallback diagnostics, and return to Companion Idle.
 
 ## 7. Native completion evidence
 
-- 81/81 normal, 81/81 AddressSanitizer, and 81/81 UndefinedBehaviorSanitizer tests pass.
-- The 100,000-tick deterministic randomized gate retains hash `0xe0a00023687fb22a`.
-- Portable core/application line coverage is 90.29% and branch coverage is 81.00%.
+- 85/85 normal, 85/85 AddressSanitizer, and 85/85 UndefinedBehaviorSanitizer tests pass.
+- The 100,000-tick deterministic randomized gate retains hash `0x8474a362fb71a430` after the intentional full-ammo recharge fix.
+- Portable core/application line coverage is 90.72% and branch coverage is 82.11%.
 - Real Chrome proves consumed Wake, second-FIRE Play, queue-preserving inactivity prompt, Continue, explicit Sleep, schema v3, form isolation, and zero horizontal overflow at 1440×1050 and 390×1800.
 - Reviewed screenshots cover Neutral, Look Right, Curious, Surprised, and return to Neutral; pixel tests cover all nine frames.
 - The frozen ESP-DL artifact hash matches its accepted W8A16 release, the 10,000-observation report records 98.61% masked-action agreement, and four local export/recurrent tests pass.
-- The combined Companion Idle plus resident ESP-DL firmware compiles at 54,924 bytes static RAM and 2,908,791 bytes application Flash. It is not uploaded while the raw button diagnostic remains faulty.
+- The combined Companion Idle plus resident ESP-DL firmware compiles at 55,012 bytes static RAM and 2,912,175 bytes application Flash and is installed after the six-button diagnostic passed.

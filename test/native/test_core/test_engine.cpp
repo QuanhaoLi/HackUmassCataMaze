@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:06 EST
+// Last Modified at: 2026-11-14 20:10 EST
 // Last Modified by: Codex
 // Verifies deterministic movement, combat, visibility, terminal conditions, and replay hashing.
 
@@ -79,6 +79,31 @@ TEST(GameEngine, AdjacentShotDamagesImmediatelyAndAmmoRecoversOnPhase) {
   engine.step(kAiWaits);
   EXPECT_EQ(engine.state().entities[0].ammo, 3U);
   EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
+}
+
+TEST(GameEngine, FullAmmoCannotBankRechargeCreditBeforeAShot) {
+  GameEngine engine(openSetup());
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].ammo, 3U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
+
+  ASSERT_TRUE(engine.enqueuePlayerAction(Action::ShootRight));
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].last_result, ActionResult::Shot);
+  EXPECT_EQ(engine.state().entities[0].ammo, 2U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 1U);
+
+  std::size_t player_shots = 0U;
+  std::size_t player_restores = 0U;
+  for (std::size_t index = 0U; index < engine.state().event_count; ++index) {
+    const Event& event = engine.state().events[index];
+    if (event.type == EventType::Shot && event.actor == EntityId::Player) ++player_shots;
+    if (event.type == EventType::AmmoRestored && event.actor == EntityId::Player) {
+      ++player_restores;
+    }
+  }
+  EXPECT_EQ(player_shots, 1U);
+  EXPECT_EQ(player_restores, 0U);
 }
 
 TEST(GameEngine, SimultaneousLethalHitsPreserveActualDamageAndEveryShooterCredit) {
