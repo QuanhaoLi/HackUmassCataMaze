@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:04 EST
+Last Modified at: 2026-11-14 20:40 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -30,6 +30,7 @@ Last Modified by: Codex
 |-rollout.py — Produces recurrent minibatches with equal sequence counts for every persona.
 |-schedule.py — Freezes and unfreezes the exact parameter groups for each warm-start phase.
 |-smoke.py — Runs an isolated end-to-end V2 collector/PPO/checkpoint correctness smoke.
+|-style_loss.py — Computes legal-observation tactical, category-margin, and JS style constraints.
 
 ## To-Dos
 - Add persona-balanced PPO only after migration equivalence and gradient tests pass.

@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:52 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 18:52 EST
+# Last Modified at: 2026-11-14 20:40 EST
 # Last Modified by: Codex
 # Implements equal-weight per-persona recurrent PPO for the isolated V2 policy.
 
@@ -17,6 +17,7 @@ from training.ppo import PPOConfig
 from training.rollout import RecurrentRollout, SequenceBatch
 from training.v2.model import PERSONA_COUNT, PERSONA_OFFSET
 from training.v2.rollout import persona_sequence_batches
+from training.v2.style_loss import STYLE_COMPONENT_NAMES, persona_style_loss
 
 
 def normalize_advantages_per_persona(
@@ -48,6 +49,7 @@ class PersonaPPOMetrics:
     clip_fraction: float
     grad_norm: float
     explained_variance: float
+    style_loss: float
     updates: int
     early_stopped: bool
     persona_policy_loss: tuple[float, float, float]
@@ -56,6 +58,7 @@ class PersonaPPOMetrics:
     persona_approx_kl: tuple[float, float, float]
     persona_clip_fraction: tuple[float, float, float]
     persona_explained_variance: tuple[float, float, float]
+    style_metrics: dict[str, float]
 
     def as_dict(self) -> dict[str, float]:
         metrics = {
@@ -67,6 +70,7 @@ class PersonaPPOMetrics:
             "clip_fraction": self.clip_fraction,
             "grad_norm": self.grad_norm,
             "explained_variance": self.explained_variance,
+            "style_loss": self.style_loss,
             "updates": float(self.updates),
             "early_stopped": float(self.early_stopped),
         }
@@ -81,6 +85,8 @@ class PersonaPPOMetrics:
         for name, values in fields.items():
             for persona, value in enumerate(values):
                 metrics[f"persona/{persona}/{name}"] = value
+        for name, value in self.style_metrics.items():
+            metrics[f"style/{name}"] = value
         return metrics
 
 
@@ -92,11 +98,15 @@ class PersonaPPOTrainer:
         config: PPOConfig,
         *,
         device: torch.device,
+        style_loss_coef: float = 0.0,
     ) -> None:
         self.model = model.to(device)
         self.optimizer = optimizer
         self.config = config
         self.device = device
+        if style_loss_coef < 0:
+            raise ValueError("style_loss_coef must be non-negative")
+        self.style_loss_coef = style_loss_coef
 
     @property
     def distributed(self) -> bool:
@@ -117,6 +127,7 @@ class PersonaPPOTrainer:
             "clip_fraction",
             "grad_norm",
             "explained_variance",
+            "style_loss",
         )
         persona_names = (
             "policy_loss",
@@ -130,6 +141,7 @@ class PersonaPPOTrainer:
         persona_totals = {
             name: [0.0 for _ in range(PERSONA_COUNT)] for name in persona_names
         }
+        style_totals = {name: 0.0 for name in STYLE_COMPONENT_NAMES}
         updates = 0
         early_stopped = False
         max_approx_kl = 0.0
@@ -143,12 +155,14 @@ class PersonaPPOTrainer:
                 generator=shuffle_generator,
                 include_inactive=self.distributed,
             ):
-                aggregate, per_persona = self._update_batch(batch)
+                aggregate, per_persona, style = self._update_batch(batch)
                 for name in aggregate_names:
                     totals[name] += aggregate[name]
                 for name in persona_names:
                     for persona in range(PERSONA_COUNT):
                         persona_totals[name][persona] += per_persona[name][persona]
+                for name in STYLE_COMPONENT_NAMES:
+                    style_totals[name] += style[name]
                 batch_max_kl = max(per_persona["approx_kl"])
                 max_approx_kl = max(max_approx_kl, batch_max_kl)
                 updates += 1
@@ -175,11 +189,12 @@ class PersonaPPOTrainer:
             persona_approx_kl=persona_averaged["approx_kl"],
             persona_clip_fraction=persona_averaged["clip_fraction"],
             persona_explained_variance=persona_averaged["explained_variance"],
+            style_metrics={name: value / updates for name, value in style_totals.items()},
         )
 
     def _update_batch(
         self, batch: SequenceBatch
-    ) -> tuple[dict[str, float], dict[str, list[float]]]:
+    ) -> tuple[dict[str, float], dict[str, list[float]], dict[str, float]]:
         spatial = batch.spatial.to(self.device, dtype=torch.float32, non_blocking=True)
         scalar = batch.scalar.to(self.device, dtype=torch.float32, non_blocking=True)
         action_mask = batch.action_mask.to(self.device, non_blocking=True)
@@ -204,6 +219,13 @@ class PersonaPPOTrainer:
             scalar,
             hidden=hidden,
             episode_starts=episode_starts,
+        )
+        style_loss, style_components = persona_style_loss(
+            output.logits_all,
+            safe_mask,
+            spatial,
+            scalar,
+            loss_mask,
         )
         distribution = masked_categorical(output.logits, safe_mask)
         new_log_prob = distribution.log_prob(actions)
@@ -288,6 +310,7 @@ class PersonaPPOTrainer:
             policy_loss
             + self.config.value_loss_coef * value_loss
             - self.config.entropy_coef * entropy_mean
+            + self.style_loss_coef * style_loss
         )
         if not torch.isfinite(total_loss):
             raise FloatingPointError("V2 PPO loss became NaN or Inf")
@@ -305,7 +328,14 @@ class PersonaPPOTrainer:
             for name in per_persona
         }
         aggregate["grad_norm"] = float(grad_norm.detach())
-        return aggregate, per_persona
+        aggregate["style_loss"] = float(
+            self._global_mean(style_loss.detach().reshape(1))
+        )
+        style_metrics = {
+            name: float(self._global_mean(value.detach().reshape(1)))
+            for name, value in style_components.items()
+        }
+        return aggregate, per_persona, style_metrics
 
     def _normalize_global_per_persona(
         self,

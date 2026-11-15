@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:25 EST
+# Last Modified at: 2026-11-14 20:40 EST
 # Last Modified by: Codex
 
 versions:
@@ -84,6 +84,12 @@ phases:
   curriculum: C
   learning_rate: 0.00003
   controlled_heads_only_steps: 5000000
+
+style_constraints:
+  coefficient: 0.02
+  source_checkpoint_sha256: 0b45c37551aa7bf533e59ec77212fbc6c15c14dab97dde9efcc8228285e75f85
+  first_evaluation: 5000000
+  trainable_scope: heads_only
 
 evaluation:
   every_agent_steps: 5000000

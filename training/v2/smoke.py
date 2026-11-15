@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:25 EST
+# Last Modified at: 2026-11-14 20:40 EST
 # Last Modified by: Codex
 # Runs bounded end-to-end V2 recurrent PPO without touching V1 configs or artifacts.
 
@@ -50,6 +50,7 @@ def run_smoke(
     phase: TrainingPhase = TrainingPhase.HEADS_ONLY,
     curriculum_stage: str = "A",
     learning_rate: float = 3e-4,
+    style_loss_coef: float = 0.0,
 ) -> dict[str, Any]:
     if target_agent_steps <= 0:
         raise ValueError("target_agent_steps must be positive")
@@ -72,6 +73,8 @@ def run_smoke(
         raise ValueError("provisional V2 warm-start requires explicit opt-in")
     if reward_version not in (V2_REWARD_VERSION, V3_REWARD_VERSION):
         raise ValueError("unsupported V2 smoke reward version")
+    if not 0.0 <= style_loss_coef <= 0.1:
+        raise ValueError("V2 style loss coefficient must be in [0,0.1]")
     if reward_version == V3_REWARD_VERSION:
         allowed_stages = {
             TrainingPhase.HEADS_ONLY: ("C",),
@@ -118,6 +121,7 @@ def run_smoke(
             sequences_per_batch=sequences_per_batch,
         ),
         device=device,
+        style_loss_coef=style_loss_coef,
     )
     resolved_config = {
         "schema": "catamaze.training.persona.v2-smoke",
@@ -132,6 +136,7 @@ def run_smoke(
         "reward_version": reward_version,
         "curriculum_stage": curriculum_stage,
         "learning_rate": learning_rate,
+        "style_loss_coef": style_loss_coef,
         "warmstart_sha256": file_sha256(warmstart_path),
         "source_lineage": source_lineage,
     }
@@ -254,6 +259,7 @@ def main() -> None:
         "--curriculum-stage", choices=("A", "B", "C", "D"), default="A"
     )
     parser.add_argument("--learning-rate", type=float, default=3e-4)
+    parser.add_argument("--style-loss-coef", type=float, default=0.0)
     arguments = parser.parse_args()
     summary = run_smoke(
         arguments.warmstart,
@@ -270,6 +276,7 @@ def main() -> None:
         phase=TrainingPhase(arguments.phase),
         curriculum_stage=arguments.curriculum_stage,
         learning_rate=arguments.learning_rate,
+        style_loss_coef=arguments.style_loss_coef,
     )
     print(json.dumps(summary, indent=2, sort_keys=True))
 

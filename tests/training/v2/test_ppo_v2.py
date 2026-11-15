@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:52 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 18:52 EST
+# Last Modified at: 2026-11-14 20:40 EST
 # Last Modified by: Codex
 # Verifies persona-balanced recurrent PPO without changing the V1 optimizer.
 
@@ -84,6 +84,7 @@ def test_persona_ppo_updates_every_head_and_reports_finite_metrics() -> None:
         optimizer,
         PPOConfig(update_epochs=2, sequence_length=2, sequences_per_batch=6),
         device=torch.device("cpu"),
+        style_loss_coef=0.02,
     )
     metrics = trainer.update(rollout, generator=torch.Generator().manual_seed(37))
     assert metrics.updates > 0
@@ -96,3 +97,5 @@ def test_persona_ppo_updates_every_head_and_reports_finite_metrics() -> None:
             or name.startswith(f"critics.{persona}.")
         )
         assert f"persona/{persona}/policy_loss" in metrics.as_dict()
+    assert metrics.as_dict()["style_loss"] > 0
+    assert "style/aggressive_aligned_shot" in metrics.as_dict()

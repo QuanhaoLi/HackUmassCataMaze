@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:25 EST
+# Last Modified at: 2026-11-14 20:40 EST
 # Last Modified by: Codex
 # Validates the immutable V2 lineage, topology, phase, evaluation, and embedded budgets.
 
@@ -119,6 +119,19 @@ def load_config(path: str | Path) -> dict[str, Any]:
         }
     if phases != expected_phases:
         raise ValueError("V2 phase boundaries changed")
+    style_constraints = config.get("style_constraints")
+    if reward_version == V3_REWARD_VERSION:
+        if style_constraints != {
+            "coefficient": 0.02,
+            "source_checkpoint_sha256": (
+                "0b45c37551aa7bf533e59ec77212fbc6c15c14dab97dde9efcc8228285e75f85"
+            ),
+            "first_evaluation": 5_000_000,
+            "trainable_scope": "heads_only",
+        }:
+            raise ValueError("V2 style constraint contract changed")
+    elif style_constraints is not None:
+        raise ValueError("reward-v2 architecture config cannot enable style constraints")
     quantization = config.get("quantization", {})
     if quantization.get("calibration_per_persona") < 512:
         raise ValueError("V2 calibration requires at least 512 samples per persona")

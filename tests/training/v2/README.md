@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:04 EST
+Last Modified at: 2026-11-14 20:40 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -26,6 +26,7 @@ Last Modified by: Codex
 |-test_rollout_v2.py — Verifies every V2 recurrent minibatch contains equal persona sequence counts.
 |-test_schedule_v2.py — Verifies heads-only, recurrent, and full fine-tuning ownership.
 |-test_smoke_v2.py — Verifies provisional opt-in and bounded end-to-end V2 smoke output.
+|-test_style_loss_v2.py — Verifies tactical targets, legal masks, finite empty subsets, margins, and gradients.
 
 ## To-Dos
 - Add persona-balanced rollout and PPO golden tests before Phase 4 exits.
