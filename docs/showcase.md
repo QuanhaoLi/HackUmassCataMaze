@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-15 06:30 EST
 Created by: Codex
-Last Modified at: 2026-11-15 06:30 EST
+Last Modified at: 2026-11-15 06:47 EST
 Last Modified by: Codex
 
 本文档定义无需后端的 CataMaze Cloudflare Pages 双屏演示器及其发布验收合同。
@@ -88,3 +88,16 @@ A public revision passes only when all of the following are true:
 6. The Cloudflare deployment returns HTTPS 200 for `/`, `/app.css`, and `/app.js`, and the page contains the expected release marker.
 
 Deployment does not constitute Native, ESP32, model, or physical-display acceptance.
+
+## 8. Initial production evidence
+
+The `2026.11.15.1` release passed on 2026-11-15:
+
+- Cloudflare Pages production project `hackumass-catamaze`, deployment `d14c3c6b-0b3e-46c2-bac2-fd6471cc6491`, source commit `379202e7bbdbf3c0b7f977abed9f8dee817fbd36`;
+- production hostname `https://hackumass-catamaze.pages.dev` returned HTTPS 200 for the document, stylesheet, and JavaScript;
+- response headers enforced CSP `connect-src 'none'`, clickjacking denial, MIME-sniffing denial, no referrer, same-origin opener isolation, and disabled camera, microphone, geolocation, payment, motion-sensor, and USB permissions;
+- local and production Chrome acceptance passed at 1440×1050 and 390×844 CSS viewports;
+- production interaction evidence covered Idle boot, consumed Wake, second-FIRE Play, movement queueing, CLEAR short, FIRE-before-direction shooting, wall-shot ammo consumption, CLEAR 800 ms pause without queue clearing, inactivity prompt, and Continue;
+- both widths had zero horizontal overflow; OLED widths were about 498.6 and 309.5 CSS pixels respectively, and the smallest mobile control measured about 51.2 CSS pixels;
+- reviewed Idle and Playing screenshots covered both desktop and mobile layouts; the Playing HUD visibly changed one filled ammo cartridge to an outline after a shot;
+- GitHub Native C++ quality run `43710358856` passed for the source commit.
