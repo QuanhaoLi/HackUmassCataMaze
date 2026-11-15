@@ -12,9 +12,12 @@ Last Modified by: Codex
 |-README.md — Defines the V2 training-code boundary.
 |-__init__.py — Exposes the V2 architecture version without importing V1 product code.
 |-checkpoint.py — Saves and restores complete V2 training, environment, collector, and RNG state.
+|-migrate.py — Verifies an immutable V1 checkpoint and emits a numerically equivalent V2 warm-start.
 |-model.py — Implements the shared recurrent backbone, persona modulation, three heads, and V1 migration.
 |-ppo.py — Applies persona-local advantage normalization and equal-weight recurrent PPO losses.
 |-rollout.py — Produces recurrent minibatches with equal sequence counts for every persona.
+|-schedule.py — Freezes and unfreezes the exact parameter groups for each warm-start phase.
+|-smoke.py — Runs an isolated end-to-end V2 collector/PPO/checkpoint correctness smoke.
 
 ## To-Dos
 - Add persona-balanced PPO only after migration equivalence and gradient tests pass.
