@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 19:41 EST
+Last Modified at: 2026-11-14 20:04 EST
 Last Modified by: Codex
 -->
 
@@ -45,9 +45,17 @@ Last Modified by: Codex
 
 ### Full model / curriculum C
 
-- In progress from the recurrent checkpoint at learning rate `3e-5`.
-- Target: 15M additional steps, producing the first 25M cumulative V2 candidate point.
+- Completed 15,011,572 additional steps, producing 25,124,435 cumulative staged steps.
+- 18,046 steps/s; maximum KL `0.00262`.
+- Checkpoint SHA-256: `c8390b61a7a0cb1bebf5861cf4a0c8175ccca8b8773c162a893dd112775dd018`.
+- The six-opponent 300-episode pre-screen failed: combined action JS stayed below `0.011`, counterfactual JS below `0.013`, every complete persona gate failed, and combat-planner/shortest-path escape regressed beyond the V1 bound.
+- Ablations confirmed the persona path is connected: the complete model retains measurable divergence while the no-persona variant has counterfactual JS `0` and action JS approximately `0.00024`.
+
+### Reward v3 / separate run
+
+- ADR-0011 and `reward-v3.md` accepted after the architecture-only failure and ablation.
+- This run will start from the recurrent checkpoint, reset optimizer/environment state, and leave the reward-v2 failure immutable.
 
 ## Current release status
 
-No V2 release candidate exists yet. The model may be called prepared only after full-stage evaluation, ablations, actor-only export, per-persona 10,000-sample quantization, checksummed handoff bundle, and the explicit stop-before-firmware boundary all pass.
+No V2 release candidate exists yet. Reward-v2 is explicitly rejected. The model may be called prepared only after the separate reward-v3 run passes full-stage evaluation, ablations, actor-only export, per-persona 10,000-sample quantization, checksummed handoff bundle, and the explicit stop-before-firmware boundary.
