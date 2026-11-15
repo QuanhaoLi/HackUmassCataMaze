@@ -16,6 +16,7 @@ Last Modified by: Codex
 |-test_migrate_v2.py — Verifies V1 hash enforcement, lineage, and equivalent V2 warm-start output.
 |-test_model_v2.py — Verifies shapes, V1 migration equivalence, head selection, gradients, reset, and serialization.
 |-test_ppo_v2.py — Verifies persona-local normalization, equal-weight updates, and finite per-persona metrics.
+|-test_quantize_esp_v2.py — Verifies balanced disjoint recurrent samples with nonzero hidden state.
 |-test_rollout_v2.py — Verifies every V2 recurrent minibatch contains equal persona sequence counts.
 |-test_schedule_v2.py — Verifies heads-only, recurrent, and full fine-tuning ownership.
 |-test_smoke_v2.py — Verifies provisional opt-in and bounded end-to-end V2 smoke output.
