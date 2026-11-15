@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 11:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 19:00 EST
+// Last Modified at: 2026-11-14 19:07 EST
 // Last Modified by: Codex
 // Implements expressive one-bit eyes and a session-preserving inactivity confirmation screen.
 
@@ -138,7 +138,7 @@ Framebuffer policyHealthScreen(const app::PolicyHealth& health) noexcept {
   frame.fillRect(3, 11, 122, 1);
   frame.drawText(4, 16, app::policyModeName(health.mode));
   frame.drawText(4, 27, app::policyFailureName(health.failure));
-  char line[22]{};
+  char line[40]{};
   std::snprintf(line, sizeof(line), "CALLS %lu FAIL %lu",
                 static_cast<unsigned long>(health.inference_calls),
                 static_cast<unsigned long>(health.inference_failures));
