@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-15 00:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:46 EST
+Last Modified at: 2026-11-14 19:04 EST
 Last Modified by: Codex
 -->
 
@@ -42,13 +42,13 @@ There is no manual model switch. One released Resident Policy is automatic when 
 
 ## Physical ESP32-S3 evidence
 
-The guarded final release ran on the verified 16MB-Flash/8MB-PSRAM board. The firmware occupies 2,903,175 of 6,553,600 application bytes and 54,860 static RAM bytes.
+The guarded atomic v1 release ran on the verified 16MB-Flash/8MB-PSRAM board. The firmware occupies 2,912,167 of 6,553,600 application bytes and 55,012 static RAM bytes.
 
 At startup, the firmware writes a frozen real recurrent observation into the model and runs three complete sequential inferences. The accepted physical result was:
 
 | Measurement | Result | Gate |
 |---|---:|---:|
-| Three sequential inferences | 126,210µs | ≤900,000µs |
+| Three sequential inferences | 126,239µs | ≤900,000µs |
 | Maximum logit error | 0.021938 | ≤0.10 |
 | Value error | 0.016793 | ≤0.50 |
 | Maximum hidden error | 0.032408 | ≤0.18 |
@@ -56,6 +56,8 @@ At startup, the firmware writes a frozen real recurrent observation into the mod
 | PSRAM runtime allocation | 1,480,032 bytes | Observed fit |
 
 The ESP-DL 3.3.11 runtime's strict raw test differs from the 3.3.15 exporter by two INT16 units in one hidden value. The decoded physical errors above are the release authority and remain within the separately measured W8A16 error envelope.
+
+The guarded boot additionally reported release `production-100364306-w8a16`, compatibility `decoded-envelope-v1`, `policy_mode=MODEL_ACTIVE`, `policy_failure=NONE`, zero inference failures, no fallback latch, and `ready=true`. The release manifest and generated C++ header are verified before every product build.
 
 ## Residency
 

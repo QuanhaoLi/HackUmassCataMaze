@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:46 EST
+Last Modified at: 2026-11-14 19:04 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -470,6 +470,16 @@ Pass conditions:
 - Normal, ASan, UBSan, coverage, randomized, ESP32 compile, startup envelope, and guarded upload gates pass.
 - Native and ESP32 recurrent traces match accepted tolerances when the source ONNX release artifact is present.
 - The 10,000-tick physical endurance run reports no watchdog, heap trend, hidden corruption, mixed-policy tick, or unexpected fallback.
+
+### Atomic v1 integration evidence — 2026-11-14
+
+- `policy_release.json` is the single authority for SHA, bytes, shapes, exporter/runtime compatibility, agreement, reference tolerances, and complete-tick latency; Python tests and the ESP build reject drift.
+- `Application` calls one Resident Policy module per tick. Focused regression proves a failing module cannot leak provisional model actions into the world transition and Restart does not clear a fallback latch.
+- ESP-DL writes actions and next hidden states into provisional arrays and commits hidden state only after all living AI pass finite-output, legal-mask, and complete-tick latency gates.
+- Policy Health is present in Native snapshot v3, the System software screen, boot v4, and a bounded runtime fallback Serial event.
+- Normal, ASan, and UBSan suites each pass 84/84; randomized 100,000 ticks retain hash `0xe0a00023687fb22a`; coverage is 90.71% lines and 82.11% branches.
+- Guarded physical release passed manifest validation, six-button/dual-display diagnostics, write verification, and boot with `MODEL_ACTIVE`, `NONE`, zero failures, 126,239µs three-inference startup, 55,012 bytes static RAM, 2,912,167 bytes Flash, and stack high-water 26,068.
+- RL6 remains `IN_PROGRESS`: the source v1 ONNX release artifact is not present locally for Native recurrent-trace parity, and the 10,000-tick physical endurance gate remains outstanding.
 
 ## Change control
 

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-15 00:52 EST
+Last Modified at: 2026-11-14 19:04 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -34,7 +34,7 @@ The PlatformIO base board `esp32-s3-devkitc-1` defaults to an 8 MB/no-PSRAM vari
 
 The active board passed fresh `catamaze.diag.v2` twice before the Home/Setup product release: exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, correct Flash/PSRAM, six active inputs released, and both GPIO4/GPIO10 unconfigured.
 
-An early product build exposed loop-task stack pressure during maze generation. The accepted build stores BFS/candidate cell references as 16-bit indices, defers `SystemController` construction into `setup()`, and provisions a 48 KiB loop-task stack. The Home/Setup product boot reports `loop_stack_high_water_words=26144`, both displays present, and `ready=true` without rebooting.
+An early product build exposed loop-task stack pressure during maze generation. The accepted build stores BFS/candidate cell references as 16-bit indices, defers `ProductShell` construction into `setup()`, and provisions a 48 KiB loop-task stack. The atomic-model product boot reports `loop_stack_high_water_words=26068`, both displays present, and `ready=true` without rebooting.
 
 ## 2. Dual OLED Assignment and Wiring
 
@@ -123,6 +123,8 @@ The electrical and logical contract is:
 The currently deployed ESP32 image is the six-button Home/Setup model build. Its `catamaze.boot.v3` record reports `button_count=6`, `gpio4_configured=false`, `gpio10_configured=false`, `system_mode=HOME`, `confirmed_map_size=30`, `tick_budget=1200`, `policy_ready=true`, `policy_fallback_latched=false`, and `ready=true`. The resident W8A16 policy passed the physical decoded-output and three-inference latency gates. Idle-high evidence is automated; physical press/release and complete-game checks remain pending user verification.
 
 Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically installed. GPIO5 and GPIO6 each passed a complete HIGH → LOW → HIGH test with exactly one debounced press count and no duplicate events during the observation period. GPIO7 is not yet fully validated.
+
+The replacement wired remote passed a complete final diagnostic on 2026-11-14: UP `63→62→63`, DOWN `63→61→63`, LEFT `63→59→63`, RIGHT `63→55→63`, FIRE `63→47→63`, and CLEAR `63→31→63` twice. The baseline remained `63`, no two bits changed together, and no reset occurred. This supersedes the earlier partial prototype scope above for the active remote assembly.
 
 - Prototyping: ELEGOO Upgraded Electronics Fun Kit (breadboard, jumper wires, buttons).
 - Development power: USB-C. Both OLED modules are powered from the board's 3.3 V rail.
