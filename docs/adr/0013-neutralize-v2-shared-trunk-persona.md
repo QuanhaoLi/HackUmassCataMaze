@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 21:09 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:55 EST
+Last Modified at: 2026-11-14 22:12 EST
 Last Modified by: Codex
 -->
 
@@ -22,3 +22,5 @@ The first neutral-trunk trial showed that a training JS target equal to the rele
 The JS-margin follow-up passed divergence but disproved local fog frontier as a novelty proxy. A final controlled run starts from `3faccbc0a29c00f51cabe14b18e47187a4d919b01de8a5a047d2cec51be58a4d`, reinforces only explorer actions whose next private position is new within the recurrent sequence, and gives low-HP cautious samples a Wait target only when no legal visible/sound retreat cue exists.
 
 That run nearly met exploration but exposed remaining transition-level failures. A final transition-credit run starts from `7a972f9a97aecd7fa394004e09fbafeb65dce5e322c4c3deb9ab227dc4fe61fd`, penalizes only the probability of actually chosen explorer revisit and cautious damage-followed actions, and weights aligned-shot CE3×. These use private adjacent sequence state only and do not change inference inputs.
+
+Transition credit passed novelty but sparse components remained underweighted. The weighted follow-up starts from `6947c4bc4a5bade4c92ba5d389e5de1211409d6894fa95e7ee177fabfbc3fef1` and changes only aligned-shot, cautious retreat/damage and explorer-revisit component multipliers to10×/3×/5×/5× inside the already bounded `0.02` style coefficient.

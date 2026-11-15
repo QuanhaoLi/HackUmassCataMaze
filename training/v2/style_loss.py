@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:55 EST
+# Last Modified at: 2026-11-14 22:12 EST
 # Last Modified by: Codex
 # Computes bounded V2 style constraints from legal local policy tensors only.
 
@@ -101,7 +101,7 @@ def persona_style_loss(
     if shot_valid.any():
         components["aggressive_aligned_shot"] = F.cross_entropy(
             logits_all[..., 0, :][shot_valid], shot_target[shot_valid]
-        ) * (3.0 / log(9.0))
+        ) * (10.0 / log(9.0))
     else:
         components["aggressive_aligned_shot"] = logits_all.sum() * 0.0
     components["aggressive_aligned_shot_count"] = shot_valid.sum().to(
@@ -133,7 +133,7 @@ def persona_style_loss(
     if retreat_valid.any():
         components["cautious_low_hp_retreat"] = F.cross_entropy(
             logits_all[..., 1, :][retreat_valid], retreat_target[retreat_valid]
-        ) / log(9.0)
+        ) * (3.0 / log(9.0))
     else:
         components["cautious_low_hp_retreat"] = logits_all.sum() * 0.0
     components["cautious_low_hp_retreat_count"] = retreat_valid.sum().to(
@@ -154,7 +154,7 @@ def persona_style_loss(
         ).squeeze(-1)
         components["cautious_damage_avoidance"] = (
             -torch.log1p(-cautious_taken_probability[cautious_damage_valid].clamp_max(0.95))
-        ).mean() / log(9.0)
+        ).mean() * (5.0 / log(9.0))
     else:
         components["cautious_damage_avoidance"] = logits_all.sum() * 0.0
     components["cautious_damage_avoidance_count"] = cautious_damage_valid.sum().to(
@@ -200,7 +200,7 @@ def persona_style_loss(
         ).squeeze(-1)
         components["explorer_revisit_avoidance"] = (
             -torch.log1p(-explorer_taken_probability[revisit_valid].clamp_max(0.95))
-        ).mean() / log(9.0)
+        ).mean() * (5.0 / log(9.0))
     else:
         components["explorer_revisit_avoidance"] = logits_all.sum() * 0.0
     components["explorer_revisit_avoidance_count"] = revisit_valid.sum().to(

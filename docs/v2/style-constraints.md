@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 20:40 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:55 EST
+Last Modified at: 2026-11-14 22:12 EST
 Last Modified by: Codex
 -->
 
@@ -57,11 +57,11 @@ For each head pair, Jensen–Shannon divergence over the same legal action set u
 ## Total loss
 
 ```text
-L_style = mean(3 * valid aggressive CE / log(9),
-               valid cautious CE / log(9),
+L_style = mean(10 * valid aggressive CE / log(9),
+               3 * valid cautious CE / log(9),
                valid explorer recurrent first-visit CE / log(4),
-               cautious damage-avoidance,
-               explorer revisit-avoidance,
+               5 * cautious damage-avoidance,
+               5 * explorer revisit-avoidance,
                category hinges,
                pairwise JS hinges)
 
@@ -76,6 +76,8 @@ The first persona-neutral5M trial used a training target equal to the release ga
 The safety-margin trial passed JS and aggressive shooting but failed explorer novelty, cautious survival, hit rate and effectiveness. Local fog frontier is therefore rejected as a proxy for novel global position. The recurrent-target trial starts from safety-margin checkpoint `3faccbc0a29c00f51cabe14b18e47187a4d919b01de8a5a047d2cec51be58a4d`, replaces only frontier supervision and low-HP no-cue behavior, and retains every other coefficient and gate.
 
 The recurrent-target trial passed every divergence and aggressive-shooting gate and moved explorer first visits to17.5% above the mean, but explorer revisit, cautious survival and aggressive hits still failed. The transition-credit trial starts from `7a972f9a97aecd7fa394004e09fbafeb65dce5e322c4c3deb9ab227dc4fe61fd`, adds only the two private next-state complement losses, and gives aligned-shot CE a fixed3× component weight. Reward and overall style coefficient remain unchanged.
+
+The transition-credit trial passed explorer first visits, all divergence, aggressive shooting and combined effectiveness, but the sparse hit/survival/revisit terms remained too weak and shortest-path escape missed its per-opponent bound by3points. The weighted transition trial starts from `6947c4bc4a5bade4c92ba5d389e5de1211409d6894fa95e7ee177fabfbc3fef1` and changes only component multipliers shown above. Overall coefficient remains `0.02`.
 
 ## Controlled run
 
