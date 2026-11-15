@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:28 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:04 EST
+Last Modified at: 2026-11-14 20:40 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -22,6 +22,7 @@ Last Modified by: Codex
 |-0009-atomic-resident-policy.md — Makes three-AI inference atomic and selects one released model with automatic latched heuristic fallback only.
 |-0010-isolate-v2-persona-policy-candidate.md — Isolates V2 model preparation from V1 deployment and freezes the multi-head persona architecture and handoff boundary.
 |-0011-isolate-persona-reward-v3.md — Introduces V2-only reward v3 after architecture ablations prove reward-v2 persona collapse.
+|-0012-bound-v2-style-constraints.md — Adds small, observable style constraints only after reward-v3 controlled trials remain below persona gates.
 
 ## To-Dos
 - Add and index an ADR before implementing any future change to a frozen environment, reward, model, deployment, or hardware contract.

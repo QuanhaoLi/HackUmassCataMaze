@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:04 EST
+Last Modified at: 2026-11-14 20:40 EST
 Last Modified by: Codex
 -->
 
@@ -16,6 +16,7 @@ Last Modified by: Codex
 - `persona-policy-plan.md` — 冻结 V1/V2 边界，并规定从合同快照到 V2 模型交付、再到部署负责人后续落地的完整工程顺序。
 - `reward-v3.md` — Defines the isolated post-ablation persona reward correction without changing V1 reward v2.
 - `status.md` — 记录 V2 当前不可变 lineage、已通过门、失败证据和正在执行的阶段。
+- `style-constraints.md` — Freezes the post-reward causal policy constraints and their bounded loss.
 
 ## Authority
 

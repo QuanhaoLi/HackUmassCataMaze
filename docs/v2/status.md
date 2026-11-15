@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:25 EST
+Last Modified at: 2026-11-14 20:40 EST
 Last Modified by: Codex
 -->
 
@@ -55,7 +55,8 @@ Last Modified by: Codex
 
 - ADR-0011 and `reward-v3.md` accepted after the architecture-only failure and ablation.
 - Full-model reward-v3 completed5,009,006 steps but failed the six-opponent pre-screen; combined action JS remained below `0.009` and counterfactual JS below `0.014`. That branch is stopped.
-- A controlled heads-only reward-v3 branch now starts from the same recurrent checkpoint to test whether freezing shared competence prevents persona collapse.
+- Controlled heads-only reward-v3 completed5,017,912 steps. It improved aggressive shooting to15.6% above the mean, explorer first visits to9.2% above the mean, and aggressive/explorer counterfactual JS to0.018, but still failed the frozen20%/0.02 thresholds, aggressive hit rate and cautious survival.
+- ADR-0012 now authorizes one bounded style-loss run from the heads-only reward-v3 checkpoint; reward, trunk weights and product gates remain unchanged.
 
 ## Current release status
 
