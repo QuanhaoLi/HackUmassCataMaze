@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:26 EST
+# Last Modified at: 2026-11-14 20:04 EST
 # Last Modified by: Codex
 # Qualifies one persona-balanced V2 model with synchronous multi-V100 DDP.
 
@@ -23,10 +23,13 @@ from training.collector import RolloutCollector
 from training.env import CataMazeBatchEnv
 from training.ppo import PPOConfig
 from training.v2.checkpoint import CHECKPOINT_FORMAT_VERSION, save_checkpoint
+from training.v2.env import PersonaV3BatchEnv
 from training.v2.migrate import MIGRATION_FORMAT, file_sha256
 from training.v2.model import PersonaRecurrentActorCritic
 from training.v2.ppo import PersonaPPOTrainer
 from training.v2.schedule import TrainingPhase, apply_training_phase
+from training.v2.reward import REWARD_VERSION as V3_REWARD_VERSION
+from training.reward import REWARD_VERSION as V2_REWARD_VERSION
 
 
 def _rank() -> int:
@@ -67,6 +70,7 @@ def run(
     phase: TrainingPhase,
     curriculum_stage: str,
     learning_rate: float,
+    reward_version: str,
 ) -> dict[str, Any] | None:
     rank = _rank()
     local_rank = _local_rank()
@@ -75,6 +79,10 @@ def run(
         raise ValueError("V2 DDP qualification requires exactly four ranks")
     if learning_rate <= 0:
         raise ValueError("V2 learning rate must be positive")
+    if reward_version not in (V2_REWARD_VERSION, V3_REWARD_VERSION):
+        raise ValueError("unsupported V2 reward version")
+    if reward_version == V3_REWARD_VERSION and phase is not TrainingPhase.FULL:
+        raise ValueError("persona reward v3 is authorized only for the full-model phase")
     allowed_stages = {
         TrainingPhase.HEADS_ONLY: ("A",),
         TrainingPhase.RECURRENT: ("B",),
@@ -123,7 +131,10 @@ def run(
             eps=1e-5,
             weight_decay=1e-4,
         )
-        environment = CataMazeBatchEnv(
+        environment_type = (
+            PersonaV3BatchEnv if reward_version == V3_REWARD_VERSION else CataMazeBatchEnv
+        )
+        environment = environment_type(
             num_envs_per_rank,
             rank_seed,
             curriculum_stage=curriculum_stage,
@@ -155,6 +166,7 @@ def run(
             "phase": phase.value,
             "curriculum_stage": curriculum_stage,
             "learning_rate": learning_rate,
+            "reward_version": reward_version,
             "warmstart_sha256": file_sha256(warmstart),
             "source_lineage": source_lineage,
         }
@@ -213,6 +225,7 @@ def run(
                 "world_size": world_size,
             },
             resolved_config=resolved_config,
+            reward_version=reward_version,
         )
         summary = {
             "schema": "catamaze.training.persona.v2-ddp-qualification-result",
@@ -252,6 +265,11 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=20261114)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument(
+        "--reward-version",
+        choices=(V2_REWARD_VERSION, V3_REWARD_VERSION),
+        default=V2_REWARD_VERSION,
+    )
+    parser.add_argument(
         "--phase",
         choices=[phase.value for phase in TrainingPhase],
         default=TrainingPhase.HEADS_ONLY.value,
@@ -273,6 +291,7 @@ def main() -> None:
         phase=TrainingPhase(arguments.phase),
         curriculum_stage=arguments.curriculum_stage,
         learning_rate=arguments.learning_rate,
+        reward_version=arguments.reward_version,
     )
     if summary is not None:
         print(json.dumps(summary, indent=2, sort_keys=True))

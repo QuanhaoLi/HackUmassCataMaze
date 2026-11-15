@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:26 EST
+# Last Modified at: 2026-11-14 20:04 EST
 # Last Modified by: Codex
 # Validates the immutable V2 lineage, topology, phase, evaluation, and embedded budgets.
 
@@ -12,8 +12,9 @@ from typing import Any
 import yaml
 
 from training import _native
-from training.reward import REWARD_VERSION
+from training.reward import REWARD_VERSION as V2_REWARD_VERSION
 from training.v2 import MODEL_ARCH_VERSION
+from training.v2.reward import REWARD_VERSION as V3_REWARD_VERSION
 
 
 def load_config(path: str | Path) -> dict[str, Any]:
@@ -21,13 +22,21 @@ def load_config(path: str | Path) -> dict[str, Any]:
         config = yaml.safe_load(stream)
     if not isinstance(config, dict):
         raise ValueError("V2 config root must be a mapping")
+    versions = config.get("versions", {})
+    reward_version = versions.get("reward")
+    if reward_version == V2_REWARD_VERSION:
+        training_config = "catamaze.training.persona.v2.1"
+    elif reward_version == V3_REWARD_VERSION:
+        training_config = "catamaze.training.persona.v2.reward3.1"
+    else:
+        raise ValueError("unsupported V2 reward version")
     expected_versions = {
         "environment": _native.environment_version,
         "observation": _native.observation_schema_version,
         "action": "catamaze.action.v1",
-        "reward": REWARD_VERSION,
+        "reward": reward_version,
         "model_arch": MODEL_ARCH_VERSION,
-        "training_config": "catamaze.training.persona.v2.1",
+        "training_config": training_config,
         "export_contract": "catamaze.esp-step.persona.v2",
     }
     if config.get("versions") != expected_versions:
@@ -44,6 +53,13 @@ def load_config(path: str | Path) -> dict[str, Any]:
             raise ValueError(f"lineage.{name} must be immutable")
     if int(lineage.get("v1_agent_steps", 0)) != 100_364_306:
         raise ValueError("V2 lineage must use the released 100,364,306-step checkpoint")
+    if reward_version == V3_REWARD_VERSION:
+        if lineage.get("reward_v3_source_phase") != "recurrent":
+            raise ValueError("reward v3 must start from the recurrent checkpoint")
+        if lineage.get("reward_v3_source_checkpoint_sha256") != (
+            "d155f283f73754c9dbb9d7142f8221bde4a6de27dc8b8c1385f63137bf85c597"
+        ):
+            raise ValueError("reward v3 source checkpoint changed")
     model = config.get("model", {})
     expected_model = {
         "spatial_channels": 13,
@@ -74,23 +90,33 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if not isinstance(steps, int) or not isinstance(length, int) or steps % length:
         raise ValueError("V2 sequence length must divide rollout steps")
     phases = config.get("phases", {})
-    if phases != {
-        "heads_only_end": 5_000_000,
-        "recurrent_end": 10_000_000,
-        "full_candidate": 25_000_000,
-        "optional_extension": 50_000_000,
-        "curriculum": {
-            "heads_only": "A",
-            "recurrent": "B",
-            "full_before_candidate": "C",
-            "full_after_candidate": "D",
-        },
-        "learning_rates": {
-            "heads_only": 0.0003,
-            "recurrent": 0.0001,
-            "full": 0.00003,
-        },
-    }:
+    expected_phases: dict[str, Any]
+    if reward_version == V2_REWARD_VERSION:
+        expected_phases = {
+            "heads_only_end": 5_000_000,
+            "recurrent_end": 10_000_000,
+            "full_candidate": 25_000_000,
+            "optional_extension": 50_000_000,
+            "curriculum": {
+                "heads_only": "A",
+                "recurrent": "B",
+                "full_before_candidate": "C",
+                "full_after_candidate": "D",
+            },
+            "learning_rates": {
+                "heads_only": 0.0003,
+                "recurrent": 0.0001,
+                "full": 0.00003,
+            },
+        }
+    else:
+        expected_phases = {
+            "first_evaluation": 5_000_000,
+            "full_target": 15_000_000,
+            "curriculum": "C",
+            "learning_rate": 0.00003,
+        }
+    if phases != expected_phases:
         raise ValueError("V2 phase boundaries changed")
     quantization = config.get("quantization", {})
     if quantization.get("calibration_per_persona") < 512:

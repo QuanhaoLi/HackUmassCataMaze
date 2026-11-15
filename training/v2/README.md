@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 19:41 EST
+Last Modified at: 2026-11-14 20:04 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -19,12 +19,14 @@ Last Modified by: Codex
 |-detailed_evaluator.py — Emits aggregate metrics plus immutable per-episode V2 evidence.
 |-evaluator.py — Computes paired persona-style gates and counterfactual action divergence.
 |-evaluate_checkpoint.py — Runs fixed-seed opponent reports and persona gates for a V2 checkpoint.
+|-env.py — Selects the isolated reward-v3 calculator while reusing frozen Native physics.
 |-export_esp.py — Exports the V2 actor-only three-head recurrent step and validates ONNX parity/operators.
 |-migrate.py — Verifies an immutable V1 checkpoint and emits a numerically equivalent V2 warm-start.
 |-model.py — Implements the shared recurrent backbone, persona modulation, three heads, and V1 migration.
 |-package_candidate.py — Validates all model-side gates and emits the checksummed stop-before-firmware handoff.
 |-ppo.py — Applies persona-local advantage normalization and equal-weight recurrent PPO losses.
 |-quantize_esp.py — Collects disjoint balanced recurrent samples and reports per-persona ESP-DL agreement.
+|-reward.py — Implements V2-only persona reward v3 without modifying V1 reward v2.
 |-rollout.py — Produces recurrent minibatches with equal sequence counts for every persona.
 |-schedule.py — Freezes and unfreezes the exact parameter groups for each warm-start phase.
 |-smoke.py — Runs an isolated end-to-end V2 collector/PPO/checkpoint correctness smoke.

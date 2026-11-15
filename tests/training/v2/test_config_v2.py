@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 20:04 EST
 # Last Modified by: Codex
 # Verifies the immutable V2 production-candidate configuration.
 
@@ -15,6 +15,7 @@ from training.v2.config import load_config
 
 
 CONFIG = Path("configs/rl/v2/persona_v2.yaml")
+REWARD_V3_CONFIG = Path("configs/rl/v2/persona_v2_reward_v3.yaml")
 
 
 def test_committed_v2_config_has_frozen_lineage_and_balanced_topology() -> None:
@@ -41,3 +42,10 @@ def test_v2_config_rejects_an_aggregate_only_quantization_gate(tmp_path: Path) -
     candidate.write_text(yaml.safe_dump(config), encoding="utf-8")
     with pytest.raises(ValueError, match="cannot be relaxed"):
         load_config(candidate)
+
+
+def test_reward_v3_config_is_separate_and_uses_the_recurrent_checkpoint() -> None:
+    config = load_config(REWARD_V3_CONFIG)
+    assert config["versions"]["reward"] == "catamaze.reward.persona.v3"
+    assert config["lineage"]["reward_v3_source_phase"] == "recurrent"
+    assert config["phases"]["first_evaluation"] == 5_000_000

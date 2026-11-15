@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 19:41 EST
+Last Modified at: 2026-11-14 20:04 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -22,6 +22,7 @@ Last Modified by: Codex
 |-test_package_candidate_v2.py — Verifies failed gates cannot produce a handoff and passing bundles are checksummed.
 |-test_ppo_v2.py — Verifies persona-local normalization, equal-weight updates, and finite per-persona metrics.
 |-test_quantize_esp_v2.py — Verifies balanced disjoint recurrent samples with nonzero hidden state.
+|-test_reward_v3.py — Verifies isolated timeout, combat, survival, exploration, potential, and ammo values.
 |-test_rollout_v2.py — Verifies every V2 recurrent minibatch contains equal persona sequence counts.
 |-test_schedule_v2.py — Verifies heads-only, recurrent, and full fine-tuning ownership.
 |-test_smoke_v2.py — Verifies provisional opt-in and bounded end-to-end V2 smoke output.

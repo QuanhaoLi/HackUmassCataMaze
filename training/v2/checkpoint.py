@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:52 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 18:52 EST
+# Last Modified at: 2026-11-14 20:04 EST
 # Last Modified by: Codex
 # Saves and restores complete atomic V2 training state without changing V1 checkpoints.
 
@@ -18,7 +18,7 @@ import torch
 from training import _native
 from training.collector import RolloutCollector
 from training.env import CataMazeBatchEnv
-from training.reward import REWARD_VERSION
+from training.reward import REWARD_VERSION as V1_REWARD_VERSION
 from training.v2 import MODEL_ARCH_VERSION
 from training.v2.model import PersonaRecurrentActorCritic
 
@@ -38,6 +38,7 @@ def save_checkpoint(
     resolved_config: dict[str, Any],
     scheduler: Any | None = None,
     best_metrics: dict[str, float] | None = None,
+    reward_version: str = V1_REWARD_VERSION,
 ) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -46,7 +47,7 @@ def save_checkpoint(
         "contracts": {
             "environment": _native.environment_version,
             "observation": _native.observation_schema_version,
-            "reward": REWARD_VERSION,
+            "reward": reward_version,
             "model_arch": MODEL_ARCH_VERSION,
         },
         "model": model.state_dict(),
@@ -94,6 +95,7 @@ def load_checkpoint(
     collector: RolloutCollector,
     policy_generator: torch.Generator,
     scheduler: Any | None = None,
+    reward_version: str = V1_REWARD_VERSION,
 ) -> dict[str, Any]:
     payload = torch.load(Path(path), map_location="cpu", weights_only=False)
     if payload.get("format") != CHECKPOINT_FORMAT_VERSION:
@@ -101,7 +103,7 @@ def load_checkpoint(
     expected_contracts = {
         "environment": _native.environment_version,
         "observation": _native.observation_schema_version,
-        "reward": REWARD_VERSION,
+        "reward": reward_version,
         "model_arch": MODEL_ARCH_VERSION,
     }
     if payload.get("contracts") != expected_contracts:

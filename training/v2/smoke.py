@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 20:04 EST
 # Last Modified by: Codex
 # Runs bounded end-to-end V2 recurrent PPO without touching V1 configs or artifacts.
 
@@ -19,11 +19,18 @@ import torch
 from training.collector import RolloutCollector
 from training.env import CataMazeBatchEnv
 from training.ppo import PPOConfig
-from training.v2.checkpoint import load_checkpoint, save_checkpoint
+from training.reward import REWARD_VERSION as V2_REWARD_VERSION
+from training.v2.checkpoint import (
+    CHECKPOINT_FORMAT_VERSION,
+    load_checkpoint,
+    save_checkpoint,
+)
+from training.v2.env import PersonaV3BatchEnv
 from training.v2.migrate import MIGRATION_FORMAT, file_sha256
 from training.v2.model import PersonaRecurrentActorCritic
 from training.v2.ppo import PersonaPPOTrainer
 from training.v2.schedule import TrainingPhase, apply_training_phase
+from training.v2.reward import REWARD_VERSION as V3_REWARD_VERSION
 
 
 def run_smoke(
@@ -39,6 +46,10 @@ def run_smoke(
     sequences_per_batch: int = 12,
     update_epochs: int = 2,
     allow_provisional: bool = False,
+    reward_version: str = V2_REWARD_VERSION,
+    phase: TrainingPhase = TrainingPhase.HEADS_ONLY,
+    curriculum_stage: str = "A",
+    learning_rate: float = 3e-4,
 ) -> dict[str, Any]:
     if target_agent_steps <= 0:
         raise ValueError("target_agent_steps must be positive")
@@ -51,27 +62,44 @@ def run_smoke(
         torch.cuda.manual_seed_all(seed)
     warmstart_path = Path(warmstart)
     warmstart_payload = torch.load(warmstart_path, map_location="cpu", weights_only=False)
-    if warmstart_payload.get("format") != MIGRATION_FORMAT:
-        raise ValueError("V2 smoke requires a migrated warm-start checkpoint")
-    if warmstart_payload["lineage"]["provisional"] and not allow_provisional:
+    if warmstart_payload.get("format") == MIGRATION_FORMAT:
+        source_lineage = warmstart_payload["lineage"]
+    elif warmstart_payload.get("format") == CHECKPOINT_FORMAT_VERSION:
+        source_lineage = warmstart_payload["resolved_config"]["source_lineage"]
+    else:
+        raise ValueError("V2 smoke requires a warm-start or V2 checkpoint")
+    if source_lineage["provisional"] and not allow_provisional:
         raise ValueError("provisional V2 warm-start requires explicit opt-in")
+    if reward_version not in (V2_REWARD_VERSION, V3_REWARD_VERSION):
+        raise ValueError("unsupported V2 smoke reward version")
+    if reward_version == V3_REWARD_VERSION and phase is not TrainingPhase.FULL:
+        raise ValueError("persona reward v3 smoke requires the full-model phase")
+    allowed_stages = {
+        TrainingPhase.HEADS_ONLY: ("A",),
+        TrainingPhase.RECURRENT: ("B",),
+        TrainingPhase.FULL: ("C", "D"),
+    }
+    if curriculum_stage not in allowed_stages[phase]:
+        raise ValueError("V2 smoke phase/curriculum combination is invalid")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "checkpoints").mkdir(exist_ok=True)
     model = PersonaRecurrentActorCritic().to(device)
     model.load_state_dict(warmstart_payload["model"])
-    phase = TrainingPhase.HEADS_ONLY
     trainable_names = apply_training_phase(model, phase)
     optimizer = torch.optim.AdamW(
         [parameter for parameter in model.parameters() if parameter.requires_grad],
-        lr=3e-4,
+        lr=learning_rate,
         eps=1e-5,
         weight_decay=1e-4,
     )
-    environment = CataMazeBatchEnv(
+    environment_type = (
+        PersonaV3BatchEnv if reward_version == V3_REWARD_VERSION else CataMazeBatchEnv
+    )
+    environment = environment_type(
         num_envs,
         seed,
-        curriculum_stage="A",
+        curriculum_stage=curriculum_stage,
         randomize_spawns=True,
     )
     collector = RolloutCollector(environment, model, device=device)
@@ -96,8 +124,11 @@ def run_smoke(
         "sequences_per_batch": sequences_per_batch,
         "update_epochs": update_epochs,
         "phase": phase.value,
+        "reward_version": reward_version,
+        "curriculum_stage": curriculum_stage,
+        "learning_rate": learning_rate,
         "warmstart_sha256": file_sha256(warmstart_path),
-        "source_lineage": warmstart_payload["lineage"],
+        "source_lineage": source_lineage,
     }
     (output_dir / "resolved_config.json").write_text(
         json.dumps(resolved_config, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -146,6 +177,7 @@ def run_smoke(
                 "phase": phase.value,
             },
             resolved_config=resolved_config,
+            reward_version=reward_version,
         )
         load_checkpoint(
             checkpoint,
@@ -154,6 +186,7 @@ def run_smoke(
             environment=environment,
             collector=collector,
             policy_generator=generator,
+            reward_version=reward_version,
         )
     elapsed = perf_counter() - started
     changed = {
@@ -182,7 +215,7 @@ def run_smoke(
         "trainable_names": trainable_names,
         "checkpoint": str(output_dir / "checkpoints" / "latest.pt"),
         "checkpoint_sha256": file_sha256(output_dir / "checkpoints" / "latest.pt"),
-        "source_lineage": warmstart_payload["lineage"],
+        "source_lineage": source_lineage,
     }
     (output_dir / "summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -202,6 +235,20 @@ def main() -> None:
     parser.add_argument("--sequences-per-batch", type=int, default=12)
     parser.add_argument("--update-epochs", type=int, default=2)
     parser.add_argument("--allow-provisional", action="store_true")
+    parser.add_argument(
+        "--reward-version",
+        choices=(V2_REWARD_VERSION, V3_REWARD_VERSION),
+        default=V2_REWARD_VERSION,
+    )
+    parser.add_argument(
+        "--phase",
+        choices=[phase.value for phase in TrainingPhase],
+        default=TrainingPhase.HEADS_ONLY.value,
+    )
+    parser.add_argument(
+        "--curriculum-stage", choices=("A", "B", "C", "D"), default="A"
+    )
+    parser.add_argument("--learning-rate", type=float, default=3e-4)
     arguments = parser.parse_args()
     summary = run_smoke(
         arguments.warmstart,
@@ -214,6 +261,10 @@ def main() -> None:
         sequences_per_batch=arguments.sequences_per_batch,
         update_epochs=arguments.update_epochs,
         allow_provisional=arguments.allow_provisional,
+        reward_version=arguments.reward_version,
+        phase=TrainingPhase(arguments.phase),
+        curriculum_stage=arguments.curriculum_stage,
+        learning_rate=arguments.learning_rate,
     )
     print(json.dumps(summary, indent=2, sort_keys=True))
 
