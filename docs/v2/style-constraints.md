@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 20:40 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:03 EST
+Last Modified at: 2026-11-14 21:29 EST
 Last Modified by: Codex
 -->
 
@@ -46,7 +46,7 @@ Each is a hinge; exceeding a margin adds no further incentive. Every hinge is di
 
 ### Pairwise distribution floor
 
-For each head pair, Jensen–Shannon divergence over the same legal action set uses normalized hinge `max(0, 0.02 - JS) / 0.02`. This prevents identical heads but does not reward unbounded divergence.
+For each head pair, Jensen–Shannon divergence over the same legal action set uses normalized training hinge `max(0, 0.05 - JS) / 0.05`. The production acceptance gate remains `0.02`; the larger training target provides distribution-shift margin rather than weakening release criteria. Exceeding `0.05` adds no incentive.
 
 ## Total loss
 
@@ -62,6 +62,8 @@ L_total = L_PPO + value_coef * L_value - entropy_coef * H
 ```
 
 Empty tactical subsets contribute zero, never NaN. All components and valid sample counts are logged. DDP averages the loss across ranks. The first raw-scale5M trial is retained as failed evidence because it reached only action JS `0.0185` and explorer first-visit uplift around12%; the normalized trial starts from that checkpoint with a fresh optimizer.
+
+The first persona-neutral5M trial used a training target equal to the release gate (`0.02`). Its training-batch hinges converged, but independent Stage-D counterfactual JS remained `0.0085–0.0159`. The safety-margin trial starts from checkpoint `e6a521a10b54f44a9f3e7ad55dbbeaebabe0db564725050884a4c6f3b022c0ad`, changes only the training JS target to `0.05`, and keeps the release threshold at `0.02`.
 
 ## Controlled run
 

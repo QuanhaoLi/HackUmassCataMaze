@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:09 EST
+Last Modified at: 2026-11-14 21:29 EST
 Last Modified by: Codex
 -->
 
@@ -61,6 +61,8 @@ Last Modified by: Codex
 - A normalized style-loss correction now starts from that checkpoint: each hinge is scaled by its target, tactical CE is log-normalized, explorer receives a local fog-frontier target, and cautious low-HP retreat may use legal sound direction. Reward and the overall `0.02` coefficient remain unchanged.
 - The normalized run completed5,088,824 steps and made its internal head hinges converge, but deployment-equivalent counterfactual JS stayed below `0.019`. It is rejected because training and deployment compared different persona-conditioned trunk features.
 - ADR-0013 now authorizes V2.1: neutralize persona conditioning in the shared trunk and train only independent heads, making internal and deployed counterfactual comparisons identical.
+- The first V2.1 persona-neutral run completed5,027,564 steps, but independent Stage-D counterfactual JS remained below `0.016`; it was rejected before the expensive six-opponent evaluation.
+- A final safety-margin trial changes only the training JS target from `0.02` to `0.05`; the production gate remains `0.02`.
 
 ## Current release status
 

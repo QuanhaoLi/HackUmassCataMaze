@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:03 EST
+# Last Modified at: 2026-11-14 21:29 EST
 # Last Modified by: Codex
 # Computes bounded V2 style constraints from legal local policy tensors only.
 
@@ -30,6 +30,7 @@ STYLE_METRIC_NAMES = STYLE_COMPONENT_NAMES + (
     "cautious_low_hp_retreat_count",
     "explorer_local_frontier_count",
 )
+STYLE_TRAINING_JS_TARGET = 0.05
 
 
 def persona_style_loss(
@@ -163,8 +164,8 @@ def persona_style_loss(
             + (q * (q.log() - midpoint.log())).sum(dim=-1)
         )
         components[f"js_{persona_names[left]}_{persona_names[right]}"] = F.relu(
-            0.02 - active_mean(divergence)
-        ) / 0.02
+            STYLE_TRAINING_JS_TARGET - active_mean(divergence)
+        ) / STYLE_TRAINING_JS_TARGET
 
     ordered = [components[name] for name in STYLE_COMPONENT_NAMES]
     return torch.stack(ordered).mean(), components
