@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 20:40 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:40 EST
+Last Modified at: 2026-11-14 21:03 EST
 Last Modified by: Codex
 -->
 
@@ -27,7 +27,11 @@ Player visibility is read from legal player channel5. If the player lies on the 
 
 ### Cautious low-HP retreat target
 
-Only when normalized HP is at most `0.60`, a visible cardinal player produces the opposite movement target. The term is active only when that move is legal. It never invents a route from hidden map state.
+Only when normalized HP is at most `0.60`, a visible cardinal player produces the opposite movement target. When no cardinal player is visible, a legal heard-sound direction may produce the opposite movement target. The term is active only when that move is legal. It never invents a route from hidden map state.
+
+### Explorer local frontier target
+
+For every legal movement, count fog cells in the destination-centered local3×3 window of the existing5×5 observation. Explorer cross-entropy targets the legal move with the largest local fog frontier. This uses no visited-set or full-map privilege; ties follow the frozen action order.
 
 ### Category margins
 
@@ -38,17 +42,18 @@ Across active observations:
 - explorer move probability must exceed aggressive by `0.15`;
 - explorer move probability must exceed cautious by `0.10`.
 
-Each is a hinge; exceeding a margin adds no further incentive.
+Each is a hinge; exceeding a margin adds no further incentive. Every hinge is divided by its own target margin before aggregation, making a fully missed constraint equal to `1`.
 
 ### Pairwise distribution floor
 
-For each head pair, Jensen–Shannon divergence over the same legal action set uses hinge `max(0, 0.02 - JS)`. This prevents identical heads but does not reward unbounded divergence.
+For each head pair, Jensen–Shannon divergence over the same legal action set uses normalized hinge `max(0, 0.02 - JS) / 0.02`. This prevents identical heads but does not reward unbounded divergence.
 
 ## Total loss
 
 ```text
-L_style = mean(valid aggressive CE,
-               valid cautious CE,
+L_style = mean(valid aggressive CE / log(9),
+               valid cautious CE / log(9),
+               valid explorer frontier CE / log(4),
                category hinges,
                pairwise JS hinges)
 
@@ -56,7 +61,7 @@ L_total = L_PPO + value_coef * L_value - entropy_coef * H
           + 0.02 * L_style
 ```
 
-Empty tactical subsets contribute zero, never NaN. All components and valid sample counts are logged. DDP averages the loss across ranks.
+Empty tactical subsets contribute zero, never NaN. All components and valid sample counts are logged. DDP averages the loss across ranks. The first raw-scale5M trial is retained as failed evidence because it reached only action JS `0.0185` and explorer first-visit uplift around12%; the normalized trial starts from that checkpoint with a fresh optimizer.
 
 ## Controlled run
 

@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:40 EST
+# Last Modified at: 2026-11-14 21:03 EST
 # Last Modified by: Codex
 # Validates the immutable V2 lineage, topology, phase, evaluation, and embedded budgets.
 
@@ -123,8 +123,11 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if reward_version == V3_REWARD_VERSION:
         if style_constraints != {
             "coefficient": 0.02,
-            "source_checkpoint_sha256": (
+            "raw_scale_source_checkpoint_sha256": (
                 "0b45c37551aa7bf533e59ec77212fbc6c15c14dab97dde9efcc8228285e75f85"
+            ),
+            "source_checkpoint_sha256": (
+                "f9b6c54422a825388ddb3d164c07cf0dfbd45178963273866004e8b52fdc5567"
             ),
             "first_evaluation": 5_000_000,
             "trainable_scope": "heads_only",

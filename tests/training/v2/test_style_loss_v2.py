@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:40 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:40 EST
+# Last Modified at: 2026-11-14 21:03 EST
 # Last Modified by: Codex
 # Verifies bounded local-observation V2 style constraints and gradients.
 
@@ -30,6 +30,7 @@ def test_style_loss_is_finite_complete_and_backpropagates() -> None:
     assert set(components) == set(STYLE_METRIC_NAMES)
     assert components["aggressive_aligned_shot_count"] > 0
     assert components["cautious_low_hp_retreat_count"] > 0
+    assert components["explorer_local_frontier_count"] > 0
     loss.backward()
     assert tensors[0].grad is not None
     assert torch.count_nonzero(tensors[0].grad) > 0

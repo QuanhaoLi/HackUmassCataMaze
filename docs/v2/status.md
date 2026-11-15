@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:40 EST
+Last Modified at: 2026-11-14 21:03 EST
 Last Modified by: Codex
 -->
 
@@ -57,6 +57,8 @@ Last Modified by: Codex
 - Full-model reward-v3 completed5,009,006 steps but failed the six-opponent pre-screen; combined action JS remained below `0.009` and counterfactual JS below `0.014`. That branch is stopped.
 - Controlled heads-only reward-v3 completed5,017,912 steps. It improved aggressive shooting to15.6% above the mean, explorer first visits to9.2% above the mean, and aggressive/explorer counterfactual JS to0.018, but still failed the frozen20%/0.02 thresholds, aggressive hit rate and cautious survival.
 - ADR-0012 now authorizes one bounded style-loss run from the heads-only reward-v3 checkpoint; reward, trunk weights and product gates remain unchanged.
+- The first raw-scale style-loss run completed5,013,132 steps. It passed aggressive shooting and improved explorer coverage/action JS, but stopped below the0.02/20% gates and still failed hit-rate, cautious-survival and hard-opponent effectiveness.
+- A normalized style-loss correction now starts from that checkpoint: each hinge is scaled by its target, tactical CE is log-normalized, explorer receives a local fog-frontier target, and cautious low-HP retreat may use legal sound direction. Reward and the overall `0.02` coefficient remain unchanged.
 
 ## Current release status
 
