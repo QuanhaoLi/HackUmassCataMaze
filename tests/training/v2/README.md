@@ -12,6 +12,7 @@ Last Modified by: Codex
 |-README.md — Defines V2 model test ownership.
 |-test_checkpoint_v2.py — Verifies a V2 checkpoint reproduces the exact next recurrent rollout.
 |-test_evaluator_v2.py — Verifies persona behavior gates and counterfactual JS divergence.
+|-test_export_esp_v2.py — Verifies actor-only shapes, critic pruning, supported operators, and ONNX parity.
 |-test_migrate_v2.py — Verifies V1 hash enforcement, lineage, and equivalent V2 warm-start output.
 |-test_model_v2.py — Verifies shapes, V1 migration equivalence, head selection, gradients, reset, and serialization.
 |-test_ppo_v2.py — Verifies persona-local normalization, equal-weight updates, and finite per-persona metrics.
