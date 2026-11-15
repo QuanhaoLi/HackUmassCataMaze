@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 18:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:52 EST
+Last Modified at: 2026-11-14 19:26 EST
 Last Modified by: Codex
 -->
 
@@ -257,10 +257,10 @@ V2 架构首轮完整复用 `catamaze.reward.v2`。只有在下列条件同时�
 
 按顺序执行：
 
-1. `0–5M`：冻结共享视觉主干和GRU，只训练 modulation、actor heads和critic heads；
-2. `5–10M`：解冻 fusion与GRU，主干低学习率；
-3. `10–25M`：全模型低学习率联合微调；
-4. `25–50M`：仅在效果与人格曲线持续改善时继续；
+1. `0–5M`：课程 A，冻结共享视觉主干和GRU，只训练 modulation、actor heads和critic heads；
+2. `5–10M`：课程 B，解冻 fusion与GRU，主干低学习率；
+3. `10–25M`：课程 C，全模型低学习率联合微调；
+4. `25–50M`：只有效果与人格曲线持续改善时进入课程 D；
 5. `50–100M`：只有固定评估仍未收敛且无退化时使用，不因预算存在而盲跑。
 
 每5M agent steps固定评估并生成不可覆盖的 checkpoint。任何阶段效果显著退化时回退到上一候选，不在同一 run中临时改 reward。

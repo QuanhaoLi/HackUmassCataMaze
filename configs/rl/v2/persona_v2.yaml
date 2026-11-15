@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 19:26 EST
 # Last Modified by: Codex
 
 versions:
@@ -80,6 +80,11 @@ phases:
   recurrent_end: 10000000
   full_candidate: 25000000
   optional_extension: 50000000
+  curriculum:
+    heads_only: A
+    recurrent: B
+    full_before_candidate: C
+    full_after_candidate: D
 
 evaluation:
   every_agent_steps: 5000000

@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 19:26 EST
 # Last Modified by: Codex
 # Validates the immutable V2 lineage, topology, phase, evaluation, and embedded budgets.
 
@@ -78,6 +78,12 @@ def load_config(path: str | Path) -> dict[str, Any]:
         "recurrent_end": 10_000_000,
         "full_candidate": 25_000_000,
         "optional_extension": 50_000_000,
+        "curriculum": {
+            "heads_only": "A",
+            "recurrent": "B",
+            "full_before_candidate": "C",
+            "full_after_candidate": "D",
+        },
     }:
         raise ValueError("V2 phase boundaries changed")
     quantization = config.get("quantization", {})

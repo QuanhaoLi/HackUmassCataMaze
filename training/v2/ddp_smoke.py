@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 19:26 EST
 # Last Modified by: Codex
 # Qualifies one persona-balanced V2 model with synchronous multi-V100 DDP.
 
@@ -65,12 +65,22 @@ def run(
     update_epochs: int,
     seed: int,
     phase: TrainingPhase,
+    curriculum_stage: str,
 ) -> dict[str, Any] | None:
     rank = _rank()
     local_rank = _local_rank()
     world_size = _world_size()
     if world_size != 4:
         raise ValueError("V2 DDP qualification requires exactly four ranks")
+    allowed_stages = {
+        TrainingPhase.HEADS_ONLY: ("A",),
+        TrainingPhase.RECURRENT: ("B",),
+        TrainingPhase.FULL: ("C", "D"),
+    }
+    if curriculum_stage not in allowed_stages[phase]:
+        raise ValueError(
+            f"V2 phase {phase.value} cannot use curriculum stage {curriculum_stage}"
+        )
     torch.cuda.set_device(local_rank)
     device = torch.device("cuda", local_rank)
     dist.init_process_group(backend="nccl")
@@ -113,7 +123,7 @@ def run(
         environment = CataMazeBatchEnv(
             num_envs_per_rank,
             rank_seed,
-            curriculum_stage="A",
+            curriculum_stage=curriculum_stage,
             randomize_spawns=True,
         )
         collector = RolloutCollector(environment, ddp_model, device=device)
@@ -140,6 +150,7 @@ def run(
             "update_epochs": update_epochs,
             "seed": seed,
             "phase": phase.value,
+            "curriculum_stage": curriculum_stage,
             "warmstart_sha256": file_sha256(warmstart),
             "source_lineage": source_lineage,
         }
@@ -240,6 +251,9 @@ def main() -> None:
         choices=[phase.value for phase in TrainingPhase],
         default=TrainingPhase.HEADS_ONLY.value,
     )
+    parser.add_argument(
+        "--curriculum-stage", choices=("A", "B", "C", "D"), default="A"
+    )
     arguments = parser.parse_args()
     summary = run(
         Path(arguments.warmstart),
@@ -252,6 +266,7 @@ def main() -> None:
         update_epochs=arguments.update_epochs,
         seed=arguments.seed,
         phase=TrainingPhase(arguments.phase),
+        curriculum_stage=arguments.curriculum_stage,
     )
     if summary is not None:
         print(json.dumps(summary, indent=2, sort_keys=True))
