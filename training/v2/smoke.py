@@ -35,6 +35,9 @@ def run_smoke(
     seed: int = 20261114,
     num_envs: int = 4,
     environment_steps: int = 8,
+    sequence_length: int = 4,
+    sequences_per_batch: int = 12,
+    update_epochs: int = 2,
     allow_provisional: bool = False,
 ) -> dict[str, Any]:
     if target_agent_steps <= 0:
@@ -77,9 +80,9 @@ def run_smoke(
         model,
         optimizer,
         PPOConfig(
-            update_epochs=2,
-            sequence_length=4,
-            sequences_per_batch=12,
+            update_epochs=update_epochs,
+            sequence_length=sequence_length,
+            sequences_per_batch=sequences_per_batch,
         ),
         device=device,
     )
@@ -89,6 +92,9 @@ def run_smoke(
         "device": str(device),
         "num_envs": num_envs,
         "environment_steps": environment_steps,
+        "sequence_length": sequence_length,
+        "sequences_per_batch": sequences_per_batch,
+        "update_epochs": update_epochs,
         "phase": phase.value,
         "warmstart_sha256": file_sha256(warmstart_path),
         "source_lineage": warmstart_payload["lineage"],
@@ -190,6 +196,11 @@ def main() -> None:
     parser.add_argument("--agent-steps", type=int, default=100_000)
     parser.add_argument("--output", default=".artifacts/v2/smoke")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    parser.add_argument("--num-envs", type=int, default=4)
+    parser.add_argument("--environment-steps", type=int, default=8)
+    parser.add_argument("--sequence-length", type=int, default=4)
+    parser.add_argument("--sequences-per-batch", type=int, default=12)
+    parser.add_argument("--update-epochs", type=int, default=2)
     parser.add_argument("--allow-provisional", action="store_true")
     arguments = parser.parse_args()
     summary = run_smoke(
@@ -197,6 +208,11 @@ def main() -> None:
         target_agent_steps=arguments.agent_steps,
         output_dir=Path(arguments.output),
         device=torch.device(arguments.device),
+        num_envs=arguments.num_envs,
+        environment_steps=arguments.environment_steps,
+        sequence_length=arguments.sequence_length,
+        sequences_per_batch=arguments.sequences_per_batch,
+        update_epochs=arguments.update_epochs,
         allow_provisional=arguments.allow_provisional,
     )
     print(json.dumps(summary, indent=2, sort_keys=True))
