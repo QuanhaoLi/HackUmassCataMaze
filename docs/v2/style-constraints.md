@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 20:40 EST
 Created by: Codex
-Last Modified at: 2026-11-14 22:12 EST
+Last Modified at: 2026-11-14 22:29 EST
 Last Modified by: Codex
 -->
 
@@ -78,6 +78,8 @@ The safety-margin trial passed JS and aggressive shooting but failed explorer no
 The recurrent-target trial passed every divergence and aggressive-shooting gate and moved explorer first visits to17.5% above the mean, but explorer revisit, cautious survival and aggressive hits still failed. The transition-credit trial starts from `7a972f9a97aecd7fa394004e09fbafeb65dce5e322c4c3deb9ab227dc4fe61fd`, adds only the two private next-state complement losses, and gives aligned-shot CE a fixed3× component weight. Reward and overall style coefficient remain unchanged.
 
 The transition-credit trial passed explorer first visits, all divergence, aggressive shooting and combined effectiveness, but the sparse hit/survival/revisit terms remained too weak and shortest-path escape missed its per-opponent bound by3points. The weighted transition trial starts from `6947c4bc4a5bade4c92ba5d389e5de1211409d6894fa95e7ee177fabfbc3fef1` and changes only component multipliers shown above. Overall coefficient remains `0.02`.
+
+The weighted trial still failed hit/survival/revisit and shortest-path gates. Every prior style branch inherited a recurrent checkpoint already modified under curriculum B. The final direct-head trial starts from immutable V1-equivalent warm-start `4458eb4bd85acc1328d212aa25654eb12451bb298c47221ee02a86361737160c`, applies the same persona-neutral transform, and trains only heads with the already frozen weighted constraints. This tests style adaptation without inherited recurrent policy drift.
 
 ## Controlled run
 

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 22:12 EST
+Last Modified at: 2026-11-14 22:29 EST
 Last Modified by: Codex
 -->
 
@@ -69,6 +69,8 @@ Last Modified by: Codex
 - A transition-credit run now starts from `7a972f9a97aecd7fa394004e09fbafeb65dce5e322c4c3deb9ab227dc4fe61fd`: discourage chosen explorer moves that revisit sequence positions, discourage chosen cautious actions followed by own HP loss, and weight legal aligned-shot CE3×. No reward or release gate changes.
 - Transition-credit completed5,019,726 steps and passed divergence, aggressive shooting, explorer first visits and combined V1 effectiveness. It still failed aggressive hits, cautious survival, explorer revisit and shortest-path per-opponent regression.
 - A final weighted-transition run starts from `6947c4bc4a5bade4c92ba5d389e5de1211409d6894fa95e7ee177fabfbc3fef1`; it changes only sparse component multipliers, leaving information, reward, total coefficient and release gates unchanged.
+- Weighted transition completed5,011,381 steps. It passed divergence, aggressive shooting, explorer first visits and combined effectiveness, but still failed aggressive hits, cautious survival, explorer revisits and shortest-path per-opponent regression.
+- The final direct-head control starts from the immutable V1-equivalent warm-start, not any recurrent V2 branch. It neutralizes trunk persona columns and trains only heads under the already frozen reward/style contract.
 
 ## Current release status
 
