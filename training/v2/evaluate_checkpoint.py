@@ -13,8 +13,9 @@ from pathlib import Path
 import torch
 
 from training.evaluator import evaluate_policy
+from training.env import CataMazeBatchEnv
 from training.opponents import OpponentStrategy
-from training.v2.evaluator import assess_persona_gates
+from training.v2.evaluator import assess_persona_gates, counterfactual_persona_divergence
 from training.v2.export_esp import load_v2_model
 
 
@@ -27,6 +28,7 @@ def main() -> None:
     parser.add_argument("--mode", choices=("stochastic", "deterministic"), default="stochastic")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--seed", type=int, default=20261114)
+    parser.add_argument("--v1-evaluation")
     parser.add_argument(
         "--opponents",
         nargs="+",
@@ -38,6 +40,11 @@ def main() -> None:
         raise ValueError("episodes must be positive")
     device = torch.device(arguments.device)
     model = load_v2_model(arguments.checkpoint).to(device).eval()
+    v1_evaluation = None
+    if arguments.v1_evaluation:
+        v1_evaluation = json.loads(
+            Path(arguments.v1_evaluation).read_text(encoding="utf-8")
+        )
     reports: dict[str, object] = {}
     for name in arguments.opponents:
         opponent = OpponentStrategy[name.upper()]
@@ -52,13 +59,35 @@ def main() -> None:
         )
         reports[name] = {
             "evaluation": report,
-            "persona_assessment": assess_persona_gates(report),
+            "persona_assessment": assess_persona_gates(
+                report,
+                v1_player_escape_rate=(
+                    float(v1_evaluation[name]["player_escape_rate"])
+                    if v1_evaluation is not None
+                    else None
+                ),
+            ),
         }
+    counterfactual_environment = CataMazeBatchEnv(
+        min(arguments.num_envs, 64), arguments.seed + 999_999, curriculum_stage="D"
+    )
+    observation = counterfactual_environment.observation
+    counterfactual = counterfactual_persona_divergence(
+        model,
+        torch.from_numpy(observation["spatial"]).reshape(-1, 13, 5, 5).to(device),
+        torch.from_numpy(observation["scalar"]).reshape(-1, 46).to(device),
+        torch.zeros(
+            1, counterfactual_environment.num_envs * 3, 256, device=device
+        ),
+        torch.from_numpy(observation["action_mask"]).reshape(-1, 9).to(device),
+    )
     result = {
         "schema": "catamaze.evaluation.persona.v2",
         "checkpoint": arguments.checkpoint,
         "episodes_per_opponent": arguments.episodes,
         "mode": arguments.mode,
+        "counterfactual_persona_js": counterfactual,
+        "counterfactual_gate_passed": max(counterfactual.values()) >= 0.02,
         "reports": reports,
     }
     output = Path(arguments.output)
