@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-15 00:52 EST
 Created by: Codex
-Last Modified at: 2026-11-15 02:30 EST
+Last Modified at: 2026-11-15 06:57 EST
 Last Modified by: Codex
 -->
 
@@ -43,7 +43,7 @@ There is no manual model switch. One released Resident Policy is automatic when 
 
 ## Physical ESP32-S3 evidence
 
-The guarded atomic v1 release ran on the verified 16MB-Flash/8MB-PSRAM board. The firmware occupies 2,912,167 of 6,553,600 application bytes and 55,012 static RAM bytes.
+The guarded atomic v1 release was reflashed and accepted on the verified 16MB-Flash/8MB-PSRAM board on 2026-11-15. The current firmware occupies 2,912,215 of 6,553,600 application bytes and 55,012 static RAM bytes.
 
 At startup, the firmware writes a frozen real recurrent observation into the model and runs three complete sequential inferences. The accepted physical result was:
 

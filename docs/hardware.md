@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-15 02:04 EST
+Last Modified at: 2026-11-15 06:57 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -32,7 +32,7 @@ Read-only preflight evidence from the active replacement board:
 
 The PlatformIO base board `esp32-s3-devkitc-1` defaults to an 8 MB/no-PSRAM variant, so the project configuration must explicitly override it to 16 MB Flash and `qio_opi` memory type. Runtime diagnostic firmware must still assert the observed capacities before the product firmware is accepted.
 
-The active board passed fresh `catamaze.diag.v2` twice before the Home/Setup product release: exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, correct Flash/PSRAM, six active inputs released, and both GPIO4/GPIO10 unconfigured.
+The active board passed fresh `catamaze.diag.v2` twice before the Home/Setup product release. A fresh `catamaze.diag.v3` gate passed again immediately before the 2026-11-15 product reflash: exactly one `0x3C` device on each controller, all four I²C lines HIGH, zero bus errors, both display initialization and pattern writes accepted, correct Flash/PSRAM, all six active inputs released, and both GPIO4/GPIO10 unconfigured.
 
 An early product build exposed loop-task stack pressure during maze generation. The accepted build stores BFS/candidate cell references as 16-bit indices, defers `ProductShell` construction into `setup()`, and provisions a 48 KiB loop-task stack. The atomic-model product boot reports `loop_stack_high_water_words=26068`, both displays present, and `ready=true` without rebooting.
 
@@ -124,7 +124,7 @@ The electrical and logical contract is:
 - CLEAR short press clears pending actions only on release. CLEAR long press commits at 800 ms and suppresses the later short release event.
 - GPIO10 is `UNASSIGNED_SPARE` and must not be initialized as a button.
 
-The currently deployed ESP32 image is the six-button Home/Setup model build. Its `catamaze.boot.v3` record reports `button_count=6`, `gpio4_configured=false`, `gpio10_configured=false`, `system_mode=HOME`, `confirmed_map_size=30`, `tick_budget=1200`, `policy_ready=true`, `policy_fallback_latched=false`, and `ready=true`. The resident W8A16 policy passed the physical decoded-output and three-inference latency gates. Idle-high evidence is automated; physical press/release and complete-game checks remain pending user verification.
+The currently deployed ESP32 image is the six-button Companion/Home product build reflashed on 2026-11-15. Its accepted `catamaze.boot.v4` record reports `mode=IDLE`, `companion_frame=NEUTRAL`, `button_count=6`, `gpio4_configured=false`, `gpio10_configured=false`, `confirmed_map_size=30`, `tick_budget=1200`, `policy_mode=MODEL_ACTIVE`, `policy_ready=true`, `policy_fallback_latched=false`, and `ready=true`. Both buses reported one `0x3C` display and the 16MB Flash/8MB PSRAM capacities matched preflight. The resident W8A16 policy passed the decoded-output and 126,239µs three-inference latency gates. The firmware and model are persistent Flash assets and standalone operation has no network, browser, Mac, or Serial dependency; connecting power boots the product automatically. Without the optional Mac audio companion, gameplay remains operational and silent.
 
 Current prototype scope: only GPIO5, GPIO6, and GPIO7 have buttons physically installed. GPIO5 and GPIO6 each passed a complete HIGH → LOW → HIGH test with exactly one debounced press count and no duplicate events during the observation period. GPIO7 is not yet fully validated.
 
