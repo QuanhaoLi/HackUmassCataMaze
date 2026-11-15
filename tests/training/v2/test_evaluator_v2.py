@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 19:41 EST
 # Last Modified by: Codex
 # Verifies explicit V2 persona gates and same-state counterfactual divergence.
 
@@ -8,7 +8,11 @@ from __future__ import annotations
 
 import torch
 
-from training.v2.evaluator import assess_persona_gates, counterfactual_persona_divergence
+from training.v2.evaluator import (
+    assess_persona_gates,
+    combine_opponent_reports,
+    counterfactual_persona_divergence,
+)
 from training.v2.model import PersonaRecurrentActorCritic
 
 
@@ -17,6 +21,7 @@ def passing_report() -> dict[str, object]:
         "player_escape_rate": 0.20,
         "personality": {
             "aggressive": {
+                "mean_return": 1.0,
                 "shots_per_100_ticks": 6.0,
                 "hits_per_100_ticks": 3.0,
                 "first_visits_per_100_ticks": 1.0,
@@ -25,6 +30,7 @@ def passing_report() -> dict[str, object]:
                 "action_counts": [30, 5, 5, 5, 20, 20, 10, 5, 0],
             },
             "cautious": {
+                "mean_return": 1.0,
                 "shots_per_100_ticks": 2.0,
                 "hits_per_100_ticks": 1.0,
                 "first_visits_per_100_ticks": 1.0,
@@ -33,6 +39,7 @@ def passing_report() -> dict[str, object]:
                 "action_counts": [5, 30, 5, 5, 5, 5, 5, 5, 35],
             },
             "explorer": {
+                "mean_return": 1.0,
                 "shots_per_100_ticks": 1.0,
                 "hits_per_100_ticks": 0.5,
                 "first_visits_per_100_ticks": 5.0,
@@ -51,6 +58,35 @@ def test_persona_gate_assessment_requires_style_and_v1_effectiveness() -> None:
     failed = passing_report()
     failed["personality"]["aggressive"]["shots_per_100_ticks"] = 1.0
     assert assess_persona_gates(failed)["gates"]["aggressive_shots"] is False
+
+
+def test_cross_opponent_combination_preserves_episode_and_action_counts() -> None:
+    first = passing_report()
+    first.update(
+        {
+            "episodes": 10,
+            "mode": "stochastic",
+            "outcomes": {"player_death": 5, "player_escape": 2, "timeout": 3},
+        }
+    )
+    second = passing_report()
+    second.update(
+        {
+            "episodes": 20,
+            "mode": "stochastic",
+            "outcomes": {"player_death": 8, "player_escape": 4, "timeout": 8},
+        }
+    )
+    combined = combine_opponent_reports([first, second])
+    assert combined["episodes"] == 30
+    assert combined["outcomes"] == {
+        "player_death": 13,
+        "player_escape": 6,
+        "timeout": 11,
+    }
+    assert combined["personality"]["aggressive"]["action_counts"] == [
+        value * 2 for value in first["personality"]["aggressive"]["action_counts"]
+    ]
 
 
 def test_counterfactual_divergence_is_zero_when_persona_inputs_are_neutralized() -> None:
