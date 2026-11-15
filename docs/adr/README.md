@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:28 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:40 EST
+Last Modified at: 2026-11-14 21:09 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -23,6 +23,7 @@ Last Modified by: Codex
 |-0010-isolate-v2-persona-policy-candidate.md — Isolates V2 model preparation from V1 deployment and freezes the multi-head persona architecture and handoff boundary.
 |-0011-isolate-persona-reward-v3.md — Introduces V2-only reward v3 after architecture ablations prove reward-v2 persona collapse.
 |-0012-bound-v2-style-constraints.md — Adds small, observable style constraints only after reward-v3 controlled trials remain below persona gates.
+|-0013-neutralize-v2-shared-trunk-persona.md — Makes V2 deployment persona selection live only in independent heads so training divergence matches counterfactual inference.
 
 ## To-Dos
 - Add and index an ADR before implementing any future change to a frozen environment, reward, model, deployment, or hardware contract.
