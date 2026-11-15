@@ -36,6 +36,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
     for name in (
         "v1_freeze_commit",
         "v1_checkpoint_sha256",
+        "v1_evaluation_sha256",
         "v2_warmstart_sha256",
     ):
         value = lineage.get(name)
