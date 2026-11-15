@@ -40,6 +40,7 @@ def consolidate(
             "agent_steps": int(payload["training_state"]["agent_steps"]),
             "checkpoint_name": path.name,
             "checkpoint_sha256": file_sha256(path),
+            "reward_version": payload["contracts"]["reward"],
         }
         for name, path, payload in loaded
     ]
