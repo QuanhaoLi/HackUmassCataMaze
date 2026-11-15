@@ -85,6 +85,11 @@ def load_config(path: str | Path) -> dict[str, Any]:
             "full_before_candidate": "C",
             "full_after_candidate": "D",
         },
+        "learning_rates": {
+            "heads_only": 0.0003,
+            "recurrent": 0.0001,
+            "full": 0.00003,
+        },
     }:
         raise ValueError("V2 phase boundaries changed")
     quantization = config.get("quantization", {})

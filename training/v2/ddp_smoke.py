@@ -66,12 +66,15 @@ def run(
     seed: int,
     phase: TrainingPhase,
     curriculum_stage: str,
+    learning_rate: float,
 ) -> dict[str, Any] | None:
     rank = _rank()
     local_rank = _local_rank()
     world_size = _world_size()
     if world_size != 4:
         raise ValueError("V2 DDP qualification requires exactly four ranks")
+    if learning_rate <= 0:
+        raise ValueError("V2 learning rate must be positive")
     allowed_stages = {
         TrainingPhase.HEADS_ONLY: ("A",),
         TrainingPhase.RECURRENT: ("B",),
@@ -116,7 +119,7 @@ def run(
         )
         optimizer = torch.optim.AdamW(
             [parameter for parameter in model.parameters() if parameter.requires_grad],
-            lr=3e-4,
+            lr=learning_rate,
             eps=1e-5,
             weight_decay=1e-4,
         )
@@ -151,6 +154,7 @@ def run(
             "seed": seed,
             "phase": phase.value,
             "curriculum_stage": curriculum_stage,
+            "learning_rate": learning_rate,
             "warmstart_sha256": file_sha256(warmstart),
             "source_lineage": source_lineage,
         }
@@ -246,6 +250,7 @@ def main() -> None:
     parser.add_argument("--sequences-per-batch-per-rank", type=int, default=30)
     parser.add_argument("--update-epochs", type=int, default=2)
     parser.add_argument("--seed", type=int, default=20261114)
+    parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument(
         "--phase",
         choices=[phase.value for phase in TrainingPhase],
@@ -267,6 +272,7 @@ def main() -> None:
         seed=arguments.seed,
         phase=TrainingPhase(arguments.phase),
         curriculum_stage=arguments.curriculum_stage,
+        learning_rate=arguments.learning_rate,
     )
     if summary is not None:
         print(json.dumps(summary, indent=2, sort_keys=True))

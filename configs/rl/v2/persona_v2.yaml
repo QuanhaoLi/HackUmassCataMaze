@@ -86,6 +86,10 @@ phases:
     recurrent: B
     full_before_candidate: C
     full_after_candidate: D
+  learning_rates:
+    heads_only: 0.0003
+    recurrent: 0.0001
+    full: 0.00003
 
 evaluation:
   every_agent_steps: 5000000
