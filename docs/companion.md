@@ -93,9 +93,9 @@ The v1 animation is a deterministic 24-second loop so Native and ESP32 produce t
 
 ## 7. Native completion evidence
 
-- 85/85 normal, 85/85 AddressSanitizer, and 85/85 UndefinedBehaviorSanitizer tests pass.
-- The 100,000-tick deterministic randomized gate retains hash `0x8474a362fb71a430` after the intentional full-ammo recharge fix.
-- Portable core/application line coverage is 90.72% and branch coverage is 82.11%.
+- 86/86 normal, 86/86 AddressSanitizer, and 86/86 UndefinedBehaviorSanitizer tests pass.
+- The 100,000-tick deterministic randomized gate retains hash `0xaa4060b19cb592b1` after the intentional full-ammo recovery timing fix.
+- Portable core/application line coverage is 90.72% and branch coverage is 82.05%.
 - Real Chrome proves consumed Wake, second-FIRE Play, queue-preserving inactivity prompt, Continue, explicit Sleep, schema v3, form isolation, and zero horizontal overflow at 1440×1050 and 390×1800.
 - Reviewed screenshots cover Neutral, Look Right, Curious, Surprised, and return to Neutral; pixel tests cover all nine frames.
 - The frozen ESP-DL artifact hash matches its accepted W8A16 release, the 10,000-observation report records 98.61% masked-action agreement, and four local export/recurrent tests pass.

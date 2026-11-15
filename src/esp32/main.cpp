@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:50 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 19:00 EST
+// Last Modified at: 2026-11-15 00:24 EST
 // Last Modified by: Codex
 // Composes deterministic gameplay with verified buttons, two OLED buses, and optional Serial audio.
 
@@ -32,6 +32,7 @@ bool hardware_ready = false;
 bool boot_diagnostics_pending = true;
 std::uint32_t next_tick_ms = 0U;
 catamaze::app::PolicyMode reported_policy_mode = catamaze::app::PolicyMode::Heuristic;
+std::uint32_t reported_policy_calls = 0U;
 
 catamaze::app::ProductShell& product() { return *product_controller; }
 
@@ -157,6 +158,7 @@ void loop() {
   if (boot_diagnostics_pending) {
     printBootDiagnostics();
     reported_policy_mode = policy.diagnostics().mode;
+    reported_policy_calls = policy.diagnostics().inference_calls;
     boot_diagnostics_pending = false;
   }
   if (!hardware_ready) {
@@ -181,9 +183,13 @@ void loop() {
       audio.emit(catamaze::app::selectAudioEvent(state), state.tick);
       renderBoth();
     }
-    if (policy.diagnostics().mode != reported_policy_mode) {
+    const auto& policy_health = policy.diagnostics();
+    const bool first_model_tick = reported_policy_calls == 0U && policy_health.inference_calls > 0U;
+    const bool periodic_health = policy_health.inference_calls - reported_policy_calls >= 300U;
+    if (policy_health.mode != reported_policy_mode || first_model_tick || periodic_health) {
       printPolicyHealth();
-      reported_policy_mode = policy.diagnostics().mode;
+      reported_policy_mode = policy_health.mode;
+      reported_policy_calls = policy_health.inference_calls;
     }
     next_tick_ms += catamaze::esp32::kTickIntervalMs;
     if (static_cast<std::int32_t>(now - next_tick_ms) >= 0) {

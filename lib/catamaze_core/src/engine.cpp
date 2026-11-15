@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 20:11 EST
+// Last Modified at: 2026-11-15 00:22 EST
 // Last Modified by: Codex
 // Implements deterministic simultaneous movement, combat, observations, and terminal rules.
 
@@ -305,11 +305,12 @@ void GameEngine::step(const std::array<Action, kAiCount>& ai_actions) noexcept {
     }
   }
 
-  for (auto& entity : state_.entities) {
+  for (std::size_t index = 0U; index < state_.entities.size(); ++index) {
+    auto& entity = state_.entities[index];
     if (!entity.alive) {
       continue;
     }
-    if (entity.ammo >= kMaxAmmo) {
+    if (start_entities[index].ammo >= kMaxAmmo || entity.ammo >= kMaxAmmo) {
       entity.recharge_progress = 0U;
       continue;
     }

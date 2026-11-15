@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:19 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 20:10 EST
+// Last Modified at: 2026-11-15 00:22 EST
 // Last Modified by: Codex
 // Verifies deterministic movement, combat, visibility, terminal conditions, and replay hashing.
 
@@ -73,9 +73,12 @@ TEST(GameEngine, AdjacentShotDamagesImmediatelyAndAmmoRecoversOnPhase) {
   engine.step(kAiWaits);
   EXPECT_EQ(engine.state().entities[1].hp, 4U);
   EXPECT_EQ(engine.state().entities[0].ammo, 2U);
-  EXPECT_EQ(engine.state().entities[0].recharge_progress, 1U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
   EXPECT_EQ(engine.state().bullet_count, 0U);
 
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].ammo, 2U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 1U);
   engine.step(kAiWaits);
   EXPECT_EQ(engine.state().entities[0].ammo, 3U);
   EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
@@ -91,7 +94,7 @@ TEST(GameEngine, FullAmmoCannotBankRechargeCreditBeforeAShot) {
   engine.step(kAiWaits);
   EXPECT_EQ(engine.state().entities[0].last_result, ActionResult::Shot);
   EXPECT_EQ(engine.state().entities[0].ammo, 2U);
-  EXPECT_EQ(engine.state().entities[0].recharge_progress, 1U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
 
   std::size_t player_shots = 0U;
   std::size_t player_restores = 0U;
@@ -104,6 +107,33 @@ TEST(GameEngine, FullAmmoCannotBankRechargeCreditBeforeAShot) {
   }
   EXPECT_EQ(player_shots, 1U);
   EXPECT_EQ(player_restores, 0U);
+
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].ammo, 2U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 1U);
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].ammo, 3U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
+}
+
+TEST(GameEngine, ShotIntoWallConsumesAmmoForTwoSubsequentTicks) {
+  GameSetup setup = openSetup();
+  setup.map.set(Position{3, 2}, Terrain::Wall);
+  GameEngine engine(setup);
+  ASSERT_TRUE(engine.enqueuePlayerAction(Action::ShootRight));
+
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].last_result, ActionResult::Shot);
+  EXPECT_EQ(engine.state().entities[0].ammo, 2U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
+  EXPECT_EQ(engine.state().bullet_count, 0U);
+
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].ammo, 2U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 1U);
+  engine.step(kAiWaits);
+  EXPECT_EQ(engine.state().entities[0].ammo, 3U);
+  EXPECT_EQ(engine.state().entities[0].recharge_progress, 0U);
 }
 
 TEST(GameEngine, SimultaneousLethalHitsPreserveActualDamageAndEveryShooterCredit) {

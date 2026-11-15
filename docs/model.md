@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-15 00:52 EST
 Created by: Codex
-Last Modified at: 2026-11-14 19:04 EST
+Last Modified at: 2026-11-15 00:24 EST
 Last Modified by: Codex
 -->
 
@@ -22,6 +22,7 @@ There is no manual model switch. One released Resident Policy is automatic when 
 - The three model actions and three next hidden states commit only if every required inference, finite-output check, legal mask, and complete-tick latency gate passes.
 - Any failure discards every provisional next hidden state and makes all AI use Heuristic Fallback for that world transition and every later transition until reboot.
 - Policy Health is visible through bounded System/Serial diagnostics without entering Game Core state, observations, rewards, or model inputs.
+- Serial emits Policy Health after the first model-driven tick, every 100 complete three-AI ticks, and immediately on a mode/fallback transition; this proves runtime inference without unbounded per-tick logging.
 - Model identity and every release gate come from one versioned release manifest consumed by build, boot diagnostics, and upload acceptance.
 - Native parity is an offline acceptance adapter; ONNX/Torch never becomes a browser, Game Core, or standalone gameplay dependency.
 
@@ -62,6 +63,10 @@ The guarded boot additionally reported release `production-100364306-w8a16`, com
 ## Residency
 
 The `.espdl` artifact is embedded permanently in Flash. At boot, one model instance is built and its parameters are copied into PSRAM for inference speed. It remains resident across Companion Idle, Home, Setup, Pause, and every Game Session; it is not loaded once per tick or copied once per enemy. Residency does not imply inference outside a Game Session.
+
+## Encounter expectations
+
+For the frozen default seed, current farthest-cell spawning places AI approximately 36–38 path steps away on 12×12, 123–124 on 20×20, 256–258 on 30×30, and 505–506 on 50×50. A long delay before seeing an enemy on Medium/Original maps is therefore not evidence that the Resident Policy is inactive. Human model validation should use Tiny 12×12 and confirm Policy Health inference calls plus a physical encounter; changing spawn bands is a separate game-design/model-distribution decision.
 
 ## Remaining endurance gate
 
