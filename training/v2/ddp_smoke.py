@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:04 EST
+# Last Modified at: 2026-11-14 20:25 EST
 # Last Modified by: Codex
 # Qualifies one persona-balanced V2 model with synchronous multi-V100 DDP.
 
@@ -81,13 +81,18 @@ def run(
         raise ValueError("V2 learning rate must be positive")
     if reward_version not in (V2_REWARD_VERSION, V3_REWARD_VERSION):
         raise ValueError("unsupported V2 reward version")
-    if reward_version == V3_REWARD_VERSION and phase is not TrainingPhase.FULL:
-        raise ValueError("persona reward v3 is authorized only for the full-model phase")
-    allowed_stages = {
-        TrainingPhase.HEADS_ONLY: ("A",),
-        TrainingPhase.RECURRENT: ("B",),
-        TrainingPhase.FULL: ("C", "D"),
-    }
+    if reward_version == V3_REWARD_VERSION:
+        allowed_stages = {
+            TrainingPhase.HEADS_ONLY: ("C",),
+            TrainingPhase.RECURRENT: (),
+            TrainingPhase.FULL: ("C",),
+        }
+    else:
+        allowed_stages = {
+            TrainingPhase.HEADS_ONLY: ("A",),
+            TrainingPhase.RECURRENT: ("B",),
+            TrainingPhase.FULL: ("C", "D"),
+        }
     if curriculum_stage not in allowed_stages[phase]:
         raise ValueError(
             f"V2 phase {phase.value} cannot use curriculum stage {curriculum_stage}"

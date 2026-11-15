@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 20:04 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:04 EST
+Last Modified at: 2026-11-14 20:25 EST
 Last Modified by: Codex
 -->
 
@@ -59,10 +59,12 @@ The reward-v3 run:
 
 1. starts from recurrent checkpoint SHA `d155f283f73754c9dbb9d7142f8221bde4a6de27dc8b8c1385f63137bf85c597`;
 2. resets optimizer and rollout state;
-3. trains the full V2 model on curriculum C at learning rate `3e-5`;
+3. first trained the full V2 model on curriculum C at learning rate `3e-5`;
 4. uses a distinct run directory and checkpoint format metadata;
-5. first evaluates at 5M, then may continue to15M only while effectiveness and persona metrics improve;
+5. evaluates at5M and stops that branch unless effectiveness and persona metrics improve;
 6. never overwrites the reward-v2 25M failure evidence.
+
+The full-model reward-v3 branch failed its5M pre-screen: combined action JS remained below `0.009`, counterfactual JS below `0.014`, and hard-opponent effectiveness did not improve enough. It is therefore stopped. A controlled reward-v3 heads-only branch starts from the same recurrent checkpoint, uses the same curriculum C samples and reward values, and updates only modulation plus actor/critic heads. This isolates optimizer ownership; it is not permission to continue a failed full-model run.
 
 ## Acceptance
 

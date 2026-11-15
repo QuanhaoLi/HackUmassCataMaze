@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:04 EST
+# Last Modified at: 2026-11-14 20:25 EST
 # Last Modified by: Codex
 
 versions:
@@ -83,6 +83,7 @@ phases:
   full_target: 15000000
   curriculum: C
   learning_rate: 0.00003
+  controlled_heads_only_steps: 5000000
 
 evaluation:
   every_agent_steps: 5000000

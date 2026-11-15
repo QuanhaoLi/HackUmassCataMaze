@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:04 EST
+# Last Modified at: 2026-11-14 20:25 EST
 # Last Modified by: Codex
 # Validates the immutable V2 lineage, topology, phase, evaluation, and embedded budgets.
 
@@ -115,6 +115,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
             "full_target": 15_000_000,
             "curriculum": "C",
             "learning_rate": 0.00003,
+            "controlled_heads_only_steps": 5_000_000,
         }
     if phases != expected_phases:
         raise ValueError("V2 phase boundaries changed")

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 19:41 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:04 EST
+Last Modified at: 2026-11-14 20:25 EST
 Last Modified by: Codex
 -->
 
@@ -54,7 +54,8 @@ Last Modified by: Codex
 ### Reward v3 / separate run
 
 - ADR-0011 and `reward-v3.md` accepted after the architecture-only failure and ablation.
-- This run will start from the recurrent checkpoint, reset optimizer/environment state, and leave the reward-v2 failure immutable.
+- Full-model reward-v3 completed5,009,006 steps but failed the six-opponent pre-screen; combined action JS remained below `0.009` and counterfactual JS below `0.014`. That branch is stopped.
+- A controlled heads-only reward-v3 branch now starts from the same recurrent checkpoint to test whether freezing shared competence prevents persona collapse.
 
 ## Current release status
 

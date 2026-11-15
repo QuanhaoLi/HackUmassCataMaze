@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:04 EST
+# Last Modified at: 2026-11-14 20:25 EST
 # Last Modified by: Codex
 # Runs bounded end-to-end V2 recurrent PPO without touching V1 configs or artifacts.
 
@@ -72,13 +72,18 @@ def run_smoke(
         raise ValueError("provisional V2 warm-start requires explicit opt-in")
     if reward_version not in (V2_REWARD_VERSION, V3_REWARD_VERSION):
         raise ValueError("unsupported V2 smoke reward version")
-    if reward_version == V3_REWARD_VERSION and phase is not TrainingPhase.FULL:
-        raise ValueError("persona reward v3 smoke requires the full-model phase")
-    allowed_stages = {
-        TrainingPhase.HEADS_ONLY: ("A",),
-        TrainingPhase.RECURRENT: ("B",),
-        TrainingPhase.FULL: ("C", "D"),
-    }
+    if reward_version == V3_REWARD_VERSION:
+        allowed_stages = {
+            TrainingPhase.HEADS_ONLY: ("C",),
+            TrainingPhase.RECURRENT: (),
+            TrainingPhase.FULL: ("C",),
+        }
+    else:
+        allowed_stages = {
+            TrainingPhase.HEADS_ONLY: ("A",),
+            TrainingPhase.RECURRENT: ("B",),
+            TrainingPhase.FULL: ("C", "D"),
+        }
     if curriculum_stage not in allowed_stages[phase]:
         raise ValueError("V2 smoke phase/curriculum combination is invalid")
 
