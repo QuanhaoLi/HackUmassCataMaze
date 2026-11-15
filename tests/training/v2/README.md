@@ -10,6 +10,7 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Defines V2 model test ownership.
+|-test_ablation_v2.py — Verifies every causal comparison removes only its declared persona mechanism.
 |-test_checkpoint_v2.py — Verifies a V2 checkpoint reproduces the exact next recurrent rollout.
 |-test_config_v2.py — Verifies the committed V2 lineage, topology, phase, quantization, and budget contract.
 |-test_detailed_evaluator_v2.py — Verifies aggregate and raw episode evidence agree.

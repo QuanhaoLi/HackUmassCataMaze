@@ -11,6 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Defines the V2 training-code boundary.
 |-__init__.py — Exposes the V2 architecture version without importing V1 product code.
+|-ablation.py — Creates explicit no-modulation, shared-head, and no-persona V2 comparison checkpoints.
 |-checkpoint.py — Saves and restores complete V2 training, environment, collector, and RNG state.
 |-config.py — Validates immutable V1 lineage and every V2 production-candidate contract.
 |-ddp_smoke.py — Qualifies one shared V2 model across four V100 ranks with global persona statistics.
