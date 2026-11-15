@@ -83,7 +83,7 @@ def run(
         if rank == 0:
             output_dir.mkdir(parents=True, exist_ok=True)
             (output_dir / "checkpoints").mkdir(exist_ok=True)
-        dist.barrier()
+        dist.barrier(device_ids=[local_rank])
 
         payload = torch.load(warmstart, map_location="cpu", weights_only=False)
         if payload.get("format") != MIGRATION_FORMAT:
