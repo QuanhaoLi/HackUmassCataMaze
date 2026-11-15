@@ -22,7 +22,7 @@ from torch.nn.parallel import DistributedDataParallel
 from training.collector import RolloutCollector
 from training.env import CataMazeBatchEnv
 from training.ppo import PPOConfig
-from training.v2.checkpoint import save_checkpoint
+from training.v2.checkpoint import CHECKPOINT_FORMAT_VERSION, save_checkpoint
 from training.v2.migrate import MIGRATION_FORMAT, file_sha256
 from training.v2.model import PersonaRecurrentActorCritic
 from training.v2.ppo import PersonaPPOTrainer
@@ -64,6 +64,7 @@ def run(
     sequences_per_batch_per_rank: int,
     update_epochs: int,
     seed: int,
+    phase: TrainingPhase,
 ) -> dict[str, Any] | None:
     rank = _rank()
     local_rank = _local_rank()
@@ -86,13 +87,16 @@ def run(
         dist.barrier(device_ids=[local_rank])
 
         payload = torch.load(warmstart, map_location="cpu", weights_only=False)
-        if payload.get("format") != MIGRATION_FORMAT:
-            raise ValueError("DDP qualification requires a migrated V2 warm-start")
-        if payload["lineage"]["provisional"]:
+        if payload.get("format") == MIGRATION_FORMAT:
+            source_lineage = payload["lineage"]
+        elif payload.get("format") == CHECKPOINT_FORMAT_VERSION:
+            source_lineage = payload["resolved_config"]["source_lineage"]
+        else:
+            raise ValueError("DDP qualification requires a V2 warm-start or checkpoint")
+        if source_lineage["provisional"]:
             raise ValueError("DDP qualification rejects provisional lineage")
         model = PersonaRecurrentActorCritic().to(device)
         model.load_state_dict(payload["model"])
-        phase = TrainingPhase.HEADS_ONLY
         trainable_names = apply_training_phase(model, phase)
         ddp_model = DistributedDataParallel(
             model,
@@ -137,7 +141,7 @@ def run(
             "seed": seed,
             "phase": phase.value,
             "warmstart_sha256": file_sha256(warmstart),
-            "source_lineage": payload["lineage"],
+            "source_lineage": source_lineage,
         }
         if rank == 0:
             (output_dir / "resolved_config.json").write_text(
@@ -208,7 +212,8 @@ def run(
             "trainable_names": trainable_names,
             "checkpoint": str(output_dir / "checkpoints" / "latest.pt"),
             "checkpoint_sha256": file_sha256(output_dir / "checkpoints" / "latest.pt"),
-            "source_lineage": payload["lineage"],
+            "phase": phase.value,
+            "source_lineage": source_lineage,
         }
         (output_dir / "summary.json").write_text(
             json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -230,6 +235,11 @@ def main() -> None:
     parser.add_argument("--sequences-per-batch-per-rank", type=int, default=30)
     parser.add_argument("--update-epochs", type=int, default=2)
     parser.add_argument("--seed", type=int, default=20261114)
+    parser.add_argument(
+        "--phase",
+        choices=[phase.value for phase in TrainingPhase],
+        default=TrainingPhase.HEADS_ONLY.value,
+    )
     arguments = parser.parse_args()
     summary = run(
         Path(arguments.warmstart),
@@ -241,6 +251,7 @@ def main() -> None:
         sequences_per_batch_per_rank=arguments.sequences_per_batch_per_rank,
         update_epochs=arguments.update_epochs,
         seed=arguments.seed,
+        phase=TrainingPhase(arguments.phase),
     )
     if summary is not None:
         print(json.dumps(summary, indent=2, sort_keys=True))
