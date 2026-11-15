@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 20:13 EST
+Last Modified at: 2026-11-15 02:33 EST
 Last Modified by: Codex
 
 本文档按可玩性优先原则拆分 CataMaze v1 里程碑，并为每个里程碑定义可执行验收门槛。
@@ -189,6 +189,8 @@ Pass conditions:
 - Native snapshot v3 and browser automation pass Wake, second-FIRE Play, 30-second prompt, Continue, explicit Sleep, and exact framebuffer checks.
 - Local model checks pass artifact SHA-256, the frozen 10,000-observation 98.61% agreement report, four export/recurrent tests, and the portable provider/fallback integration test.
 - Combined Companion Idle plus ESP-DL product firmware compiles at 55,012 bytes RAM and 2,912,175 bytes Flash. The replacement remote passed all six raw-input transitions and the guarded companion/model image is physically installed; the 30-second physical prompt/endurance checks keep C1 `IN_PROGRESS`.
+- Native real-time sampling measured five consecutive intervals at 598.7–601.6ms with a 599.4ms mean, validating the 600ms Tick Cadence independently of virtual stepping.
+- A 64-seed stationary-player encounter baseline found median first visibility at 27s / 1m36s / 4m02s / 11m38s for 12/20/30/50 maps at 600ms cadence; Tiny is the reviewed quick model-demonstration preset.
 
 ## M3 — Native product hardening
 
@@ -481,6 +483,7 @@ Pass conditions:
 - Policy Health is present in Native snapshot v3, the System software screen, boot v4, and a bounded runtime fallback Serial event.
 - Normal, ASan, and UBSan suites each pass 86/86; randomized 100,000 ticks retain hash `0xaa4060b19cb592b1`; coverage is 90.72% lines and 82.05% branches.
 - Guarded physical release passed manifest validation, six-button/dual-display diagnostics, write verification, and boot with `MODEL_ACTIVE`, `NONE`, zero failures, 126,239µs three-inference startup, 55,012 bytes static RAM, 2,912,167 bytes Flash, and stack high-water 26,068.
+- The 600ms cadence revision tightens complete three-AI inference from 900,000µs to 500,000µs; the accepted v1 boot measurement remains approximately 126ms and passes with more than 370ms policy-budget margin.
 - RL6 remains `IN_PROGRESS`: the source v1 ONNX release artifact is not present locally for Native recurrent-trace parity, and the 10,000-tick physical endurance gate remains outstanding.
 
 ## Change control

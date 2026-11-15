@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:37 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:22 EST
+// Last Modified at: 2026-11-15 02:30 EST
 // Last Modified by: Codex
 // Declares loopback-only Native server configuration and lifecycle.
 
@@ -17,7 +17,7 @@ struct NativeServerOptions {
   std::uint64_t seed{0x000000000134fd5aULL};
   std::uint16_t port{0};
   bool start_paused{false};
-  std::chrono::milliseconds tick_interval{1000};
+  std::chrono::milliseconds tick_interval{600};
   std::filesystem::path web_root{"web"};
 };
 

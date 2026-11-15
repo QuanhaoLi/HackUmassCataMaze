@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:46 EST
+Last Modified at: 2026-11-15 02:30 EST
 Last Modified by: Codex
 
 本文档集中记录 CataMaze v1 实施过程中不可违反的产品、架构、硬件与运维限制。
@@ -60,7 +60,7 @@ Keywords `MUST`, `MUST NOT`, `SHOULD`, and `MAY` are normative.
 
 ## 5. Timing and concurrency
 
-- Normal gameplay advances at one tick per second.
+- Normal gameplay advances exactly once every 600 ms on Native and ESP32; virtual tests may advance without sleeping.
 - Production logic MUST NOT use long blocking sleeps or `delay()` calls.
 - Native automated tests MUST use a virtual clock.
 - Exactly one simulation owner may mutate the game state.

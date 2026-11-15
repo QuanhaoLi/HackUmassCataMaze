@@ -33,10 +33,10 @@
     "maximum_logit_error": 0.1,
     "maximum_value_error": 0.5,
     "maximum_hidden_error": 0.18,
-    "maximum_three_agent_us": 900000
+    "maximum_three_agent_us": 500000
   },
   "generated_header": {
     "created_at": "2026-11-14 18:51 EST",
-    "modified_at": "2026-11-14 18:51 EST"
+    "modified_at": "2026-11-15 02:30 EST"
   }
 }

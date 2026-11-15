@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 06:54 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:46 EST
+Last Modified at: 2026-11-15 02:30 EST
 Last Modified by: Codex
 
 本文档是 CataMaze 产品领域语言词汇表，不包含实现规格。
@@ -76,6 +76,10 @@ _Avoid_: Resolution, difficulty, arbitrary map size
 **Tick Budget**:
 The maximum completed ticks allowed for a Game Session, derived from its Map Preset.
 _Avoid_: Timer, time limit in seconds
+
+**Tick Cadence**:
+The real-time interval between Game Session ticks, fixed at 600 ms on Native and ESP32; it does not affect virtual test stepping.
+_Avoid_: FPS, animation speed, timeout
 
 **Six-button set**:
 The physical controls UP, DOWN, LEFT, RIGHT, FIRE, and CLEAR shared by navigation and gameplay.

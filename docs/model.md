@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-15 00:52 EST
 Created by: Codex
-Last Modified at: 2026-11-15 00:24 EST
+Last Modified at: 2026-11-15 02:30 EST
 Last Modified by: Codex
 -->
 
@@ -49,7 +49,7 @@ At startup, the firmware writes a frozen real recurrent observation into the mod
 
 | Measurement | Result | Gate |
 |---|---:|---:|
-| Three sequential inferences | 126,239µs | ≤900,000µs |
+| Three sequential inferences | 126,239µs | ≤500,000µs |
 | Maximum logit error | 0.021938 | ≤0.10 |
 | Value error | 0.016793 | ≤0.50 |
 | Maximum hidden error | 0.032408 | ≤0.18 |
@@ -67,6 +67,8 @@ The `.espdl` artifact is embedded permanently in Flash. At boot, one model insta
 ## Encounter expectations
 
 For the frozen default seed, current farthest-cell spawning places AI approximately 36–38 path steps away on 12×12, 123–124 on 20×20, 256–258 on 30×30, and 505–506 on 50×50. A long delay before seeing an enemy on Medium/Original maps is therefore not evidence that the Resident Policy is inactive. Human model validation should use Tiny 12×12 and confirm Policy Health inference calls plus a physical encounter; changing spawn bands is a separate game-design/model-distribution decision.
+
+Across 64 deterministic seeds with a stationary player and the heuristic baseline, first visible-enemy medians are 45 ticks on 12×12, 160 on 20×20, 403 on 30×30, and 1,164 on 50×50. At 600 ms/tick this is approximately 27 seconds, 1m36s, 4m02s, and 11m38s; p90 values are approximately 33 seconds, 2m00s, 5m08s, and 15m06s. These are encounter baselines, not claims about ESP-DL path optimality.
 
 ## Remaining endurance gate
 

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:50 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:42 EST
+// Last Modified at: 2026-11-15 02:30 EST
 // Last Modified by: Codex
 // Freezes verified ESP32-S3 pins, bus settings, debounce, and timing without GPIO4 or GPIO10.
 
@@ -32,7 +32,7 @@ inline constexpr std::array<std::uint8_t, 6> kButtonPins{kUpPin,    kDownPin, kL
                                                          kRightPin, kFirePin, kClearPin};
 
 inline constexpr std::uint32_t kDebounceMs = 20U;
-inline constexpr std::uint32_t kTickIntervalMs = 1000U;
+inline constexpr std::uint32_t kTickIntervalMs = 600U;
 inline constexpr std::uint32_t kSerialBaud = 115200U;
 inline constexpr std::uint64_t kDefaultSeed = 0x000000000134fd5aULL;
 

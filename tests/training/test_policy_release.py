@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:51 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 18:51 EST
+# Last Modified at: 2026-11-15 02:34 EST
 # Last Modified by: Codex
 # Verifies the single released-model manifest, artifact, evidence, tensor contract, and C++ output.
 
@@ -62,7 +62,7 @@ def test_release_evidence_passes_declared_gates_and_compatibility_is_explicit() 
         "maximum_logit_error": 0.1,
         "maximum_value_error": 0.5,
         "maximum_hidden_error": 0.18,
-        "maximum_three_agent_us": 900_000,
+        "maximum_three_agent_us": 500_000,
     }
 
 

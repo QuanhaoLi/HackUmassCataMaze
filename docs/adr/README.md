@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:28 EST
 Created by: Codex
-Last Modified at: 2026-11-14 21:09 EST
+Last Modified at: 2026-11-15 02:30 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -20,6 +20,7 @@ Last Modified by: Codex
 |-0007-esp32-local-policy-inference.md — Defines ESP-DL export, quantization, sequential inference, fallback, and physical acceptance.
 |-0008-companion-shell-outside-game-core.md — Keeps expressive idle animation and inactivity timing outside deterministic game/model state.
 |-0009-atomic-resident-policy.md — Makes three-AI inference atomic and selects one released model with automatic latched heuristic fallback only.
+|-0010-six-hundred-ms-tick-cadence.md — Sets 600 ms real-time ticks and tightens complete-model inference to 500 ms.
 |-0010-isolate-v2-persona-policy-candidate.md — Isolates V2 model preparation from V1 deployment and freezes the multi-head persona architecture and handoff boundary.
 |-0011-isolate-persona-reward-v3.md — Introduces V2-only reward v3 after architecture ablations prove reward-v2 persona collapse.
 |-0012-bound-v2-style-constraints.md — Adds small, observable style constraints only after reward-v3 controlled trials remain below persona gates.

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 18:51 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 18:51 EST
+// Last Modified at: 2026-11-15 02:30 EST
 // Last Modified by: Codex
 // Generated from model/policy_release.json; do not hand-edit release values.
 
@@ -37,7 +37,7 @@ inline constexpr float kMinimumMaskedActionAgreement = 0.985000F;
 inline constexpr float kMaximumLogitError = 0.100000F;
 inline constexpr float kMaximumValueError = 0.500000F;
 inline constexpr float kMaximumHiddenError = 0.180000F;
-inline constexpr std::uint32_t kMaximumThreeAgentUs = 900000U;
+inline constexpr std::uint32_t kMaximumThreeAgentUs = 500000U;
 inline constexpr std::uint32_t kPhysicalThreeInferenceUs = 126287U;
 inline constexpr std::uint32_t kPhysicalInternalBytes = 167508U;
 inline constexpr std::uint32_t kPhysicalPsramBytes = 1480032U;

@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:37 EST
 Created by: CataDragon
-Last Modified at: 2026-11-15 00:22 EST
+Last Modified at: 2026-11-15 02:30 EST
 Last Modified by: Codex
 
 本文档定义 CataMaze v1 的确定性游戏规则、状态转换、可观察信息与终局条件。
@@ -9,7 +9,7 @@ Last Modified by: Codex
 
 # CataMaze v1 — Game Rules
 
-CataMaze is a **standalone, single-player maze escape game** running on an ESP32-S3 handheld. The player searches for an exit while avoiding or fighting three AI enemies. The game advances at **one tick per second** during normal play. Each tick resolves one player action and one action per living AI.
+CataMaze is a **standalone, single-player maze escape game** running on an ESP32-S3 handheld. The player searches for an exit while avoiding or fighting three AI enemies. The game advances once every **600 ms** during normal play. Each tick resolves one player action and one action per living AI.
 
 ## 1. Game Setup
 

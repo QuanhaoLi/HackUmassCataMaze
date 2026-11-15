@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 02:05 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:34 EST
+Last Modified at: 2026-11-15 02:30 EST
 Last Modified by: Codex
 
 本文档冻结 CataMaze v1 黑客松阶段的工程结构、工具链、目标边界与运行接口。
@@ -114,7 +114,7 @@ The coordinator translates platform input into domain commands and coordinates:
 - debounced input events;
 - an allocation-free six-button interpreter shared by Native tests and the ESP32 adapter;
 - Home, Setup, System, About, Game Session, Pause Menu, confirmation, and Result transitions;
-- one-second real-time scheduling or accelerated virtual ticks;
+- 600 ms real-time scheduling or accelerated virtual ticks;
 - mode-aware action queue mutation, including separate CLEAR short and 800 ms long intents;
 - one heuristic-policy decision for each living AI per tick;
 - rendering snapshots after ticks and queue changes;

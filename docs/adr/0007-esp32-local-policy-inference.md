@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-14 10:39 EST
 Created by: Codex
-Last Modified at: 2026-11-15 00:28 EST
+Last Modified at: 2026-11-15 02:30 EST
 Last Modified by: Codex
 -->
 
@@ -32,11 +32,11 @@ The production policy contains 1,010,826 parameters and uses Conv2D, GroupNorm, 
 - The ONNX graph contains only ESP-DL-supported operators after GroupNorm decomposition.
 - Quantized action agreement against FP32 is at least `98.5%` on 10,000 legal observations; the released W8A16 artifact achieves `98.61%`, and no masked action is selected because the portable C++ mask is authoritative.
 - The complete model plus firmware fit verified Flash/PSRAM budgets.
-- Three sequential AI inferences complete within 900ms p95, leaving at least 100ms for game, input, display, and audio work in the one-second tick.
+- Three sequential AI inferences complete within 500ms, leaving at least 100ms for game, input, display, audio, and scheduling work in the 600ms tick.
 - A 10,000-tick physical run has no watchdog, heap-growth, hidden-state corruption, or model/fallback transition failure.
 
 ## Released evidence
 
 The released W8A16 artifact is 1,490,800 bytes with SHA-256 `0cc8bb5025ff22c435b0107fd739560f4c4e13c16e2683a1ad3f0e0ee7044322`. On the final physical N16R8 release, three sequential reference inferences completed in 126,210 microseconds. Maximum decoded errors against the frozen FP32 reference were `0.021938` logits, `0.016793` value, and `0.032408` hidden state. Runtime allocation consumed 167,508 bytes of internal memory and 1,480,032 bytes of PSRAM. The guarded product release reported `policy_ready=true` and `policy_fallback_latched=false`.
 
-The 10,000-tick endurance gate remains post-release validation; any runtime tensor, finite-output, legal-mask, or 900ms latency failure immediately latches the heuristic fallback.
+The 10,000-tick endurance gate remains post-release validation; any runtime tensor, finite-output, legal-mask, or 500ms latency failure immediately latches the heuristic fallback.
