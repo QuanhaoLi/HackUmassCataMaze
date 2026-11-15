@@ -13,6 +13,7 @@ Last Modified by: Codex
 |-__init__.py — Exposes the V2 architecture version without importing V1 product code.
 |-ablation.py — Creates explicit no-modulation, shared-head, and no-persona V2 comparison checkpoints.
 |-checkpoint.py — Saves and restores complete V2 training, environment, collector, and RNG state.
+|-consolidate.py — Produces one immutable cumulative checkpoint from the three isolated phase checkpoints.
 |-config.py — Validates immutable V1 lineage and every V2 production-candidate contract.
 |-ddp_smoke.py — Qualifies one shared V2 model across four V100 ranks with global persona statistics.
 |-detailed_evaluator.py — Emits aggregate metrics plus immutable per-episode V2 evidence.

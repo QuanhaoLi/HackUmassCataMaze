@@ -12,6 +12,7 @@ Last Modified by: Codex
 |-README.md — Defines V2 model test ownership.
 |-test_ablation_v2.py — Verifies every causal comparison removes only its declared persona mechanism.
 |-test_checkpoint_v2.py — Verifies a V2 checkpoint reproduces the exact next recurrent rollout.
+|-test_consolidate_v2.py — Verifies cumulative phase lineage without changing final model tensors.
 |-test_config_v2.py — Verifies the committed V2 lineage, topology, phase, quantization, and budget contract.
 |-test_detailed_evaluator_v2.py — Verifies aggregate and raw episode evidence agree.
 |-test_evaluator_v2.py — Verifies persona behavior gates and counterfactual JS divergence.
