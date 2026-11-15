@@ -1,0 +1,112 @@
+<!--
+Created at: 2026-11-15 06:38 EST
+Created by: Codex
+Last Modified at: 2026-11-15 06:38 EST
+Last Modified by: Codex
+Defines the accessible, backend-free CataMaze dual-OLED showcase.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#080b0c">
+    <meta name="description" content="Play the backend-free dual-screen CataMaze browser simulation.">
+    <title>CataMaze — Dual-OLED Browser Sim</title>
+    <link rel="stylesheet" href="./app.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body data-release="2026.11.15.1">
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">HANDHELD + COMPANION</p>
+          <h1>CataMaze <span>dual-OLED sim</span></h1>
+        </div>
+        <div class="runtime-cluster">
+          <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true">
+            SOUND ON
+          </button>
+          <div class="runtime-badge" aria-label="This simulation runs locally in your browser">
+            <span aria-hidden="true"></span>BROWSER SIM
+          </div>
+        </div>
+      </header>
+
+      <section class="device" aria-label="CataMaze handheld browser simulation">
+        <div class="device-mark">
+          <span>CATAMAZE // POCKET-01</span>
+          <span>LOCAL / OFFLINE</span>
+        </div>
+
+        <div class="screens">
+          <article class="screen-module">
+            <div class="screen-heading"><span>LEFT OLED / EYE + FOCUS</span><span>128×64</span></div>
+            <div class="screen-bezel">
+              <canvas id="map-screen" width="128" height="64" role="img"
+                aria-label="Left OLED showing the companion eye, menus, or nine by five local map">
+                Left OLED display.
+              </canvas>
+            </div>
+          </article>
+
+          <article class="screen-module">
+            <div class="screen-heading"><span>RIGHT OLED / EYE + CONTEXT</span><span>128×64</span></div>
+            <div class="screen-bezel">
+              <canvas id="hud-screen" width="128" height="64" role="img"
+                aria-label="Right OLED showing the companion eye, context, or icon HUD">
+                Right OLED display.
+              </canvas>
+            </div>
+          </article>
+        </div>
+
+        <div class="status-strip" aria-live="polite" aria-atomic="true">
+          <span><b>MODE</b><i id="status">IDLE</i></span>
+          <span><b>TICK</b><i id="tick">00000</i></span>
+          <span><b>QUEUE</b><i id="queue">00/32</i></span>
+        </div>
+
+        <div class="control-deck">
+          <section class="dpad-panel" aria-label="Directional controls">
+            <button class="key direction up" type="button" data-direction="UP" aria-label="Up">▲</button>
+            <button class="key direction left" type="button" data-direction="LEFT" aria-label="Left">◀</button>
+            <div class="dpad-center" aria-hidden="true"><span></span></div>
+            <button class="key direction right" type="button" data-direction="RIGHT" aria-label="Right">▶</button>
+            <button class="key direction down" type="button" data-direction="DOWN" aria-label="Down">▼</button>
+          </section>
+
+          <section class="action-panel" aria-label="Action controls">
+            <button class="round-key fire" id="fire" type="button"
+              aria-label="FIRE: confirm, or hold before a direction to shoot">
+              <span>FIRE</span><small>OK / HOLD</small>
+            </button>
+            <button class="round-key clear" id="clear" type="button"
+              aria-label="CLEAR: tap to go back or clear queue; hold 0.8 seconds to pause">
+              <span>CLEAR</span><small>BACK / HOLD</small>
+              <i aria-hidden="true"></i>
+            </button>
+          </section>
+        </div>
+      </section>
+
+      <aside class="guide" aria-label="Control guide">
+        <div>
+          <p class="eyebrow">HOW TO PLAY</p>
+          <p>Any button wakes the companion. Press <kbd>FIRE</kbd> again to play. Move with the D-pad; hold FIRE first, then press a direction to shoot. Projectiles stay invisible by design.</p>
+        </div>
+        <div class="legend" aria-label="Simulation facts">
+          <span><b>600ms</b> tick</span>
+          <span><b>9×5</b> player view</span>
+          <span><b>3</b> demo AIs</span>
+          <span><b>0</b> backend calls</span>
+        </div>
+      </aside>
+
+      <footer>
+        <p>This public artifact is a deterministic browser showcase. The shared C++ Game Core and ESP-DL Resident Policy remain authoritative on Native and ESP32.</p>
+        <p>RELEASE 2026.11.15.1</p>
+      </footer>
+    </main>
+  </body>
+</html>

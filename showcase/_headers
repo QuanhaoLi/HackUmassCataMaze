@@ -1,0 +1,20 @@
+# Created at: 2026-11-15 06:38 EST
+# Created by: Codex
+# Last Modified at: 2026-11-15 06:38 EST
+# Last Modified by: Codex
+# Applies security and cache policy to the backend-free Cloudflare Pages showcase.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache

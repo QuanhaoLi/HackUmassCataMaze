@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 18:51 EST
+Last Modified at: 2026-11-15 06:36 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -11,6 +11,7 @@ Last Modified by: Codex
 ## folder structure
 |-README.md — Documents acceptance-script ownership.
 |-capture_chrome.mjs — Applies an exact CSS viewport through Chrome DevTools, rejects overflow, and saves a PNG.
+|-capture_showcase.mjs — Drives the static showcase through real Chrome, checks six-button semantics and layout, and captures one viewport.
 |-esp32_capture_serial.py — Captures bounded ESP32 Serial output without hard-coding a port.
 |-esp32_detect_port.sh — Resolves exactly one Espressif native USB-Serial/JTAG device.
 |-esp32_preflight.sh — Runs read-only chip and Flash identity checks before any upload.
@@ -26,6 +27,7 @@ Last Modified by: Codex
 |-run_randomized.sh — Runs and repeats the deterministic randomized invariant executable.
 |-run_sanitizers.sh — Executes the full Native suite under ASan and UBSan.
 |-screenshot_native.sh — Starts the loopback simulator and captures desktop and narrow Chrome screenshots.
+|-screenshot_showcase.sh — Serves the backend-free showcase locally and runs desktop/mobile Chrome acceptance captures.
 
 ## To-Dos
 - Add ESP32 scripts only when their documented milestones begin.

@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 00:16 EST
 # Created by: Codex
-# Last Modified at: 2026-11-15 00:56 EST
+# Last Modified at: 2026-11-15 06:36 EST
 # Last Modified by: Codex
 
 # macOS Finder metadata must not be committed.
@@ -9,6 +9,7 @@
 # Project-local tools, build products, diagnostics, and visual QA artifacts.
 .venv/
 .pio/
+.wrangler/
 .artifacts/
 coverage/
 compile_commands.json
