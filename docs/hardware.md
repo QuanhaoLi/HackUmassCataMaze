@@ -1,7 +1,7 @@
 <!--
 Created at: 2026-11-13 23:50 EST
 Created by: CataDragon
-Last Modified at: 2026-11-14 19:04 EST
+Last Modified at: 2026-11-15 02:04 EST
 Last Modified by: Codex
 
 本文档记录 CataMaze v1 当前硬件清单、已验证的双屏接线、显示职责与驱动约束。
@@ -80,6 +80,10 @@ The final wiring above was tested on the physical ESP32-S3 and both physical OLE
 - Each display completed approximately 1,081 I²C transactions with zero reported errors during the validation run.
 
 Validation used a standalone Arduino diagnostic sketch named `Dual_GME12864_Test`. It is a hardware test artifact, not the production game renderer.
+
+On 2026-11-15 the right panel entered a powered latch state: it continued acknowledging `0x3C` with both bus lines HIGH and zero I²C errors, but visually retained only the center pupil highlight instead of accepting new framebuffer pixels. Repeated ESP resets and initialization commands did not clear it; a complete ten-second power removal restored normal display operation. Enhanced `catamaze.diag.v3` now independently initializes both panels, writes a checker pattern to the left and an all-white 1,024-byte pattern to the right, and records initialization/write acknowledgements. The recovered panel passed both electronic writes and human visual confirmation.
+
+Because the four-pin modules expose no reset pin, firmware cannot guarantee recovery from a controller state that still ACKs while ignoring display RAM. Product mitigation is secure VCC/GND connections, avoid hot-plugging, keep wiring short, and perform a full power cycle if the symptom returns. A local 100 nF ceramic plus 4.7–10 µF bulk capacitor near each panel is recommended for the final enclosure power rail.
 
 ## 4. Six-button input
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 04:44 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 07:42 EST
+# Last Modified at: 2026-11-15 01:59 EST
 # Last Modified by: Codex
 # Preflights, uploads only diagnostic firmware, captures Serial, and asserts physical evidence.
 
@@ -34,7 +34,7 @@ done
 diag_json="$(sed -n 's/^CATAMAZE_DIAG //p' "${artifact_dir}/diagnostic-serial.log" | head -n 1)"
 [[ -n "${diag_json}" ]]
 jq -e '
-  .schema == "catamaze.diag.v2" and
+  .schema == "catamaze.diag.v3" and
   .flash_bytes == 16777216 and
   .psram_found == true and
   .psram_bytes == 8388608 and
@@ -42,6 +42,8 @@ jq -e '
   .map_i2c_errors == 0 and .map_sda_high == true and .map_scl_high == true and
   .hud_bus_started == true and .hud_i2c_count == 1 and .hud_i2c_address == 60 and
   .hud_i2c_errors == 0 and .hud_sda_high == true and .hud_scl_high == true and
+  .map_initialized == true and .map_pattern_write == true and
+  .hud_initialized == true and .hud_pattern_write == true and
   .button_count == 6 and .released_mask == 63 and .all_buttons_released == true and
   .gpio4_configured == false and .gpio10_configured == false and .pass == true
 ' <<<"${diag_json}" >/dev/null

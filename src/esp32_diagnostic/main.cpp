@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:44 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 07:42 EST
+// Last Modified at: 2026-11-15 01:59 EST
 // Last Modified by: Codex
 // Reports bounded ESP32-S3, PSRAM, dual-I2C, and idle-button evidence before product upload.
 
@@ -20,6 +20,12 @@ constexpr std::uint32_t kExpectedFlashBytes = 16U * 1024U * 1024U;
 constexpr std::uint32_t kExpectedPsramBytes = 8U * 1024U * 1024U;
 constexpr std::array<std::uint8_t, 6> kButtonPins{5U, 6U, 7U, 15U, 16U, 11U};
 constexpr std::uint8_t kAllButtonsReleasedMask = 0x3fU;
+constexpr std::array<std::uint8_t, 25> kInitializationCommands{
+    0xae, 0xd5, 0x80, 0xa8, 0x3f, 0xd3, 0x00, 0x40, 0x8d, 0x14, 0x20, 0x00, 0xa1,
+    0xc8, 0xda, 0x12, 0x81, 0xcf, 0xd9, 0xf1, 0xdb, 0x40, 0xa4, 0xa6, 0xaf};
+constexpr std::array<std::uint8_t, 6> kFullWindowCommands{0x21, 0x00, 0x7f, 0x22, 0x00, 0x07};
+constexpr std::size_t kFramebufferBytes = 1024U;
+constexpr std::size_t kChunkBytes = 16U;
 
 TwoWire hud_wire(1U);
 
@@ -42,6 +48,32 @@ I2cScan scanBus(TwoWire& bus) {
     }
   }
   return scan;
+}
+
+template <std::size_t Size>
+bool sendCommands(TwoWire& bus, const std::array<std::uint8_t, Size>& commands) {
+  bus.beginTransmission(kExpectedDisplayAddress);
+  bus.write(0x00U);
+  bus.write(commands.data(), commands.size());
+  return bus.endTransmission() == 0U;
+}
+
+bool initializePanel(TwoWire& bus) { return sendCommands(bus, kInitializationCommands); }
+
+bool writePattern(TwoWire& bus, bool all_on) {
+  if (!sendCommands(bus, kFullWindowCommands)) return false;
+  std::array<std::uint8_t, kChunkBytes> chunk{};
+  for (std::size_t offset = 0U; offset < kFramebufferBytes; offset += chunk.size()) {
+    for (std::size_t index = 0U; index < chunk.size(); ++index) {
+      const std::size_t byte = offset + index;
+      chunk[index] = all_on ? 0xffU : ((byte / 16U + byte) % 2U == 0U ? 0xaaU : 0x55U);
+    }
+    bus.beginTransmission(kExpectedDisplayAddress);
+    bus.write(0x40U);
+    bus.write(chunk.data(), chunk.size());
+    if (bus.endTransmission() != 0U) return false;
+  }
+  return true;
 }
 
 std::uint8_t releasedButtonMask() {
@@ -77,6 +109,14 @@ void setup() {
   const bool hud_scl_high = digitalRead(17) == HIGH;
   const I2cScan map_scan = scanBus(Wire);
   const I2cScan hud_scan = scanBus(hud_wire);
+  const bool map_initialized = map_bus_started && map_scan.count == 1U &&
+                               map_scan.first_address == kExpectedDisplayAddress &&
+                               initializePanel(Wire);
+  const bool hud_initialized = hud_bus_started && hud_scan.count == 1U &&
+                               hud_scan.first_address == kExpectedDisplayAddress &&
+                               initializePanel(hud_wire);
+  const bool map_pattern_write = map_initialized && writePattern(Wire, false);
+  const bool hud_pattern_write = hud_initialized && writePattern(hud_wire, true);
 
   const std::uint32_t flash_bytes = ESP.getFlashChipSize();
   const bool psram_found = psramFound();
@@ -88,10 +128,11 @@ void setup() {
                     map_scan.errors == 0U && hud_scan.count == 1U &&
                     hud_scan.first_address == kExpectedDisplayAddress && hud_scan.errors == 0U &&
                     map_sda_high && map_scl_high && hud_sda_high && hud_scl_high &&
+                    map_initialized && hud_initialized && map_pattern_write && hud_pattern_write &&
                     released_mask == kAllButtonsReleasedMask;
 
   Serial0.printf(
-      "CATAMAZE_DIAG {\"schema\":\"catamaze.diag.v2\","
+      "CATAMAZE_DIAG {\"schema\":\"catamaze.diag.v3\","
       "\"chip\":\"%s\",\"revision\":%u,\"cpu_mhz\":%u,"
       "\"flash_bytes\":%lu,\"psram_found\":%s,\"psram_bytes\":%lu,"
       "\"map_bus_started\":%s,\"map_i2c_count\":%u,"
@@ -100,6 +141,8 @@ void setup() {
       "\"hud_bus_started\":%s,\"hud_i2c_count\":%u,"
       "\"hud_i2c_address\":%u,\"hud_i2c_errors\":%u,"
       "\"hud_sda_high\":%s,\"hud_scl_high\":%s,"
+      "\"map_initialized\":%s,\"map_pattern_write\":%s,"
+      "\"hud_initialized\":%s,\"hud_pattern_write\":%s,"
       "\"button_count\":%u,\"released_mask\":%u,\"all_buttons_released\":%s,"
       "\"gpio4_configured\":false,\"gpio10_configured\":false,\"pass\":%s}\n",
       ESP.getChipModel(), static_cast<unsigned>(ESP.getChipRevision()),
@@ -111,6 +154,8 @@ void setup() {
       hud_bus_started ? "true" : "false", static_cast<unsigned>(hud_scan.count),
       static_cast<unsigned>(hud_scan.first_address), static_cast<unsigned>(hud_scan.errors),
       hud_sda_high ? "true" : "false", hud_scl_high ? "true" : "false",
+      map_initialized ? "true" : "false", map_pattern_write ? "true" : "false",
+      hud_initialized ? "true" : "false", hud_pattern_write ? "true" : "false",
       static_cast<unsigned>(kButtonPins.size()), static_cast<unsigned>(released_mask),
       released_mask == kAllButtonsReleasedMask ? "true" : "false", pass ? "true" : "false");
   printButtons(released_mask);
