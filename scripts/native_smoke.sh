@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Created at: 2026-11-14 02:26 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 11:38 EST
+# Last Modified at: 2026-11-14 19:00 EST
 # Last Modified by: Codex
 # Builds and executes a bounded headless Native gameplay acceptance check.
 
@@ -51,7 +51,7 @@ done
 
 curl -fsS "${base_url}/health" | jq -e '.status == "ok"' >/dev/null
 curl -fsS "${base_url}/api/v1/snapshot" | jq -e \
-  '.schema == "catamaze.snapshot.v3" and .mode == "IDLE" and .system_mode == "HOME" and .companion_frame == "NEUTRAL" and .system.confirmed_map_size == 30 and (.left_frame_hex | length) == 2048 and (.right_frame_hex | length) == 2048 and .tick == 0' \
+  '.schema == "catamaze.snapshot.v3" and .mode == "IDLE" and .system_mode == "HOME" and .companion_frame == "NEUTRAL" and .policy.mode == "HEURISTIC" and .policy.failure == "NONE" and .system.confirmed_map_size == 30 and (.left_frame_hex | length) == 2048 and (.right_frame_hex | length) == 2048 and .tick == 0' \
   >/dev/null
 curl -fsS -X POST -H 'Content-Type: application/json' \
   -d '{"input":"FIRE"}' "${base_url}/api/v1/input" | \

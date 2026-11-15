@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-15 00:20 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Implements deterministic legal-observation AI policies and application tick ownership.
 
@@ -93,18 +93,18 @@ Application::Application(core::GameConfig config) noexcept : engine_(config) {
 void Application::reset(std::uint64_t seed) noexcept {
   engine_.reset(seed);
   initializeAiMemory(seed);
-  if (ai_action_provider_ != nullptr) ai_action_provider_->reset();
+  if (resident_policy_ != nullptr) resident_policy_->resetSession();
 }
 
 void Application::reset(core::GameConfig config) noexcept {
   engine_.reset(config);
   initializeAiMemory(config.seed);
-  if (ai_action_provider_ != nullptr) ai_action_provider_->reset();
+  if (resident_policy_ != nullptr) resident_policy_->resetSession();
 }
 
-void Application::setAiActionProvider(AiActionProvider* provider) noexcept {
-  ai_action_provider_ = provider;
-  if (ai_action_provider_ != nullptr) ai_action_provider_->reset();
+void Application::installResidentPolicy(ResidentPolicyModule& policy) noexcept {
+  resident_policy_ = &policy;
+  resident_policy_->resetSession();
 }
 
 bool Application::enqueuePlayerAction(core::Action action) noexcept {
@@ -264,33 +264,49 @@ Action Application::chooseHeuristicAction(std::size_t ai_index,
   return Action::Wait;
 }
 
-Action Application::chooseAction(std::size_t ai_index) noexcept {
-  const EntityId id = static_cast<EntityId>(ai_index + 1U);
-  const Observation observation = engine_.observe(id);
-  if (!observation.self.alive) return Action::Wait;
-  if (ai_action_provider_ != nullptr) {
-    const core::EncodedObservation encoded =
-        core::encodePolicyObservation(observation, engine_.state().tick);
-    Action selected = Action::Wait;
-    if (ai_action_provider_->select(ai_index, encoded, selected) &&
-        static_cast<std::size_t>(selected) < encoded.action_mask.size() &&
-        encoded.action_mask[static_cast<std::size_t>(selected)]) {
-      return selected;
-    }
-  }
-  return chooseHeuristicAction(ai_index, observation);
-}
-
 void Application::tick() noexcept {
   if (engine_.state().status != core::GameStatus::Running) {
     return;
   }
   std::array<Action, core::kAiCount> actions{};
-  if (ai_action_provider_ != nullptr) ai_action_provider_->beginTick();
+  actions.fill(Action::Wait);
+  std::array<Observation, core::kAiCount> observations{};
+  PolicyTickInput policy_input{};
   for (std::size_t ai = 0; ai < actions.size(); ++ai) {
-    actions[ai] = chooseAction(ai);
+    const EntityId id = static_cast<EntityId>(ai + 1U);
+    observations[ai] = engine_.observe(id);
+    policy_input.active[ai] = observations[ai].self.alive;
+    if (policy_input.active[ai]) {
+      policy_input.observations[ai] =
+          core::encodePolicyObservation(observations[ai], engine_.state().tick);
+    }
   }
-  if (ai_action_provider_ != nullptr) ai_action_provider_->endTick();
+
+  bool model_tick_valid = false;
+  if (resident_policy_ != nullptr) {
+    std::array<Action, core::kAiCount> proposed{};
+    proposed.fill(Action::Wait);
+    model_tick_valid = resident_policy_->selectTick(policy_input, proposed);
+    if (model_tick_valid) {
+      for (std::size_t ai = 0; ai < proposed.size(); ++ai) {
+        const std::size_t action = static_cast<std::size_t>(proposed[ai]);
+        if (policy_input.active[ai] &&
+            (action >= policy_input.observations[ai].action_mask.size() ||
+             !policy_input.observations[ai].action_mask[action])) {
+          model_tick_valid = false;
+          break;
+        }
+      }
+    }
+    if (model_tick_valid) actions = proposed;
+  }
+  if (!model_tick_valid) {
+    for (std::size_t ai = 0; ai < actions.size(); ++ai) {
+      if (policy_input.active[ai]) {
+        actions[ai] = chooseHeuristicAction(ai, observations[ai]);
+      }
+    }
+  }
   engine_.step(actions);
   for (std::size_t ai = 0; ai < ai_memory_.size(); ++ai) {
     const auto& entity = engine_.state().entities[ai + 1U];
@@ -308,6 +324,10 @@ core::PlayerObservation Application::playerObservation() const noexcept {
   return engine_.observePlayer();
 }
 
+const PolicyHealth& Application::policyHealth() const noexcept {
+  return resident_policy_ != nullptr ? resident_policy_->health() : heuristic_health_;
+}
+
 std::uint64_t Application::stateHash() const noexcept {
   std::uint64_t hash = engine_.stateHash();
   const auto mix = [&hash](std::uint64_t value) {
@@ -319,7 +339,7 @@ std::uint64_t Application::stateHash() const noexcept {
       mix(visits);
     }
   }
-  if (ai_action_provider_ != nullptr) mix(ai_action_provider_->stateHash());
+  if (resident_policy_ != nullptr) mix(resident_policy_->stateHash());
   return hash;
 }
 

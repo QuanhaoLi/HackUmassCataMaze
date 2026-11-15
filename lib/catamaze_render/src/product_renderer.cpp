@@ -1,12 +1,13 @@
 // Created at: 2026-11-14 11:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 11:34 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Implements expressive one-bit eyes and a session-preserving inactivity confirmation screen.
 
 #include "catamaze/render/product_renderer.hpp"
 
 #include <cstdint>
+#include <cstdio>
 
 #include "catamaze/render/renderer.hpp"
 
@@ -130,6 +131,25 @@ Framebuffer inactivityPrompt(const app::ProductSnapshot& product) noexcept {
   return frame;
 }
 
+Framebuffer policyHealthScreen(const app::PolicyHealth& health) noexcept {
+  Framebuffer frame;
+  frame.clear();
+  frame.drawText(4, 2, "POLICY HEALTH");
+  frame.fillRect(3, 11, 122, 1);
+  frame.drawText(4, 16, app::policyModeName(health.mode));
+  frame.drawText(4, 27, app::policyFailureName(health.failure));
+  char line[22]{};
+  std::snprintf(line, sizeof(line), "CALLS %lu FAIL %lu",
+                static_cast<unsigned long>(health.inference_calls),
+                static_cast<unsigned long>(health.inference_failures));
+  frame.drawText(4, 39, line);
+  std::snprintf(line, sizeof(line), "LAT %lu/%lu US",
+                static_cast<unsigned long>(health.last_tick_inference_us),
+                static_cast<unsigned long>(health.max_tick_inference_us));
+  frame.drawText(4, 51, line);
+  return frame;
+}
+
 }  // namespace
 
 DualFrames ProductRenderer::screens(const app::ProductSnapshot& product,
@@ -139,8 +159,13 @@ DualFrames ProductRenderer::screens(const app::ProductSnapshot& product,
     case app::ProductMode::CompanionIdle:
       return DualFrames{eyeFrame(product.companion_frame, false),
                         eyeFrame(product.companion_frame, true)};
-    case app::ProductMode::Active:
-      return SystemRenderer::screens(product.system, observation, world);
+    case app::ProductMode::Active: {
+      DualFrames frames = SystemRenderer::screens(product.system, observation, world);
+      if (product.system.mode == app::SystemMode::System && product.system.focus == 1U) {
+        frames.right = policyHealthScreen(product.policy_health);
+      }
+      return frames;
+    }
     case app::ProductMode::InactivityPrompt:
       return DualFrames{Renderer::mapScreen(observation), inactivityPrompt(product)};
   }

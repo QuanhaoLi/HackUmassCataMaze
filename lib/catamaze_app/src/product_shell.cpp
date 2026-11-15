@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 11:30 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 11:42 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Implements wrap-safe Companion Idle, consumed Wake, and guarded inactivity transitions.
 
@@ -34,7 +34,10 @@ std::uint32_t ProductShell::elapsed(std::uint32_t now_ms, std::uint32_t since_ms
   return now_ms - since_ms;
 }
 
-void ProductShell::syncSystemSnapshot() noexcept { snapshot_.system = system_.snapshot(); }
+void ProductShell::syncSystemSnapshot() noexcept {
+  snapshot_.system = system_.snapshot();
+  snapshot_.policy_health = system_.application().policyHealth();
+}
 
 void ProductShell::begin(std::uint32_t now_ms) noexcept {
   last_activity_ms_ = now_ms;

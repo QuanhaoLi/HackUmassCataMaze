@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 07:39 EST
+Last Modified at: 2026-11-14 18:51 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -17,9 +17,11 @@ Last Modified by: Codex
 |-esp32_upload_product.sh — Refuses product upload unless fresh diagnostic v2 evidence passes, then validates Home-mode product boot.
 |-esp32_upload_diagnostic.sh — Uploads only bounded six-input diagnostic firmware and validates dual buses, memory, idle inputs, and spare GPIOs.
 |-mac_audio_companion.py — Auto-discovers ESP32 Serial audio events, reconnects, validates, and plays through Mac speakers.
+|-generate_policy_release.py — Validates one model release manifest/artifact and deterministically generates C++ constants.
 |-native_smoke.sh — Builds and runs a bounded headless Native gameplay smoke check.
 |-pio_coverage.py — Adds Clang's profile runtime to the final Native coverage link.
 |-pio_native_deps.py — Fetches and SHA-256-verifies pinned cpp-httplib and nlohmann/json single headers for Native builds.
+|-pio_policy_release.py — Refuses ESP32 product builds when the manifest, artifact, or generated header drifts.
 |-run_coverage.sh — Measures portable core/application coverage and enforces M3 thresholds.
 |-run_randomized.sh — Runs and repeats the deterministic randomized invariant executable.
 |-run_sanitizers.sh — Executes the full Native suite under ASan and UBSan.

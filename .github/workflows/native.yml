@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 02:51 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 02:51 EST
+# Last Modified at: 2026-11-14 19:00 EST
 # Last Modified by: Codex
 # Runs only locally proven Native build, test, and smoke commands without hardware access.
 
@@ -30,6 +30,8 @@ jobs:
         run: |
           node --check web/app.js
           node --check scripts/capture_chrome.mjs
+          .venv/bin/python scripts/generate_policy_release.py --check
+          .venv/bin/python -m pytest tests/training/test_policy_release.py -q
           .venv/bin/pio project config --json-output >/dev/null
       - name: Build and test Native product
         run: |

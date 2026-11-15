@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 04:50 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 11:43 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Composes deterministic gameplay with verified buttons, two OLED buses, and optional Serial audio.
 
@@ -16,6 +16,7 @@
 #include "display_adapter.hpp"
 #include "hardware_config.hpp"
 #include "policy_adapter.hpp"
+#include "policy_release.hpp"
 #include "serial_audio_adapter.hpp"
 
 SET_LOOP_TASK_STACK_SIZE(48U * 1024U);
@@ -30,6 +31,7 @@ catamaze::esp32::PolicyAdapter policy;
 bool hardware_ready = false;
 bool boot_diagnostics_pending = true;
 std::uint32_t next_tick_ms = 0U;
+catamaze::app::PolicyMode reported_policy_mode = catamaze::app::PolicyMode::Heuristic;
 
 catamaze::app::ProductShell& product() { return *product_controller; }
 
@@ -49,6 +51,8 @@ void printBootDiagnostics() {
   const std::string_view system_mode = catamaze::app::systemModeName(snapshot.mode);
   const std::string_view companion_frame =
       catamaze::app::companionFrameName(product_snapshot.companion_frame);
+  const std::string_view policy_mode = catamaze::app::policyModeName(policy_status.mode);
+  const std::string_view policy_failure = catamaze::app::policyFailureName(policy_status.failure);
   Serial0.printf(
       "CATAMAZE_BOOT {\"schema\":\"catamaze.boot.v4\","
       "\"flash_bytes\":%lu,\"psram_found\":%s,\"psram_bytes\":%lu,"
@@ -58,15 +62,19 @@ void printBootDiagnostics() {
       "\"mode\":\"%.*s\",\"system_mode\":\"%.*s\","
       "\"companion_frame\":\"%.*s\",\"confirmed_map_size\":%u,"
       "\"tick_budget\":%u,"
-      "\"policy\":\"ESP-DL-W8A16\",\"policy_runtime\":\"3.3.11\","
-      "\"policy_artifact_bytes\":%u,\"policy_artifact_sha256\":\"%s\","
-      "\"policy_masked_agreement\":0.9861,\"policy_ready\":%s,"
+      "\"policy\":\"%.*s\",\"policy_runtime\":\"%.*s\","
+      "\"policy_exporter\":\"%.*s\",\"policy_compatibility\":\"%.*s\","
+      "\"policy_artifact_bytes\":%u,\"policy_artifact_sha256\":\"%.*s\","
+      "\"policy_masked_agreement\":%.6f,\"policy_mode\":\"%.*s\","
+      "\"policy_failure\":\"%.*s\",\"policy_ready\":%s,"
       "\"policy_vector_test\":%s,\"policy_exact_vector_test\":%s,"
       "\"policy_boot_max_logit_error\":%.6f,\"policy_boot_value_error\":%.6f,"
       "\"policy_boot_max_hidden_error\":%.6f,"
       "\"policy_boot_three_inference_us\":%u,"
       "\"policy_internal_bytes\":%u,"
-      "\"policy_psram_bytes\":%u,\"policy_fallback_latched\":%s,"
+      "\"policy_psram_bytes\":%u,\"policy_inference_calls\":%u,"
+      "\"policy_inference_failures\":%u,\"policy_last_tick_us\":%u,"
+      "\"policy_max_tick_us\":%u,\"policy_fallback_latched\":%s,"
       "\"loop_stack_high_water_words\":%u,"
       "\"gpio4_configured\":false,\"ready\":%s}\n",
       static_cast<unsigned long>(ESP.getFlashChipSize()), psramFound() ? "true" : "false",
@@ -78,8 +86,21 @@ void printBootDiagnostics() {
       static_cast<int>(companion_frame.size()), companion_frame.data(),
       static_cast<unsigned>(snapshot.confirmed_map_size),
       static_cast<unsigned>(snapshot.tick_budget),
-      static_cast<unsigned>(catamaze::esp32::kPolicyArtifactBytes),
-      catamaze::esp32::kPolicyArtifactSha256, policy_status.ready ? "true" : "false",
+      static_cast<int>(catamaze::esp32::policy_release::kRelease.size()),
+      catamaze::esp32::policy_release::kRelease.data(),
+      static_cast<int>(catamaze::esp32::policy_release::kRuntimeVersion.size()),
+      catamaze::esp32::policy_release::kRuntimeVersion.data(),
+      static_cast<int>(catamaze::esp32::policy_release::kExporterVersion.size()),
+      catamaze::esp32::policy_release::kExporterVersion.data(),
+      static_cast<int>(catamaze::esp32::policy_release::kRuntimeCompatibility.size()),
+      catamaze::esp32::policy_release::kRuntimeCompatibility.data(),
+      static_cast<unsigned>(catamaze::esp32::policy_release::kArtifactBytes),
+      static_cast<int>(catamaze::esp32::policy_release::kArtifactSha256.size()),
+      catamaze::esp32::policy_release::kArtifactSha256.data(),
+      static_cast<double>(catamaze::esp32::policy_release::kMaskedActionAgreement),
+      static_cast<int>(policy_mode.size()), policy_mode.data(),
+      static_cast<int>(policy_failure.size()), policy_failure.data(),
+      policy_status.mode == catamaze::app::PolicyMode::ModelActive ? "true" : "false",
       policy_status.vector_test_passed ? "true" : "false",
       policy_status.exact_vector_test_passed ? "true" : "false",
       static_cast<double>(policy_status.boot_max_logit_error),
@@ -88,9 +109,29 @@ void printBootDiagnostics() {
       static_cast<unsigned>(policy_status.boot_three_inference_us),
       static_cast<unsigned>(policy_status.internal_used_bytes),
       static_cast<unsigned>(policy_status.psram_used_bytes),
-      policy_status.fallback_latched ? "true" : "false",
+      static_cast<unsigned>(policy_status.inference_calls),
+      static_cast<unsigned>(policy_status.inference_failures),
+      static_cast<unsigned>(policy_status.last_tick_inference_us),
+      static_cast<unsigned>(policy_status.max_tick_inference_us),
+      policy_status.mode == catamaze::app::PolicyMode::FallbackLatched ? "true" : "false",
       static_cast<unsigned>(uxTaskGetStackHighWaterMark(nullptr)),
       hardware_ready ? "true" : "false");
+}
+
+void printPolicyHealth() {
+  const auto& health = policy.diagnostics();
+  const std::string_view mode = catamaze::app::policyModeName(health.mode);
+  const std::string_view failure = catamaze::app::policyFailureName(health.failure);
+  Serial0.printf(
+      "CATAMAZE_POLICY_HEALTH {\"schema\":\"catamaze.policy.health.v1\","
+      "\"mode\":\"%.*s\",\"failure\":\"%.*s\","
+      "\"inference_calls\":%u,\"inference_failures\":%u,"
+      "\"last_tick_us\":%u,\"max_tick_us\":%u}\n",
+      static_cast<int>(mode.size()), mode.data(), static_cast<int>(failure.size()), failure.data(),
+      static_cast<unsigned>(health.inference_calls),
+      static_cast<unsigned>(health.inference_failures),
+      static_cast<unsigned>(health.last_tick_inference_us),
+      static_cast<unsigned>(health.max_tick_inference_us));
 }
 
 }  // namespace
@@ -100,13 +141,13 @@ void setup() {
   static catamaze::app::ProductShell product_instance(catamaze::esp32::kDefaultSeed);
   product_controller = &product_instance;
   const std::uint32_t started_ms = millis();
-  product().begin(started_ms);
   buttons.begin(started_ms);
   const bool memory_ok = ESP.getFlashChipSize() == 16U * 1024U * 1024U && psramFound() &&
                          ESP.getPsramSize() == 8U * 1024U * 1024U;
   hardware_ready = memory_ok && displays.begin();
   policy.begin();
-  product().application().setAiActionProvider(&policy);
+  product().application().installResidentPolicy(policy);
+  product().begin(started_ms);
   if (hardware_ready) renderBoth();
   next_tick_ms = millis() + catamaze::esp32::kTickIntervalMs;
 }
@@ -115,6 +156,7 @@ void loop() {
   const std::uint32_t now = millis();
   if (boot_diagnostics_pending) {
     printBootDiagnostics();
+    reported_policy_mode = policy.diagnostics().mode;
     boot_diagnostics_pending = false;
   }
   if (!hardware_ready) {
@@ -138,6 +180,10 @@ void loop() {
     if (state.tick != previous_tick) {
       audio.emit(catamaze::app::selectAudioEvent(state), state.tick);
       renderBoth();
+    }
+    if (policy.diagnostics().mode != reported_policy_mode) {
+      printPolicyHealth();
+      reported_policy_mode = policy.diagnostics().mode;
     }
     next_tick_ms += catamaze::esp32::kTickIntervalMs;
     if (static_cast<std::int32_t>(now - next_tick_ms) >= 0) {

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 11:30 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 11:30 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Declares explicit-time Companion Idle and inactivity coordination outside deterministic game
 // state.
@@ -35,6 +35,7 @@ enum class CompanionFrame : std::uint8_t {
 struct ProductSnapshot {
   ProductMode mode{ProductMode::CompanionIdle};
   SystemSnapshot system{};
+  PolicyHealth policy_health{};
   CompanionFrame companion_frame{CompanionFrame::Neutral};
   std::uint8_t prompt_focus{0U};
   bool prompt_resumes_playing{false};

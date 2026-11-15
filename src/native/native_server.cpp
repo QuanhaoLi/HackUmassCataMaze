@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:37 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 11:36 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Implements a bounded-command Native adapter with one simulation owner and immutable snapshots.
 
@@ -356,6 +356,13 @@ class NativeServer::Impl {
           {"tick_budget", system_state.tick_budget},
           {"has_active_session", system_state.has_active_session},
           {"prompt_focus", product_state.prompt_focus}}},
+        {"policy",
+         {{"mode", std::string(app::policyModeName(product_state.policy_health.mode))},
+          {"failure", std::string(app::policyFailureName(product_state.policy_health.failure))},
+          {"inference_calls", product_state.policy_health.inference_calls},
+          {"inference_failures", product_state.policy_health.inference_failures},
+          {"last_tick_us", product_state.policy_health.last_tick_inference_us},
+          {"max_tick_us", product_state.policy_health.max_tick_inference_us}}},
         {"player",
          {{"hp", player.hp},
           {"ammo", player.ammo},

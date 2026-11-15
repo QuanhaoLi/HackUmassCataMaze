@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 02:11 EST
 Created by: Codex
-Last Modified at: 2026-11-14 11:30 EST
+Last Modified at: 2026-11-14 18:58 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -13,6 +13,7 @@ Last Modified by: Codex
 |-application.cpp — Implements deterministic persona policies and one-owner tick coordination.
 |-audio_event.cpp — Selects one highest-priority audio event without exposing hidden state.
 |-product_shell.cpp — Implements explicit-time companion animation, consumed Wake, and guarded inactivity transitions.
+|-resident_policy.cpp — Implements stable Policy Health mode/failure names shared by product diagnostics.
 |-six_button_input.cpp — Implements debounce, FIRE sampling, no-repeat input, and CLEAR short/long suppression.
 |-system_controller.cpp — Implements portable launcher, preset, pause, result, and queue-preserving transitions.
 

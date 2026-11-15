@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 11:34 EST
 // Created by: Codex
-// Last Modified at: 2026-11-14 11:34 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Verifies reviewed eye expressions, active delegation, and inactivity prompt framebuffers.
 
@@ -91,6 +91,30 @@ TEST(ProductRenderer, InactivityPromptFreezesMapAndOwnsRightScreen) {
   const DualFrames sleep = ProductRenderer::screens(shell.snapshot(), shell.playerObservation(),
                                                     shell.application().state());
   EXPECT_NE(frames.right.bytes(), sleep.right.bytes());
+}
+
+TEST(ProductRenderer, SystemSoftwareFocusShowsBoundedPolicyHealth) {
+  app::ProductShell shell(17U);
+  shell.begin(0U);
+  shell.handle(app::SystemInput::Up, 1U);
+  app::ProductSnapshot snapshot = shell.snapshot();
+  snapshot.mode = app::ProductMode::Active;
+  snapshot.system.mode = app::SystemMode::System;
+  snapshot.system.focus = 1U;
+  snapshot.policy_health.mode = app::PolicyMode::FallbackLatched;
+  snapshot.policy_health.failure = app::PolicyFailure::LatencyBudget;
+  snapshot.policy_health.inference_calls = 123U;
+  snapshot.policy_health.inference_failures = 1U;
+  snapshot.policy_health.last_tick_inference_us = 900001U;
+  snapshot.policy_health.max_tick_inference_us = 900001U;
+
+  const DualFrames health =
+      ProductRenderer::screens(snapshot, shell.playerObservation(), shell.application().state());
+  snapshot.policy_health.failure = app::PolicyFailure::None;
+  const DualFrames healthy =
+      ProductRenderer::screens(snapshot, shell.playerObservation(), shell.application().state());
+  EXPECT_GT(litPixels(health.right), 200U);
+  EXPECT_NE(health.right.bytes(), healthy.right.bytes());
 }
 
 }  // namespace

@@ -1,6 +1,6 @@
 // Created at: 2026-11-14 02:26 EST
 // Created by: Codex
-// Last Modified at: 2026-11-15 00:20 EST
+// Last Modified at: 2026-11-14 19:00 EST
 // Last Modified by: Codex
 // Declares the one-owner application coordinator and deterministic heuristic AI lifecycle.
 
@@ -10,21 +10,10 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "catamaze/app/resident_policy.hpp"
 #include "catamaze/core/engine.hpp"
-#include "catamaze/core/policy_contract.hpp"
 
 namespace catamaze::app {
-
-class AiActionProvider {
- public:
-  virtual ~AiActionProvider() = default;
-  virtual void reset() noexcept = 0;
-  virtual void beginTick() noexcept {}
-  virtual bool select(std::size_t ai_index, const core::EncodedObservation& observation,
-                      core::Action& action) noexcept = 0;
-  virtual void endTick() noexcept {}
-  virtual std::uint64_t stateHash() const noexcept { return 0U; }
-};
 
 class Application {
  public:
@@ -36,10 +25,11 @@ class Application {
   bool enqueuePlayerAction(core::Action action) noexcept;
   void clearPlayerQueue() noexcept;
   void tick() noexcept;
-  void setAiActionProvider(AiActionProvider* provider) noexcept;
+  void installResidentPolicy(ResidentPolicyModule& policy) noexcept;
 
   core::PlayerObservation playerObservation() const noexcept;
   const core::WorldState& state() const noexcept { return engine_.state(); }
+  const PolicyHealth& policyHealth() const noexcept;
   std::uint64_t stateHash() const noexcept;
 
  private:
@@ -48,7 +38,6 @@ class Application {
     core::Direction heading{core::Direction::Up};
   };
 
-  core::Action chooseAction(std::size_t ai_index) noexcept;
   core::Action chooseHeuristicAction(std::size_t ai_index,
                                      const core::Observation& observation) noexcept;
   static bool legalMove(const core::Observation& observation, core::Direction direction) noexcept;
@@ -57,7 +46,8 @@ class Application {
 
   core::GameEngine engine_;
   std::array<AiMemory, core::kAiCount> ai_memory_{};
-  AiActionProvider* ai_action_provider_{nullptr};
+  ResidentPolicyModule* resident_policy_{nullptr};
+  PolicyHealth heuristic_health_{};
 };
 
 }  // namespace catamaze::app

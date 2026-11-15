@@ -1,7 +1,7 @@
 ## header
 Created at: 2026-11-14 03:34 EST
 Created by: Codex
-Last Modified at: 2026-11-14 10:39 EST
+Last Modified at: 2026-11-14 18:51 EST
 Last Modified by: Codex
 
 ## brief intro
@@ -19,6 +19,7 @@ Last Modified by: Codex
 |-test_checkpoint.py — Verifies save/resume reproduces the exact next recurrent rollout.
 |-test_model.py — Verifies network shapes, recurrent resets, masking, initialization scale, gradients, and serialization.
 |-test_opponents.py — Verifies curriculum opponent actions remain legal and reproducible.
+|-test_policy_release.py — Verifies the released artifact, manifest, generated header, report evidence, tensor shapes, and compatibility declaration.
 |-test_ppo.py — Verifies a masked recurrent PPO update changes parameters and emits finite metrics.
 |-test_reward.py — Verifies damage credit, kill splits, friendly fire, exploration, potential shaping, and component totals.
 |-test_reward_fixtures.py — Verifies every reviewed YAML reward trajectory through the standalone validator.

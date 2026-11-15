@@ -1,0 +1,42 @@
+{
+  "schema": "catamaze.policy.release.v1",
+  "release": "production-100364306-w8a16",
+  "artifact": "catamaze_policy.espdl",
+  "artifact_bytes": 1490800,
+  "artifact_sha256": "0cc8bb5025ff22c435b0107fd739560f4c4e13c16e2683a1ad3f0e0ee7044322",
+  "target": "esp32s3",
+  "quantization": "w8a16",
+  "parameters": 1010826,
+  "exporter_version": "3.3.15",
+  "runtime_version": "3.3.11",
+  "runtime_compatibility": "decoded-envelope-v1",
+  "inputs": {
+    "spatial": [1, 13, 5, 5],
+    "scalar": [1, 46],
+    "hidden": [1, 1, 256]
+  },
+  "outputs": {
+    "logits": [1, 9],
+    "value": [1],
+    "next_hidden": [1, 1, 256]
+  },
+  "evidence": {
+    "calibration_samples": 512,
+    "evaluation_samples": 10000,
+    "masked_action_agreement": 0.9861,
+    "physical_three_inference_us": 126287,
+    "physical_internal_bytes": 167508,
+    "physical_psram_bytes": 1480032
+  },
+  "gates": {
+    "minimum_masked_action_agreement": 0.985,
+    "maximum_logit_error": 0.1,
+    "maximum_value_error": 0.5,
+    "maximum_hidden_error": 0.18,
+    "maximum_three_agent_us": 900000
+  },
+  "generated_header": {
+    "created_at": "2026-11-14 18:51 EST",
+    "modified_at": "2026-11-14 18:51 EST"
+  }
+}
