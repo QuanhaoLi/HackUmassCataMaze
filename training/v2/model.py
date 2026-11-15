@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:52 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 18:52 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Implements the isolated V2 shared recurrent trunk with persona modulation and heads.
 
@@ -144,3 +144,15 @@ class PersonaRecurrentActorCritic(nn.Module):
             values_all=values_all,
             hidden=recurrent_hidden,
         )
+
+
+def neutralize_persona_trunk(
+    model: PersonaRecurrentActorCritic,
+) -> PersonaRecurrentActorCritic:
+    with torch.no_grad():
+        persona_columns = model.scalar_encoder[0].weight[:, 43:46]
+        shared_column = persona_columns.mean(dim=1, keepdim=True)
+        persona_columns.copy_(shared_column.expand_as(persona_columns))
+        model.persona_gamma.zero_()
+        model.persona_beta.zero_()
+    return model

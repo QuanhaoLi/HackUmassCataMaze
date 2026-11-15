@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:52 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:04 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Saves and restores complete atomic V2 training state without changing V1 checkpoints.
 
@@ -39,6 +39,7 @@ def save_checkpoint(
     scheduler: Any | None = None,
     best_metrics: dict[str, float] | None = None,
     reward_version: str = V1_REWARD_VERSION,
+    model_arch_version: str = MODEL_ARCH_VERSION,
 ) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -48,7 +49,7 @@ def save_checkpoint(
             "environment": _native.environment_version,
             "observation": _native.observation_schema_version,
             "reward": reward_version,
-            "model_arch": MODEL_ARCH_VERSION,
+            "model_arch": model_arch_version,
         },
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
@@ -96,6 +97,7 @@ def load_checkpoint(
     policy_generator: torch.Generator,
     scheduler: Any | None = None,
     reward_version: str = V1_REWARD_VERSION,
+    model_arch_version: str = MODEL_ARCH_VERSION,
 ) -> dict[str, Any]:
     payload = torch.load(Path(path), map_location="cpu", weights_only=False)
     if payload.get("format") != CHECKPOINT_FORMAT_VERSION:
@@ -104,7 +106,7 @@ def load_checkpoint(
         "environment": _native.environment_version,
         "observation": _native.observation_schema_version,
         "reward": reward_version,
-        "model_arch": MODEL_ARCH_VERSION,
+        "model_arch": model_arch_version,
     }
     if payload.get("contracts") != expected_contracts:
         raise ValueError("V2 checkpoint contract versions are incompatible")

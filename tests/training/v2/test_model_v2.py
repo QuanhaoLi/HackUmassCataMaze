@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 18:52 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 18:52 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Verifies V2 migration equivalence and isolated persona-head behavior.
 
@@ -11,7 +11,7 @@ from io import BytesIO
 import torch
 
 from training.model import RecurrentActorCritic
-from training.v2.model import PersonaRecurrentActorCritic
+from training.v2.model import PersonaRecurrentActorCritic, neutralize_persona_trunk
 
 
 def persona_scalars(batch: int, time: int) -> torch.Tensor:
@@ -104,3 +104,21 @@ def test_episode_starts_reset_hidden_and_state_dict_round_trips() -> None:
     torch.testing.assert_close(replay.logits_all, original.logits_all, rtol=0.0, atol=0.0)
     torch.testing.assert_close(replay.values_all, original.values_all, rtol=0.0, atol=0.0)
     torch.testing.assert_close(replay.hidden, original.hidden, rtol=0.0, atol=0.0)
+
+
+def test_persona_neutral_trunk_produces_identical_hidden_for_every_persona() -> None:
+    torch.manual_seed(13)
+    model = neutralize_persona_trunk(PersonaRecurrentActorCritic()).eval()
+    spatial = torch.rand(1, 1, 13, 5, 5).expand(3, -1, -1, -1, -1).clone()
+    scalar = torch.rand(1, 1, 46).expand(3, -1, -1).clone()
+    scalar[..., 43:46] = torch.eye(3).reshape(3, 1, 3)
+    hidden = torch.rand(1, 1, 256).expand(-1, 3, -1).clone()
+    with torch.no_grad():
+        output = model(spatial, scalar, hidden=hidden)
+    torch.testing.assert_close(output.hidden[:, 0], output.hidden[:, 1], rtol=0.0, atol=1e-6)
+    torch.testing.assert_close(output.hidden[:, 0], output.hidden[:, 2], rtol=0.0, atol=1e-6)
+    columns = model.scalar_encoder[0].weight[:, 43:46]
+    torch.testing.assert_close(columns[:, 0], columns[:, 1], rtol=0.0, atol=0.0)
+    torch.testing.assert_close(columns[:, 0], columns[:, 2], rtol=0.0, atol=0.0)
+    assert torch.count_nonzero(model.persona_gamma) == 0
+    assert torch.count_nonzero(model.persona_beta) == 0

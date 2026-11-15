@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Verifies the exact V2 parameter ownership of each warm-start phase.
 
@@ -32,3 +32,11 @@ def test_full_phase_enables_every_parameter() -> None:
     model = PersonaRecurrentActorCritic()
     names = apply_training_phase(model, TrainingPhase.FULL)
     assert len(names) == len(tuple(model.named_parameters()))
+
+
+def test_persona_neutral_phase_trains_only_heads() -> None:
+    model = PersonaRecurrentActorCritic()
+    names = apply_training_phase(model, TrainingPhase.HEADS_NEUTRAL)
+    assert all(name.startswith(("actors.", "critics.")) for name in names)
+    assert model.persona_gamma.requires_grad is False
+    assert model.persona_beta.requires_grad is False

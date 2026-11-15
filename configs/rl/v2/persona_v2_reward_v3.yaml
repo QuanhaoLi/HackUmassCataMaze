@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 20:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:03 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 
 versions:
@@ -8,7 +8,7 @@ versions:
   observation: catamaze.observation.v1
   action: catamaze.action.v1
   reward: catamaze.reward.persona.v3
-  model_arch: catamaze.model.persona-rppo.v2
+  model_arch: catamaze.model.persona-heads.v2.1
   training_config: catamaze.training.persona.v2.reward3.1
   export_contract: catamaze.esp-step.persona.v2
 
@@ -87,10 +87,12 @@ phases:
 
 style_constraints:
   coefficient: 0.02
-  raw_scale_source_checkpoint_sha256: 0b45c37551aa7bf533e59ec77212fbc6c15c14dab97dde9efcc8228285e75f85
-  source_checkpoint_sha256: f9b6c54422a825388ddb3d164c07cf0dfbd45178963273866004e8b52fdc5567
+  reward_v3_heads_source_checkpoint_sha256: 0b45c37551aa7bf533e59ec77212fbc6c15c14dab97dde9efcc8228285e75f85
+  raw_scale_source_checkpoint_sha256: f9b6c54422a825388ddb3d164c07cf0dfbd45178963273866004e8b52fdc5567
+  source_checkpoint_sha256: d155f283f73754c9dbb9d7142f8221bde4a6de27dc8b8c1385f63137bf85c597
   first_evaluation: 5000000
-  trainable_scope: heads_only
+  trainable_scope: heads_neutral
+  model_variant: catamaze.model.persona-heads.v2.1
 
 evaluation:
   every_agent_steps: 5000000

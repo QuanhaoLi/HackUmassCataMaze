@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 21:03 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Validates the immutable V2 lineage, topology, phase, evaluation, and embedded budgets.
 
@@ -13,7 +13,7 @@ import yaml
 
 from training import _native
 from training.reward import REWARD_VERSION as V2_REWARD_VERSION
-from training.v2 import MODEL_ARCH_VERSION
+from training.v2 import MODEL_ARCH_VERSION, PERSONA_HEADS_MODEL_ARCH_VERSION
 from training.v2.reward import REWARD_VERSION as V3_REWARD_VERSION
 
 
@@ -30,12 +30,17 @@ def load_config(path: str | Path) -> dict[str, Any]:
         training_config = "catamaze.training.persona.v2.reward3.1"
     else:
         raise ValueError("unsupported V2 reward version")
+    model_arch_version = (
+        MODEL_ARCH_VERSION
+        if reward_version == V2_REWARD_VERSION
+        else PERSONA_HEADS_MODEL_ARCH_VERSION
+    )
     expected_versions = {
         "environment": _native.environment_version,
         "observation": _native.observation_schema_version,
         "action": "catamaze.action.v1",
         "reward": reward_version,
-        "model_arch": MODEL_ARCH_VERSION,
+        "model_arch": model_arch_version,
         "training_config": training_config,
         "export_contract": "catamaze.esp-step.persona.v2",
     }
@@ -123,14 +128,18 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if reward_version == V3_REWARD_VERSION:
         if style_constraints != {
             "coefficient": 0.02,
-            "raw_scale_source_checkpoint_sha256": (
+            "reward_v3_heads_source_checkpoint_sha256": (
                 "0b45c37551aa7bf533e59ec77212fbc6c15c14dab97dde9efcc8228285e75f85"
             ),
-            "source_checkpoint_sha256": (
+            "raw_scale_source_checkpoint_sha256": (
                 "f9b6c54422a825388ddb3d164c07cf0dfbd45178963273866004e8b52fdc5567"
             ),
+            "source_checkpoint_sha256": (
+                "d155f283f73754c9dbb9d7142f8221bde4a6de27dc8b8c1385f63137bf85c597"
+            ),
             "first_evaluation": 5_000_000,
-            "trainable_scope": "heads_only",
+            "trainable_scope": "heads_neutral",
+            "model_variant": "catamaze.model.persona-heads.v2.1",
         }:
             raise ValueError("V2 style constraint contract changed")
     elif style_constraints is not None:

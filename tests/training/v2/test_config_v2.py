@@ -47,5 +47,6 @@ def test_v2_config_rejects_an_aggregate_only_quantization_gate(tmp_path: Path) -
 def test_reward_v3_config_is_separate_and_uses_the_recurrent_checkpoint() -> None:
     config = load_config(REWARD_V3_CONFIG)
     assert config["versions"]["reward"] == "catamaze.reward.persona.v3"
+    assert config["versions"]["model_arch"] == "catamaze.model.persona-heads.v2.1"
     assert config["lineage"]["reward_v3_source_phase"] == "recurrent"
     assert config["phases"]["first_evaluation"] == 5_000_000

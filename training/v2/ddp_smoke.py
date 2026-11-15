@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:40 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Qualifies one persona-balanced V2 model with synchronous multi-V100 DDP.
 
@@ -23,9 +23,10 @@ from training.collector import RolloutCollector
 from training.env import CataMazeBatchEnv
 from training.ppo import PPOConfig
 from training.v2.checkpoint import CHECKPOINT_FORMAT_VERSION, save_checkpoint
+from training.v2 import MODEL_ARCH_VERSION, PERSONA_HEADS_MODEL_ARCH_VERSION
 from training.v2.env import PersonaV3BatchEnv
 from training.v2.migrate import MIGRATION_FORMAT, file_sha256
-from training.v2.model import PersonaRecurrentActorCritic
+from training.v2.model import PersonaRecurrentActorCritic, neutralize_persona_trunk
 from training.v2.ppo import PersonaPPOTrainer
 from training.v2.schedule import TrainingPhase, apply_training_phase
 from training.v2.reward import REWARD_VERSION as V3_REWARD_VERSION
@@ -87,12 +88,14 @@ def run(
     if reward_version == V3_REWARD_VERSION:
         allowed_stages = {
             TrainingPhase.HEADS_ONLY: ("C",),
+            TrainingPhase.HEADS_NEUTRAL: ("C",),
             TrainingPhase.RECURRENT: (),
             TrainingPhase.FULL: ("C",),
         }
     else:
         allowed_stages = {
             TrainingPhase.HEADS_ONLY: ("A",),
+            TrainingPhase.HEADS_NEUTRAL: (),
             TrainingPhase.RECURRENT: ("B",),
             TrainingPhase.FULL: ("C", "D"),
         }
@@ -126,6 +129,11 @@ def run(
             raise ValueError("DDP qualification rejects provisional lineage")
         model = PersonaRecurrentActorCritic().to(device)
         model.load_state_dict(payload["model"])
+        if phase is TrainingPhase.HEADS_NEUTRAL:
+            neutralize_persona_trunk(model)
+            model_arch_version = PERSONA_HEADS_MODEL_ARCH_VERSION
+        else:
+            model_arch_version = MODEL_ARCH_VERSION
         trainable_names = apply_training_phase(model, phase)
         ddp_model = DistributedDataParallel(
             model,
@@ -179,6 +187,7 @@ def run(
             "style_loss_coef": style_loss_coef,
             "warmstart_sha256": file_sha256(warmstart),
             "source_lineage": source_lineage,
+            "model_arch_version": model_arch_version,
         }
         if rank == 0:
             (output_dir / "resolved_config.json").write_text(
@@ -236,6 +245,7 @@ def run(
             },
             resolved_config=resolved_config,
             reward_version=reward_version,
+            model_arch_version=model_arch_version,
         )
         summary = {
             "schema": "catamaze.training.persona.v2-ddp-qualification-result",

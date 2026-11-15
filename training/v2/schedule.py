@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 19:04 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Owns explicit parameter freezing for V2 warm-start phases.
 
@@ -13,6 +13,7 @@ from training.v2.model import PersonaRecurrentActorCritic
 
 class TrainingPhase(str, Enum):
     HEADS_ONLY = "heads-only"
+    HEADS_NEUTRAL = "heads-neutral"
     RECURRENT = "recurrent"
     FULL = "full"
 
@@ -37,8 +38,9 @@ def apply_training_phase(
     for module in trainable_modules:
         for parameter in module.parameters():
             parameter.requires_grad_(True)
-    model.persona_gamma.requires_grad_(True)
-    model.persona_beta.requires_grad_(True)
+    if phase is not TrainingPhase.HEADS_NEUTRAL:
+        model.persona_gamma.requires_grad_(True)
+        model.persona_beta.requires_grad_(True)
     trainable = tuple(name for name, value in model.named_parameters() if value.requires_grad)
     if not trainable:
         raise RuntimeError(f"V2 phase {phase.value} has no trainable parameters")

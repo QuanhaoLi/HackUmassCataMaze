@@ -1,6 +1,6 @@
 # Created at: 2026-11-14 19:04 EST
 # Created by: Codex
-# Last Modified at: 2026-11-14 20:40 EST
+# Last Modified at: 2026-11-14 21:09 EST
 # Last Modified by: Codex
 # Runs bounded end-to-end V2 recurrent PPO without touching V1 configs or artifacts.
 
@@ -25,9 +25,10 @@ from training.v2.checkpoint import (
     load_checkpoint,
     save_checkpoint,
 )
+from training.v2 import MODEL_ARCH_VERSION, PERSONA_HEADS_MODEL_ARCH_VERSION
 from training.v2.env import PersonaV3BatchEnv
 from training.v2.migrate import MIGRATION_FORMAT, file_sha256
-from training.v2.model import PersonaRecurrentActorCritic
+from training.v2.model import PersonaRecurrentActorCritic, neutralize_persona_trunk
 from training.v2.ppo import PersonaPPOTrainer
 from training.v2.schedule import TrainingPhase, apply_training_phase
 from training.v2.reward import REWARD_VERSION as V3_REWARD_VERSION
@@ -78,12 +79,14 @@ def run_smoke(
     if reward_version == V3_REWARD_VERSION:
         allowed_stages = {
             TrainingPhase.HEADS_ONLY: ("C",),
+            TrainingPhase.HEADS_NEUTRAL: ("C",),
             TrainingPhase.RECURRENT: (),
             TrainingPhase.FULL: ("C",),
         }
     else:
         allowed_stages = {
             TrainingPhase.HEADS_ONLY: ("A",),
+            TrainingPhase.HEADS_NEUTRAL: (),
             TrainingPhase.RECURRENT: ("B",),
             TrainingPhase.FULL: ("C", "D"),
         }
@@ -94,6 +97,11 @@ def run_smoke(
     (output_dir / "checkpoints").mkdir(exist_ok=True)
     model = PersonaRecurrentActorCritic().to(device)
     model.load_state_dict(warmstart_payload["model"])
+    if phase is TrainingPhase.HEADS_NEUTRAL:
+        neutralize_persona_trunk(model)
+        model_arch_version = PERSONA_HEADS_MODEL_ARCH_VERSION
+    else:
+        model_arch_version = MODEL_ARCH_VERSION
     trainable_names = apply_training_phase(model, phase)
     optimizer = torch.optim.AdamW(
         [parameter for parameter in model.parameters() if parameter.requires_grad],
@@ -139,6 +147,7 @@ def run_smoke(
         "style_loss_coef": style_loss_coef,
         "warmstart_sha256": file_sha256(warmstart_path),
         "source_lineage": source_lineage,
+        "model_arch_version": model_arch_version,
     }
     (output_dir / "resolved_config.json").write_text(
         json.dumps(resolved_config, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -188,6 +197,7 @@ def run_smoke(
             },
             resolved_config=resolved_config,
             reward_version=reward_version,
+            model_arch_version=model_arch_version,
         )
         load_checkpoint(
             checkpoint,
@@ -197,6 +207,7 @@ def run_smoke(
             collector=collector,
             policy_generator=generator,
             reward_version=reward_version,
+            model_arch_version=model_arch_version,
         )
     elapsed = perf_counter() - started
     changed = {
