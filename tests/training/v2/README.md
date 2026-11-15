@@ -10,7 +10,10 @@ Last Modified by: Codex
 
 ## folder structure
 |-README.md — Defines V2 model test ownership.
+|-test_checkpoint_v2.py — Verifies a V2 checkpoint reproduces the exact next recurrent rollout.
 |-test_model_v2.py — Verifies shapes, V1 migration equivalence, head selection, gradients, reset, and serialization.
+|-test_ppo_v2.py — Verifies persona-local normalization, equal-weight updates, and finite per-persona metrics.
+|-test_rollout_v2.py — Verifies every V2 recurrent minibatch contains equal persona sequence counts.
 
 ## To-Dos
 - Add persona-balanced rollout and PPO golden tests before Phase 4 exits.
