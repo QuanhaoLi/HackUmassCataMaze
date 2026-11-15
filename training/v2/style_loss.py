@@ -23,6 +23,10 @@ STYLE_COMPONENT_NAMES = (
     "js_aggressive_explorer",
     "js_cautious_explorer",
 )
+STYLE_METRIC_NAMES = STYLE_COMPONENT_NAMES + (
+    "aggressive_aligned_shot_count",
+    "cautious_low_hp_retreat_count",
+)
 
 
 def persona_style_loss(
@@ -42,7 +46,7 @@ def persona_style_loss(
         raise ValueError("scalar must have shape [S,T,46]")
     if not loss_mask.any():
         zero = logits_all.sum() * 0.0
-        return zero, {name: zero for name in STYLE_COMPONENT_NAMES}
+        return zero, {name: zero for name in STYLE_METRIC_NAMES}
 
     expanded_mask = action_mask.unsqueeze(-2).expand_as(logits_all)
     masked_logits = logits_all.masked_fill(~expanded_mask, -torch.inf)
@@ -89,6 +93,9 @@ def persona_style_loss(
         )
     else:
         components["aggressive_aligned_shot"] = logits_all.sum() * 0.0
+    components["aggressive_aligned_shot_count"] = shot_valid.sum().to(
+        dtype=logits_all.dtype
+    )
 
     retreat_target = torch.full_like(shot_target, -1)
     retreat_target[player_up] = 1
@@ -107,6 +114,9 @@ def persona_style_loss(
         )
     else:
         components["cautious_low_hp_retreat"] = logits_all.sum() * 0.0
+    components["cautious_low_hp_retreat_count"] = retreat_valid.sum().to(
+        dtype=logits_all.dtype
+    )
 
     persona_names = ("aggressive", "cautious", "explorer")
     for left, right in combinations(range(3), 2):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import torch
 
-from training.v2.style_loss import STYLE_COMPONENT_NAMES, persona_style_loss
+from training.v2.style_loss import STYLE_METRIC_NAMES, persona_style_loss
 
 
 def inputs() -> tuple[torch.Tensor, ...]:
@@ -27,7 +27,9 @@ def test_style_loss_is_finite_complete_and_backpropagates() -> None:
     tensors = inputs()
     loss, components = persona_style_loss(*tensors)
     assert torch.isfinite(loss)
-    assert set(components) == set(STYLE_COMPONENT_NAMES)
+    assert set(components) == set(STYLE_METRIC_NAMES)
+    assert components["aggressive_aligned_shot_count"] > 0
+    assert components["cautious_low_hp_retreat_count"] > 0
     loss.backward()
     assert tensors[0].grad is not None
     assert torch.count_nonzero(tensors[0].grad) > 0

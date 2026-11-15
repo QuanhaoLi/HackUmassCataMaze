@@ -17,7 +17,11 @@ from training.ppo import PPOConfig
 from training.rollout import RecurrentRollout, SequenceBatch
 from training.v2.model import PERSONA_COUNT, PERSONA_OFFSET
 from training.v2.rollout import persona_sequence_batches
-from training.v2.style_loss import STYLE_COMPONENT_NAMES, persona_style_loss
+from training.v2.style_loss import (
+    STYLE_COMPONENT_NAMES,
+    STYLE_METRIC_NAMES,
+    persona_style_loss,
+)
 
 
 def normalize_advantages_per_persona(
@@ -141,7 +145,7 @@ class PersonaPPOTrainer:
         persona_totals = {
             name: [0.0 for _ in range(PERSONA_COUNT)] for name in persona_names
         }
-        style_totals = {name: 0.0 for name in STYLE_COMPONENT_NAMES}
+        style_totals = {name: 0.0 for name in STYLE_METRIC_NAMES}
         updates = 0
         early_stopped = False
         max_approx_kl = 0.0
@@ -161,7 +165,7 @@ class PersonaPPOTrainer:
                 for name in persona_names:
                     for persona in range(PERSONA_COUNT):
                         persona_totals[name][persona] += per_persona[name][persona]
-                for name in STYLE_COMPONENT_NAMES:
+                for name in STYLE_METRIC_NAMES:
                     style_totals[name] += style[name]
                 batch_max_kl = max(per_persona["approx_kl"])
                 max_approx_kl = max(max_approx_kl, batch_max_kl)
